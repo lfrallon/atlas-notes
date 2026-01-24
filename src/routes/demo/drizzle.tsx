@@ -6,6 +6,9 @@ import { desc } from 'drizzle-orm'
 import { db } from '@/db/index'
 import { todos } from '@/db/schema'
 
+// libs
+import { authClient } from '@/lib/auth-client'
+
 const getTodos = createServerFn({
   method: 'GET',
 }).handler(async () => {
@@ -19,8 +22,20 @@ const createTodo = createServerFn({
 })
   .inputValidator((data: { title: string; userId: string }) => data)
   .handler(async ({ data }) => {
-    await db.insert(todos).values({ title: data.title, userId: data.userId })
-    return { success: true }
+    console.log('🚀 ~ data:', data)
+
+    try {
+      await db
+        .insert(todos)
+        .values({ ...data })
+        .returning()
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An error occurred!'
+      console.log('🚀 ~ errorMessage:', errorMessage)
+
+      return { error: errorMessage }
+    }
   })
 
 export const Route = createFileRoute('/demo/drizzle')({
@@ -37,14 +52,14 @@ function DemoDrizzle() {
     const formData = new FormData(e.target as HTMLFormElement)
     const title = formData.get('title') as string
 
-    if (!title) return
+    const { data: session } = await authClient.getSession()
+
+    if (!title || !session) return
 
     try {
-      await createTodo({ data: { title, userId: '' } })
-      router.invalidate()
-      ;(e.target as HTMLFormElement).reset()
+      await createTodo({ data: { title, userId: session.session.userId } })
     } catch (error) {
-      console.error('Failed to create todo:', error)
+      console.log('Failed to create todo:', error)
     }
   }
 
