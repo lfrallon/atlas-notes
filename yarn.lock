@@ -1976,7 +1976,7 @@
   dependencies:
     undici-types "~6.21.0"
 
-"@types/pg@^8.15.6":
+"@types/pg@^8.16.0":
   version "8.16.0"
   resolved "https://registry.yarnpkg.com/@types/pg/-/pg-8.16.0.tgz#b7af0d642752340b7c9de1c33afd9bc5c5f0ebeb"
   integrity sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==
@@ -2820,10 +2820,10 @@ domutils@^3.0.1, domutils@^3.2.2:
     domelementtype "^2.3.0"
     domhandler "^5.0.3"
 
-dotenv@^16.0.0:
-  version "16.6.1"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.6.1.tgz#773f0e69527a8315c7285d5ee73c4459d20a8020"
-  integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
+dotenv@^17.2.3:
+  version "17.2.3"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.2.3.tgz#ad995d6997f639b11065f419a22fabf567cdb9a2"
+  integrity sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==
 
 drizzle-kit@^0.31.8:
   version "0.31.8"
@@ -2835,7 +2835,7 @@ drizzle-kit@^0.31.8:
     esbuild "^0.25.4"
     esbuild-register "^3.5.0"
 
-drizzle-orm@^0.45.0:
+drizzle-orm@^0.45.1:
   version "0.45.1"
   resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.45.1.tgz#a8c313ee680ca12e3f00a1e4249d7110d4a4deed"
   integrity sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==
@@ -3952,7 +3952,7 @@ pg-types@2.2.0, pg-types@^2.2.0:
     postgres-date "~1.0.4"
     postgres-interval "^1.1.0"
 
-pg@^8.16.3:
+pg@^8.17.2:
   version "8.17.2"
   resolved "https://registry.yarnpkg.com/pg/-/pg-8.17.2.tgz#8df8c039c36bb97016be276094fc4991e8683963"
   integrity sha512-vjbKdiBJRqzcYw1fNU5KuHyYvdJ1qpcQg1CeBrHFqV1pWgHeVR6j/+kX0E1AAXfyuLUGY1ICrN2ELKA/z2HWzw==
@@ -4585,7 +4585,7 @@ tslib@^2.0.1, tslib@^2.4.0, tslib@^2.8.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
   integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
 
-tsx@^4.0.0, tsx@^4.19.2:
+tsx@^4.19.2, tsx@^4.21.0:
   version "4.21.0"
   resolved "https://registry.yarnpkg.com/tsx/-/tsx-4.21.0.tgz#32aa6cf17481e336f756195e6fe04dae3e6308b1"
   integrity sha512-5C1sg4USs1lfG0GFb2RLXsdpXqBSEhAaA/0kPL01wxzpMqLILNxIxIOKiILz+cdg/pLnOUxFYOR5yhHU666wbw==
