@@ -1,6 +1,8 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { desc } from 'drizzle-orm'
+
+// dbs
 import { db } from '@/db/index'
 import { todos } from '@/db/schema'
 
@@ -15,9 +17,9 @@ const getTodos = createServerFn({
 const createTodo = createServerFn({
   method: 'POST',
 })
-  .inputValidator((data: { title: string }) => data)
+  .inputValidator((data: { title: string; userId: string }) => data)
   .handler(async ({ data }) => {
-    await db.insert(todos).values({ title: data.title })
+    await db.insert(todos).values({ title: data.title, userId: data.userId })
     return { success: true }
   })
 
@@ -38,7 +40,7 @@ function DemoDrizzle() {
     if (!title) return
 
     try {
-      await createTodo({ data: { title } })
+      await createTodo({ data: { title, userId: '' } })
       router.invalidate()
       ;(e.target as HTMLFormElement).reset()
     } catch (error) {

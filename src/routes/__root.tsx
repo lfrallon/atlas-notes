@@ -1,5 +1,6 @@
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
@@ -41,9 +42,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
-
-  shellComponent: RootDocument,
+  component: RootComponent,
 })
+
+function RootComponent() {
+  return (
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
