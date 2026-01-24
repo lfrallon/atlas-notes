@@ -15,6 +15,20 @@
       "when": 1769236692528,
       "tag": "0001_bored_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769239246236,
+      "tag": "0002_zippy_kronos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769239888385,
+      "tag": "0003_broken_gambit",
+      "breakpoints": true
     }
   ]
 }
