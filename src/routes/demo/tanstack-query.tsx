@@ -1,42 +1,60 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/demo/tanstack-query')({
   component: TanStackQueryDemo,
 })
 
-type Todo = {
-  id: number
-  name: string
-}
-
 function TanStackQueryDemo() {
-  const { data, refetch } = useQuery<Todo[]>({
-    queryKey: ['todos'],
-    queryFn: () => fetch('/demo/api/tq-todos').then((res) => res.json()),
-    initialData: [],
-  })
+  // const { data, refetch } = useQuery<Todo[]>({
+  //   queryKey: ['todos'],
+  //   queryFn: () =>
+  //     fetch(`http://localhost:3006/api/v1/todos`).then((res) => res.json()),
+  //   initialData: [],
+  // })
 
-  const { mutate: addTodo } = useMutation({
-    mutationFn: (todo: string) =>
-      fetch('/demo/api/tq-todos', {
+  const addTodosMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: {
+        title: string
+      }
+    }) =>
+      fetch(`http://localhost:3006/api/v1/todos/add`, {
         method: 'POST',
-        body: JSON.stringify(todo),
-      }).then((res) => res.json()),
-    onSuccess: () => refetch(),
+        credentials: 'include',
+        body: JSON.stringify(data),
+      }),
+    // onSuccess: () => refetch(),
   })
 
   const [todo, setTodo] = useState('')
 
-  const submitTodo = useCallback(async () => {
-    await addTodo(todo)
-    setTodo('')
-  }, [addTodo, todo])
+  const submitTodo = async () => {
+    try {
+      addTodosMutation.mutateAsync(
+        { data: { title: todo } },
+        {
+          onSuccess: (data) => {
+            console.log('🚀 ~ submitTodo ~ data:', data)
+            setTodo('')
+          },
+          onError: (error) => {
+            console.log('🚀 ~ submitTodo ~ error:', error.message)
+          },
+        },
+      )
+    } catch (error) {
+      console.log('🚀 ~ submitTodo ~ error:', error)
+      setTodo('')
+    }
+  }
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-black p-4 text-white"
+      className="flex items-center justify-center min-h-screen bg-linear-to-br from-red-900 via-red-800 to-black p-4 text-white"
       style={{
         backgroundImage:
           'radial-gradient(50% 50% at 80% 20%, #3B021F 0%, #7B1028 60%, #1A000A 100%)',
@@ -45,14 +63,14 @@ function TanStackQueryDemo() {
       <div className="w-full max-w-2xl p-8 rounded-xl backdrop-blur-md bg-black/50 shadow-xl border-8 border-black/10">
         <h1 className="text-2xl mb-4">TanStack Query Todos list</h1>
         <ul className="mb-4 space-y-2">
-          {data?.map((t) => (
+          {/* {data?.map((t) => (
             <li
               key={t.id}
               className="bg-white/10 border border-white/20 rounded-lg p-3 backdrop-blur-sm shadow-md"
             >
               <span className="text-lg text-white">{t.name}</span>
             </li>
-          ))}
+          ))} */}
         </ul>
         <div className="flex flex-col gap-2">
           <input

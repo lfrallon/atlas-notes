@@ -1,51 +1,127 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { desc } from 'drizzle-orm'
-
-// dbs
-import { db } from '@/db/index'
-import { todos } from '@/db/schema'
+import { createFileRoute } from '@tanstack/react-router'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 
 // libs
 import { authClient } from '@/lib/auth-client'
+import { useMemo } from 'react'
 
-const getTodos = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return await db.query.todos.findMany({
-    orderBy: [desc(todos.createdAt)],
-  })
+// types
+const searchSchema = z.object({
+  nextCursor: z
+    .object({
+      id: z.string(),
+      createdAt: z.string(),
+    })
+    .optional(),
+  pageSize: z.coerce.number(),
 })
 
-const createTodo = createServerFn({
-  method: 'POST',
-})
-  .inputValidator((data: { title: string; userId: string }) => data)
-  .handler(async ({ data }) => {
-    console.log('🚀 ~ data:', data)
+type SearchQuery = z.infer<typeof searchSchema>
 
-    try {
-      await db
-        .insert(todos)
-        .values({ ...data })
-        .returning()
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An error occurred!'
-      console.log('🚀 ~ errorMessage:', errorMessage)
+type TFetchTodos = {
+  pageParam: SearchQuery
+  queryKey: [
+    string,
+    {
+      baseUrl: string
+      token: string
+    },
+  ]
+}
 
-      return { error: errorMessage }
+interface TodosNodes {
+  id: string
+  title: string
+  createdAt: string
+  updatedAt: string
+  userId: string
+}
+
+type TodosPage = {
+  nodes: TodosNodes[]
+  pageInfo: {
+    hasNextPage: boolean
+    nextCursor: {
+      id: string
+      createdAt: string
     }
-  })
+    pageSize: number
+    totalPages: number
+  }
+  totalCount: number
+}
+
+async function getTodos({ pageParam, queryKey }: TFetchTodos) {
+  console.log('🚀 ~ getTodos ~ pageParam:', pageParam)
+
+  const [, { baseUrl }] = queryKey
+
+  const response = await fetch(
+    `${baseUrl}?pageSize=${pageParam.pageSize ?? 6}${pageParam.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam.nextCursor ? `&createdAt=${JSON.stringify(pageParam.nextCursor.createdAt)}` : ''}`,
+    {
+      credentials: 'include',
+    },
+  )
+
+  const data = (await response.json()) as TodosPage
+  return data
+}
 
 export const Route = createFileRoute('/demo/drizzle')({
   component: DemoDrizzle,
-  loader: async () => await getTodos(),
 })
 
 function DemoDrizzle() {
-  const router = useRouter()
-  const todos = Route.useLoaderData()
+  const session = authClient.useSession()
+
+  const { data, isSuccess, fetchNextPage } = useInfiniteQuery<TodosPage, Error>(
+    {
+      queryKey: [
+        'todos',
+        {
+          baseUrl: 'http://localhost:3006/api/v1/todos',
+          token: session.data?.session.token,
+        },
+      ],
+      queryFn: async ({ pageParam, queryKey }) =>
+        await getTodos({
+          pageParam: pageParam as SearchQuery,
+          queryKey: queryKey as [
+            string,
+            {
+              baseUrl: string
+              token: string
+            },
+          ],
+        }),
+      initialPageParam: {
+        pageSize: 6,
+      },
+      getNextPageParam: (lastPage) => {
+        if (lastPage.pageInfo && lastPage.pageInfo.hasNextPage) {
+          return {
+            nextCursor: lastPage.pageInfo.nextCursor,
+            pageSize: lastPage.pageInfo.pageSize,
+          }
+        }
+      },
+    },
+  )
+
+  const todos = useMemo(() => {
+    if (!data || !isSuccess) {
+      return []
+    }
+
+    const nodes = data.pages.flatMap((data) => data.nodes)
+
+    if (nodes.length === 0) {
+      return []
+    }
+
+    return nodes
+  }, [data, isSuccess])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -57,7 +133,7 @@ function DemoDrizzle() {
     if (!title || !session) return
 
     try {
-      await createTodo({ data: { title, userId: session.session.userId } })
+      // await createTodo({ data: { title, userId: session.session.userId } })
     } catch (error) {
       console.log('Failed to create todo:', error)
     }
@@ -88,8 +164,8 @@ function DemoDrizzle() {
           }}
         >
           <div className="relative group">
-            <div className="absolute -inset-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition duration-500"></div>
-            <div className="relative bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-lg">
+            <div className="absolute -inset-2 bg-linear-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition duration-500"></div>
+            <div className="relative bg-linear-to-br from-indigo-600 to-purple-600 p-3 rounded-lg">
               <img
                 src="/drizzle.svg"
                 alt="Drizzle Logo"
@@ -97,7 +173,7 @@ function DemoDrizzle() {
               />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 text-transparent bg-clip-text">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-indigo-300 via-purple-300 to-indigo-300 text-transparent bg-clip-text">
             Drizzle Database Demo
           </h1>
         </div>
@@ -107,7 +183,7 @@ function DemoDrizzle() {
         <ul className="space-y-3 mb-6">
           {todos.map((todo) => (
             <li
-              key={todo.id}
+              key={todo?.id}
               className="rounded-lg p-4 shadow-md border transition-all hover:scale-[1.02] cursor-pointer group"
               style={{
                 background:
@@ -117,9 +193,9 @@ function DemoDrizzle() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-lg font-medium text-white group-hover:text-indigo-200 transition-colors">
-                  {todo.title}
+                  {todo?.title}
                 </span>
-                <span className="text-xs text-indigo-300/70">#{todo.id}</span>
+                <span className="text-xs text-indigo-300/70">#{todo?.id}</span>
               </div>
             </li>
           ))}
@@ -153,6 +229,19 @@ function DemoDrizzle() {
             Add Todo
           </button>
         </form>
+
+        <button
+          className="px-6 py-3 font-semibold rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95 whitespace-nowrap"
+          style={{
+            background: 'linear-gradient(135deg, #5d67e3 0%, #8b5cf6 100%)',
+            color: 'white',
+          }}
+          onClick={async () => {
+            await fetchNextPage()
+          }}
+        >
+          Fetch More Todo
+        </button>
 
         <div
           className="mt-8 p-6 rounded-lg border"

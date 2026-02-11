@@ -78,6 +78,9 @@ function BetterAuthDemo() {
           email,
           password,
           name,
+          fetchOptions: {
+            credentials: 'include',
+          },
         })
         if (result.error) {
           setError(result.error.message || 'Sign up failed')
@@ -86,6 +89,9 @@ function BetterAuthDemo() {
         const result = await authClient.signIn.email({
           email,
           password,
+          fetchOptions: {
+            credentials: 'include',
+          },
         })
         if (result.error) {
           setError(result.error.message || 'Sign in failed')
