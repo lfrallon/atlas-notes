@@ -7,17 +7,23 @@ import { authClient } from '@/lib/auth-client'
 import { useMemo } from 'react'
 
 // types
-const searchSchema = z.object({
-  nextCursor: z
-    .object({
-      id: z.string(),
-      createdAt: z.string(),
-    })
-    .optional(),
-  pageSize: z.coerce.number(),
-})
+const searchSchema = z
+  .object({
+    nextCursor: z
+      .object({
+        id: z.string(),
+        createdAt: z.string(),
+      })
+      .optional(),
+  })
+  .optional()
 
 type SearchQuery = z.infer<typeof searchSchema>
+
+type TodosInput = {
+  pageSize?: number
+  orderBy?: 'asc' | 'desc'
+}
 
 type TFetchTodos = {
   pageParam: SearchQuery
@@ -25,7 +31,7 @@ type TFetchTodos = {
     string,
     {
       baseUrl: string
-      token: string
+      input?: TodosInput
     },
   ]
 }
@@ -46,19 +52,16 @@ type TodosPage = {
       id: string
       createdAt: string
     }
-    pageSize: number
     totalPages: number
   }
   totalCount: number
 }
 
 async function getTodos({ pageParam, queryKey }: TFetchTodos) {
-  console.log('🚀 ~ getTodos ~ pageParam:', pageParam)
-
-  const [, { baseUrl }] = queryKey
+  const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
-    `${baseUrl}?pageSize=${pageParam.pageSize ?? 6}${pageParam.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam.nextCursor ? `&createdAt=${JSON.stringify(pageParam.nextCursor.createdAt)}` : ''}`,
+    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&createdAt=${JSON.stringify(pageParam.nextCursor.createdAt)}` : ''}`,
     {
       credentials: 'include',
     },
@@ -73,15 +76,16 @@ export const Route = createFileRoute('/demo/drizzle')({
 })
 
 function DemoDrizzle() {
-  const session = authClient.useSession()
-
   const { data, isSuccess, fetchNextPage } = useInfiniteQuery<TodosPage, Error>(
     {
       queryKey: [
         'todos',
         {
           baseUrl: 'http://localhost:3006/api/v1/todos',
-          token: session.data?.session.token,
+          input: {
+            pageSize: 10,
+            orderBy: 'desc',
+          },
         },
       ],
       queryFn: async ({ pageParam, queryKey }) =>
@@ -91,18 +95,15 @@ function DemoDrizzle() {
             string,
             {
               baseUrl: string
-              token: string
+              input?: TodosInput
             },
           ],
         }),
-      initialPageParam: {
-        pageSize: 6,
-      },
+      initialPageParam: undefined,
       getNextPageParam: (lastPage) => {
         if (lastPage.pageInfo && lastPage.pageInfo.hasNextPage) {
           return {
             nextCursor: lastPage.pageInfo.nextCursor,
-            pageSize: lastPage.pageInfo.pageSize,
           }
         }
       },
