@@ -1,10 +1,10 @@
+import { useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 
 // libs
 import { authClient } from '@/lib/auth-client'
-import { useMemo } from 'react'
 
 // types
 const searchSchema = z
@@ -45,7 +45,7 @@ interface TodosNodes {
 }
 
 type TodosPage = {
-  nodes: TodosNodes[]
+  nodes: Array<TodosNodes>
   pageInfo: {
     hasNextPage: boolean
     nextCursor: {
@@ -67,7 +67,7 @@ async function getTodos({ pageParam, queryKey }: TFetchTodos) {
     },
   )
 
-  const data = (await response.json()) as TodosPage
+  const data: TodosPage = await response.json()
   return data
 }
 
@@ -101,7 +101,7 @@ function DemoDrizzle() {
         }),
       initialPageParam: undefined,
       getNextPageParam: (lastPage) => {
-        if (lastPage.pageInfo && lastPage.pageInfo.hasNextPage) {
+        if (lastPage.pageInfo.hasNextPage) {
           return {
             nextCursor: lastPage.pageInfo.nextCursor,
           }
@@ -115,7 +115,7 @@ function DemoDrizzle() {
       return []
     }
 
-    const nodes = data.pages.flatMap((data) => data.nodes)
+    const nodes = data.pages.flatMap((item) => item.nodes)
 
     if (nodes.length === 0) {
       return []
@@ -184,7 +184,7 @@ function DemoDrizzle() {
         <ul className="space-y-3 mb-6">
           {todos.map((todo) => (
             <li
-              key={todo?.id}
+              key={todo.id}
               className="rounded-lg p-4 shadow-md border transition-all hover:scale-[1.02] cursor-pointer group"
               style={{
                 background:
@@ -194,9 +194,9 @@ function DemoDrizzle() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-lg font-medium text-white group-hover:text-indigo-200 transition-colors">
-                  {todo?.title}
+                  {todo.title}
                 </span>
-                <span className="text-xs text-indigo-300/70">#{todo?.id}</span>
+                <span className="text-xs text-indigo-300/70">#{todo.id}</span>
               </div>
             </li>
           ))}
