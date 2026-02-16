@@ -24,6 +24,10 @@ function TanStackQueryDemo() {
     }) =>
       fetch(`http://localhost:3006/api/v1/todos/add`, {
         method: 'POST',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
         body: JSON.stringify(data),
       }),
