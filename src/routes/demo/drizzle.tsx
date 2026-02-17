@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { z } from 'zod'
-
-// libs
-import { authClient } from '@/lib/auth-client'
 
 // types
 const searchSchema = z
@@ -57,6 +58,10 @@ type TodosPage = {
   totalCount: number
 }
 
+interface TodosStatus extends TodosNodes {
+  checked: boolean
+}
+
 async function getTodos({ pageParam, queryKey }: TFetchTodos) {
   const [, { baseUrl, input }] = queryKey
 
@@ -76,216 +81,238 @@ export const Route = createFileRoute('/demo/drizzle')({
 })
 
 function DemoDrizzle() {
-  const { data, isSuccess, fetchNextPage } = useInfiniteQuery<TodosPage, Error>(
-    {
-      queryKey: [
-        'todos',
+  const queryClient = useQueryClient()
+
+  const [todos, setTodos] = useState<TodosStatus[]>([])
+
+  const { data, fetchNextPage } = useInfiniteQuery<TodosPage, Error>({
+    queryKey: [
+      'todos',
+      {
+        baseUrl: 'http://localhost:3006/api/v1/todos',
+        input: {
+          pageSize: 10,
+          orderBy: 'desc',
+        },
+      },
+    ],
+    queryFn: async ({ pageParam, queryKey }) =>
+      await getTodos({
+        pageParam: pageParam as SearchQuery,
+        queryKey: queryKey as [
+          string,
+          {
+            baseUrl: string
+            input?: TodosInput
+          },
+        ],
+      }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pageInfo.hasNextPage) {
+        return {
+          nextCursor: lastPage.pageInfo.nextCursor,
+        }
+      }
+    },
+  })
+
+  const deleteTodosMutation = useMutation({
+    mutationFn: async ({ data }: { data: { ids: string[] } }) => {
+      return await fetch('http://localhost:3006/api/v1/todos/delete', {
+        method: 'DELETE',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['todos'] }),
+      ])
+    },
+  })
+
+  const handleCheckboxChange = (id: string) => {
+    setTodos(
+      todos.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item,
+      ),
+    )
+  }
+
+  const handleDeleteTodos = async () => {
+    try {
+      const todosChecked = todos.filter((item) => item.checked)
+      const todosIdsToDelete = todosChecked.map((item) => item.id)
+      await deleteTodosMutation.mutateAsync(
+        { data: { ids: todosIdsToDelete } },
         {
-          baseUrl: 'http://localhost:3006/api/v1/todos',
-          input: {
-            pageSize: 10,
-            orderBy: 'desc',
+          onSuccess: async (response) => {
+            if (response.ok) {
+              const result = (await response.json()) as {
+                message: string
+                deletedItems: {
+                  id: string
+                  title: string
+                }[]
+              }
+              console.log('🚀 ~ handleDeleteTodos ~ result:', result.message)
+            }
+          },
+          onError: (error) => {
+            console.log('🚀 ~ handleDeleteTodos ~ error:', error.message)
           },
         },
-      ],
-      queryFn: async ({ pageParam, queryKey }) =>
-        await getTodos({
-          pageParam: pageParam as SearchQuery,
-          queryKey: queryKey as [
-            string,
-            {
-              baseUrl: string
-              input?: TodosInput
-            },
-          ],
-        }),
-      initialPageParam: undefined,
-      getNextPageParam: (lastPage) => {
-        if (lastPage.pageInfo.hasNextPage) {
-          return {
-            nextCursor: lastPage.pageInfo.nextCursor,
-          }
-        }
-      },
-    },
-  )
-
-  const todos = useMemo(() => {
-    if (!data || !isSuccess) {
-      return []
-    }
-
-    const nodes = data.pages.flatMap((item) => item.nodes)
-
-    if (nodes.length === 0) {
-      return []
-    }
-
-    return nodes
-  }, [data, isSuccess])
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.target as HTMLFormElement)
-    const title = formData.get('title') as string
-
-    const { data: session } = await authClient.getSession()
-
-    if (!title || !session) return
-
-    try {
-      // await createTodo({ data: { title, userId: session.session.userId } })
+      )
     } catch (error) {
-      console.log('Failed to create todo:', error)
+      console.log('🚀 ~ handleDeleteTodos ~ error:', error)
     }
   }
 
+  const handleSelectAll = (
+    e: ChangeEvent<HTMLInputElement, HTMLInputElement>,
+  ) => {
+    const isChecked = e.target.checked
+    setTodos(todos.map((item) => ({ ...item, checked: isChecked })))
+  }
+
+  useEffect(() => {
+    if (!data || Object.keys(data).length === 0) return
+
+    const nodes = data.pages.flatMap((item) => item.nodes)
+
+    if (Array.isArray(nodes) && nodes.length > 0) {
+      setTodos(nodes.map((item) => ({ ...item, checked: false })))
+    } else {
+      setTodos([])
+    }
+  }, [data])
+
+  const selectedCount = todos.filter((item) => item.checked).length
+  const isAllSelected = selectedCount === todos.length && todos.length > 0
+
   return (
     <div
-      className="flex items-center justify-center min-h-screen p-4 text-white"
+      className="flex justify-center min-h-screen p-6 text-white"
       style={{
         background:
           'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
       }}
     >
-      <div
-        className="w-full max-w-2xl p-8 rounded-xl shadow-2xl border border-white/10"
-        style={{
-          background:
-            'linear-gradient(135deg, rgba(22, 32, 46, 0.95) 0%, rgba(12, 26, 43, 0.95) 100%)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
+      <div className="w-full max-w-4xl">
         <div
-          className="flex items-center justify-center gap-4 mb-8 p-4 rounded-lg"
+          className="rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
           style={{
             background:
-              'linear-gradient(90deg, rgba(93, 103, 227, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-            border: '1px solid rgba(93, 103, 227, 0.2)',
+              'linear-gradient(135deg, rgba(22, 32, 46, 0.95) 0%, rgba(12, 26, 43, 0.95) 100%)',
+            backdropFilter: 'blur(10px)',
           }}
         >
-          <div className="relative group">
-            <div className="absolute -inset-2 bg-linear-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition duration-500"></div>
-            <div className="relative bg-linear-to-br from-indigo-600 to-purple-600 p-3 rounded-lg">
-              <img
-                src="/drizzle.svg"
-                alt="Drizzle Logo"
-                className="w-8 h-8 transform group-hover:scale-110 transition-transform duration-300"
-              />
-            </div>
+          <div className="p-8 border-b border-white/10">
+            <h2 className="text-3xl font-bold text-indigo-300">Todos</h2>
+            <p className="text-gray-400 text-sm mt-2">
+              Manage your tasks efficiently
+            </p>
           </div>
-          <h1 className="text-3xl font-bold bg-linear-to-r from-indigo-300 via-purple-300 to-indigo-300 text-transparent bg-clip-text">
-            Drizzle Database Demo
-          </h1>
-        </div>
 
-        <h2 className="text-2xl font-bold mb-4 text-indigo-200">Todos</h2>
-
-        <ul className="space-y-3 mb-6">
-          {todos.map((todo) => (
-            <li
-              key={todo.id}
-              className="rounded-lg p-4 shadow-md border transition-all hover:scale-[1.02] cursor-pointer group"
-              style={{
-                background:
-                  'linear-gradient(135deg, rgba(93, 103, 227, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
-                borderColor: 'rgba(93, 103, 227, 0.3)',
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-medium text-white group-hover:text-indigo-200 transition-colors">
-                  {todo.title}
+          {/* Selection Button/Indicator */}
+          {selectedCount > 0 && (
+            <div className="px-8 pt-6 pb-4">
+              <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 rounded-lg p-4">
+                <span className="text-sm font-medium text-indigo-200">
+                  {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
                 </span>
-                <span className="text-xs text-indigo-300/70">#{todo.id}</span>
+                <button
+                  className="ml-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                  onClick={handleDeleteTodos}
+                >
+                  Delete Todo/s
+                </button>
               </div>
-            </li>
-          ))}
-          {todos.length === 0 && (
-            <li className="text-center py-8 text-indigo-300/70">
-              No todos yet. Create one below!
-            </li>
+            </div>
           )}
-        </ul>
 
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            name="title"
-            placeholder="Add a new todo..."
-            className="flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 transition-all text-white placeholder-indigo-300/50"
-            style={{
-              background: 'rgba(93, 103, 227, 0.1)',
-              borderColor: 'rgba(93, 103, 227, 0.3)',
-              // focusRing: 'rgba(93, 103, 227, 0.5)',
-            }}
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 font-semibold rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95 whitespace-nowrap"
-            style={{
-              background: 'linear-gradient(135deg, #5d67e3 0%, #8b5cf6 100%)',
-              color: 'white',
-            }}
-          >
-            Add Todo
-          </button>
-        </form>
-
-        <button
-          className="px-6 py-3 font-semibold rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95 whitespace-nowrap"
-          style={{
-            background: 'linear-gradient(135deg, #5d67e3 0%, #8b5cf6 100%)',
-            color: 'white',
-          }}
-          onClick={async () => {
-            await fetchNextPage()
-          }}
-        >
-          Fetch More Todo
-        </button>
-
-        <div
-          className="mt-8 p-6 rounded-lg border"
-          style={{
-            background: 'rgba(93, 103, 227, 0.05)',
-            borderColor: 'rgba(93, 103, 227, 0.2)',
-          }}
-        >
-          <h3 className="text-lg font-semibold mb-2 text-indigo-200">
-            Powered by Drizzle ORM
-          </h3>
-          <p className="text-sm text-indigo-300/80 mb-4">
-            Next-generation ORM for Node.js & TypeScript with PostgreSQL
-          </p>
-          <div className="space-y-2 text-sm">
-            <p className="text-indigo-200 font-medium">Setup Instructions:</p>
-            <ol className="list-decimal list-inside space-y-2 text-indigo-300/80">
-              <li>
-                Configure your{' '}
-                <code className="px-2 py-1 rounded bg-black/30 text-purple-300">
-                  DATABASE_URL
-                </code>{' '}
-                in .env.local
-              </li>
-              <li>
-                Run:{' '}
-                <code className="px-2 py-1 rounded bg-black/30 text-purple-300">
-                  npx drizzle-kit generate
-                </code>
-              </li>
-              <li>
-                Run:{' '}
-                <code className="px-2 py-1 rounded bg-black/30 text-purple-300">
-                  npx drizzle-kit migrate
-                </code>
-              </li>
-              <li>
-                Optional:{' '}
-                <code className="px-2 py-1 rounded bg-black/30 text-purple-300">
-                  npx drizzle-kit studio
-                </code>
-              </li>
-            </ol>
+          {/* Table Structure */}
+          <div className="overflow-x-auto px-8 pb-8">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="px-4 py-4 text-left">
+                    <input
+                      type="checkbox"
+                      onChange={handleSelectAll}
+                      checked={isAllSelected}
+                      className="w-5 h-5 rounded border-white/30 bg-white/10 text-indigo-600 cursor-pointer accent-indigo-600"
+                      aria-label="Select all rows"
+                    />
+                  </th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                    Title
+                  </th>
+                  <th className="px-4 py-4 text-left text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                    Created At
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {todos.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-4 py-12 text-center text-gray-400"
+                    >
+                      No todos yet. Start by creating one!
+                    </td>
+                  </tr>
+                ) : (
+                  todos.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`transition-colors duration-150 ${
+                        item.checked
+                          ? 'bg-indigo-600/20 border-indigo-500/30'
+                          : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() => handleCheckboxChange(item.id)}
+                          className="w-5 h-5 rounded border-white/30 bg-white/10 text-indigo-600 cursor-pointer accent-indigo-600"
+                          aria-label={`Select item ${item.title}`}
+                        />
+                      </td>
+                      <td className="px-4 py-4 font-medium text-white">
+                        {item.title}
+                      </td>
+                      <td className="px-4 py-4 text-gray-400 text-sm">
+                        {new Date(item.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            {data?.pages &&
+              data.pages[data.pages.length - 1]?.pageInfo?.hasNextPage && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => fetchNextPage()}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
           </div>
         </div>
       </div>
