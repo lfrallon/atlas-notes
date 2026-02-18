@@ -119,7 +119,7 @@ function DemoDrizzle() {
 
   const deleteTodosMutation = useMutation({
     mutationFn: async ({ data }: { data: { ids: string[] } }) => {
-      return await fetch('http://localhost:3006/api/v1/todos/delete', {
+      return await fetch('http://localhost:3006/api/v1/todos', {
         method: 'DELETE',
         headers: {
           accept: '*/*',
