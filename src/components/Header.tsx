@@ -3,9 +3,9 @@ import { useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
-  Database,
   Globe,
   Home,
+  ListTodo,
   Map,
   Menu,
   Network,
@@ -33,13 +33,13 @@ export default function Header() {
           <Menu size={24} />
         </button>
         <h1 className="ml-4 text-xl font-semibold">
-          <Link to="/">
+          {/* <Link to="/">
             <img
               src="/tanstack-word-logo-white.svg"
               alt="TanStack Logo"
               className="h-10"
             />
-          </Link>
+          </Link> */}
         </h1>
       </header>
 
@@ -182,8 +182,8 @@ export default function Header() {
                 'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
             }}
           >
-            <Database size={20} />
-            <span className="font-medium">Drizzle</span>
+            <ListTodo size={20} />
+            <span className="font-medium">Todos</span>
           </Link>
 
           <Link
