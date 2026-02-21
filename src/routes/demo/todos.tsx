@@ -41,6 +41,7 @@ type TFetchTodos = {
 interface TodosNodes {
   id: string
   title: string
+  completed: boolean
   createdAt: string
   updatedAt: string
   userId: string
@@ -77,13 +78,14 @@ async function getTodos({ pageParam, queryKey }: TFetchTodos) {
   return data
 }
 
-export const Route = createFileRoute('/demo/drizzle')({
+export const Route = createFileRoute('/demo/todos')({
   component: DemoDrizzle,
 })
 
 function DemoDrizzle() {
   const queryClient = useQueryClient()
 
+  const [todo, setTodo] = useState('')
   const [todos, setTodos] = useState<TodosStatus[]>([])
 
   const { data, fetchNextPage } = useInfiniteQuery<TodosPage, Error>({
@@ -136,6 +138,50 @@ function DemoDrizzle() {
       ])
     },
   })
+
+  const addTodosMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: {
+        title: string
+      }
+    }) =>
+      fetch(`http://localhost:3006/api/v1/todos/add`, {
+        method: 'POST',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['todos'] }),
+      ])
+    },
+  })
+
+  const submitTodo = async () => {
+    try {
+      addTodosMutation.mutateAsync(
+        { data: { title: todo } },
+        {
+          onSuccess: (data) => {
+            console.log('🚀 ~ submitTodo ~ data:', data)
+            setTodo('')
+          },
+          onError: (error) => {
+            console.log('🚀 ~ submitTodo ~ error:', error.message)
+          },
+        },
+      )
+    } catch (error) {
+      console.log('🚀 ~ submitTodo ~ error:', error)
+      setTodo('')
+    }
+  }
 
   const handleCheckboxChange = (id: string) => {
     setTodos(
@@ -226,13 +272,37 @@ function DemoDrizzle() {
 
   return (
     <div
-      className="flex justify-center min-h-screen p-3 sm:p-6 text-white"
+      className="min-h-screen text-white gap-6"
       style={{
         background:
           'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
       }}
     >
-      <div className="w-full">
+      <div className="sticky top-18 z-40 w-full p-3 sm:p-6 backdrop-blur-md bg-black/50 shadow-xl">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={todo}
+            onChange={(e) => setTodo(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                submitTodo()
+              }
+            }}
+            placeholder="Enter a new todo..."
+            className="flex-1 px-4 py-3 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+          />
+          <button
+            disabled={todo.trim().length === 0}
+            onClick={submitTodo}
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+          >
+            Add todo
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full p-3 sm:p-6">
         <div
           className="rounded-xl sm:rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
           style={{
@@ -262,12 +332,20 @@ function DemoDrizzle() {
                     item{selectedCount !== 1 ? 's' : ''} selected
                   </span>
                 </div>
-                <button
-                  className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 text-indigo-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                  onClick={handleDeleteTodos}
-                >
-                  Delete
-                </button>
+                <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
+                  <button
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    // onClick={handleDeleteTodos}
+                  >
+                    Mark all as completed
+                  </button>
+                  <button
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    onClick={handleDeleteTodos}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -296,6 +374,9 @@ function DemoDrizzle() {
                     Created At
                   </th>
                   <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                    Completed
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Remove
                   </th>
                 </tr>
@@ -304,7 +385,7 @@ function DemoDrizzle() {
                 {todos.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-2 sm:px-4 py-8 sm:py-12 text-center text-gray-400 text-sm"
                     >
                       No todos yet. Start by creating one!
@@ -332,7 +413,9 @@ function DemoDrizzle() {
                       <td className="px-2 sm:px-4 py-3 sm:py-4 font-medium text-white text-xs sm:text-base wrap-break-word">
                         {index + 1}
                       </td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 font-medium text-white text-xs sm:text-base wrap-break-word">
+                      <td
+                        className={`px-2 sm:px-4 py-3 sm:py-4 font-medium text-white text-xs sm:text-base wrap-break-word ${item.completed ? 'opacity-70 line-through' : ''}`}
+                      >
                         {item.title}
                       </td>
                       <td className="hidden sm:table-cell px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
@@ -344,13 +427,31 @@ function DemoDrizzle() {
                           minute: '2-digit',
                         })}
                       </td>
-                      <td className="flex flex-1 justify-center items-center px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
-                        <button
-                          onClick={() => handleDeleteTodo(item.id)}
-                          className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
-                        >
-                          <Trash size={18} className="sm:w-5 sm:h-5" />
-                        </button>
+                      <td className="flex justify-center items-center px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                        {item.completed ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
+                            Completed
+                          </span>
+                        ) : (
+                          <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
+                            <button
+                              // onClick={() => handleDeleteTodo(item.id)}
+                              className="text-green-400 hover:text-green-300 transition-colors hover:cursor-pointer"
+                            >
+                              Mark as completed
+                            </button>
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                        <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
+                          <button
+                            onClick={() => handleDeleteTodo(item.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
+                          >
+                            <Trash size={18} className="sm:w-5 sm:h-5" />
+                          </button>
+                        </span>
                       </td>
                     </tr>
                   ))

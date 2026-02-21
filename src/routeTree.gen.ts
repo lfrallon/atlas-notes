@@ -10,10 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
+import { Route as DemoTodosRouteImport } from './routes/demo/todos'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMapsRouteImport } from './routes/demo/maps'
-import { Route as DemoDrizzleRouteImport } from './routes/demo/drizzle'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -29,9 +28,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
+const DemoTodosRoute = DemoTodosRouteImport.update({
+  id: '/demo/todos',
+  path: '/demo/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStoreRoute = DemoStoreRouteImport.update({
@@ -42,11 +41,6 @@ const DemoStoreRoute = DemoStoreRouteImport.update({
 const DemoMapsRoute = DemoMapsRouteImport.update({
   id: '/demo/maps',
   path: '/demo/maps',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoDrizzleRoute = DemoDrizzleRouteImport.update({
-  id: '/demo/drizzle',
-  path: '/demo/drizzle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
@@ -98,10 +92,9 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/store': typeof DemoStoreRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -114,10 +107,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/store': typeof DemoStoreRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -131,10 +123,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/drizzle': typeof DemoDrizzleRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/store': typeof DemoStoreRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -149,10 +140,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo/better-auth'
-    | '/demo/drizzle'
     | '/demo/maps'
     | '/demo/store'
-    | '/demo/tanstack-query'
+    | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
@@ -165,10 +155,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/demo/better-auth'
-    | '/demo/drizzle'
     | '/demo/maps'
     | '/demo/store'
-    | '/demo/tanstack-query'
+    | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
@@ -181,10 +170,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/demo/better-auth'
-    | '/demo/drizzle'
     | '/demo/maps'
     | '/demo/store'
-    | '/demo/tanstack-query'
+    | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
@@ -198,10 +186,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
-  DemoDrizzleRoute: typeof DemoDrizzleRoute
   DemoMapsRoute: typeof DemoMapsRoute
   DemoStoreRoute: typeof DemoStoreRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  DemoTodosRoute: typeof DemoTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -221,11 +208,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
+    '/demo/todos': {
+      id: '/demo/todos'
+      path: '/demo/todos'
+      fullPath: '/demo/todos'
+      preLoaderRoute: typeof DemoTodosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/store': {
@@ -240,13 +227,6 @@ declare module '@tanstack/react-router' {
       path: '/demo/maps'
       fullPath: '/demo/maps'
       preLoaderRoute: typeof DemoMapsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/drizzle': {
-      id: '/demo/drizzle'
-      path: '/demo/drizzle'
-      fullPath: '/demo/drizzle'
-      preLoaderRoute: typeof DemoDrizzleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/better-auth': {
@@ -318,10 +298,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
-  DemoDrizzleRoute: DemoDrizzleRoute,
   DemoMapsRoute: DemoMapsRoute,
   DemoStoreRoute: DemoStoreRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  DemoTodosRoute: DemoTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTqTodosRoute: DemoApiTqTodosRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
