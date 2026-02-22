@@ -112,11 +112,16 @@ function DemoDrizzle() {
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
+      if ('error' in lastPage) {
+        return undefined
+      }
+
       if (lastPage.pageInfo.hasNextPage) {
         return {
           nextCursor: lastPage.pageInfo.nextCursor,
         }
       }
+      return undefined
     },
   })
 
@@ -156,6 +161,29 @@ function DemoDrizzle() {
         credentials: 'include',
         body: JSON.stringify(data),
       }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['todos'] }),
+      ])
+    },
+  })
+
+  const updateTodosMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: { id: string; title?: string; completed?: boolean }[]
+    }) => {
+      return await fetch('http://localhost:3006/api/v1/todos/update', {
+        method: 'PUT',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      })
+    },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['todos'] }),
@@ -247,6 +275,47 @@ function DemoDrizzle() {
     }
   }
 
+  const handleUpdateTodo = async (id: string, completed: boolean) => {
+    try {
+      await updateTodosMutation.mutateAsync(
+        { data: [{ id, completed }] },
+        {
+          onSuccess: async (response) => {
+            if (response.ok) {
+              const result = (await response.json()) as {
+                message: string
+                updatedItems: {
+                  id: string
+                  title: string
+                  completed: boolean
+                }[]
+              }
+              console.log('🚀 ~ handleUpdateTodo ~ result:', result.message)
+            }
+          },
+          onError: (error) => {
+            console.log('🚀 ~ handleUpdateTodo ~ error:', error.message)
+          },
+        },
+      )
+    } catch (error) {
+      console.log('🚀 ~ handleUpdateTodo ~ error:', error)
+    }
+  }
+
+  const handleUpdateAllTodos = async () => {
+    try {
+      const todosUnChecked = todos.filter((item) => !item.completed)
+      const todosToUpdate = todosUnChecked.map((item) => ({
+        id: item.id,
+        completed: true,
+      }))
+      await updateTodosMutation.mutateAsync({ data: todosToUpdate })
+    } catch (error) {
+      console.log('🚀 ~ handleUpdateAllTodos ~ error:', error)
+    }
+  }
+
   const handleSelectAll = (
     e: ChangeEvent<HTMLInputElement, HTMLInputElement>,
   ) => {
@@ -257,6 +326,11 @@ function DemoDrizzle() {
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
+
+    if ('error' in data.pages[0]) {
+      setTodos([])
+      return
+    }
 
     const nodes = data.pages.flatMap((item) => item.nodes)
 
@@ -335,7 +409,7 @@ function DemoDrizzle() {
                 <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
                   <button
                     className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                    // onClick={handleDeleteTodos}
+                    onClick={handleUpdateAllTodos}
                   >
                     Mark all as completed
                   </button>
@@ -385,7 +459,7 @@ function DemoDrizzle() {
                 {todos.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-2 sm:px-4 py-8 sm:py-12 text-center text-gray-400 text-sm"
                     >
                       No todos yet. Start by creating one!
@@ -435,7 +509,7 @@ function DemoDrizzle() {
                         ) : (
                           <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
                             <button
-                              // onClick={() => handleDeleteTodo(item.id)}
+                              onClick={() => handleUpdateTodo(item.id, true)}
                               className="text-green-400 hover:text-green-300 transition-colors hover:cursor-pointer"
                             >
                               Mark as completed
