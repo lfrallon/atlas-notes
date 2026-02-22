@@ -1,19 +1,29 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { authClient } from '@/lib/auth-client'
+import { useQueryClient } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/demo/better-auth')({
   component: BetterAuthDemo,
 })
 
 function BetterAuthDemo() {
+  const router = useRouter()
+  const queryClient = useQueryClient()
   const { data: session, isPending } = authClient.useSession()
+
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const handleLogout = async () => {
+    await authClient.signOut()
+    await Promise.all([queryClient.invalidateQueries({ queryKey: ['todos'] })])
+    await router.navigate({ to: '/demo/better-auth', reloadDocument: true })
+  }
 
   if (isPending) {
     return (
@@ -57,7 +67,7 @@ function BetterAuthDemo() {
           </div>
 
           <button
-            onClick={() => authClient.signOut()}
+            onClick={handleLogout}
             className="w-full h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
             Sign out
