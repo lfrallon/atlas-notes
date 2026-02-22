@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { z } from 'zod'
-import { Trash } from 'lucide-react'
+import { CircleX, Trash } from 'lucide-react'
 
 // types
 const searchSchema = z
@@ -408,13 +408,13 @@ function DemoDrizzle() {
                 </div>
                 <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
                   <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
                     onClick={handleUpdateAllTodos}
                   >
                     Mark all as completed
                   </button>
                   <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-200 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
                     onClick={handleDeleteTodos}
                   >
                     Delete
@@ -503,9 +503,19 @@ function DemoDrizzle() {
                       </td>
                       <td className="flex justify-center items-center px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
                         {item.completed ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
-                            Completed
-                          </span>
+                          <div className="inline-flex items-center gap-1 px-2 py-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
+                              Completed
+                            </span>
+                            <span className="inline-flex justify-center items-center px-2 py-1 text-xs">
+                              <button
+                                onClick={() => handleUpdateTodo(item.id, false)}
+                                className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
+                              >
+                                <CircleX size={16} />
+                              </button>
+                            </span>
+                          </div>
                         ) : (
                           <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
                             <button
