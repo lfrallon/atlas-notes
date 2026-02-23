@@ -1693,23 +1693,23 @@
     "@tanstack/query-core" "5.90.20"
 
 "@tanstack/react-router-devtools@^1.132.0":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-router-devtools/-/react-router-devtools-1.162.2.tgz#62e66332521a31a39256370699957a890b26f880"
-  integrity sha512-QgFKttjFCy51b0WD3t5Y2aTY4vAXCJBnrYe6a61HnI+XqGNgJH3IH/6iNeno7qyqo9FbgSqaIHJX+Y6nMWVdrQ==
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-router-devtools/-/react-router-devtools-1.162.4.tgz#c4110ac7f540ce30ac79b49908cc90d66efe1601"
+  integrity sha512-clIlN0yDjuhHbMoVZC94EZHqoUnH9yx054nAAoCVHHN7gLD/29xHTIRgPuXWmGb0cpQanddkllBto5WefI1UMg==
   dependencies:
     "@tanstack/router-devtools-core" "1.162.2"
 
 "@tanstack/react-router-ssr-query@^1.131.7":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-router-ssr-query/-/react-router-ssr-query-1.162.2.tgz#cc3c50133c8211808d05f1eb50c2bf0e6e7bf912"
-  integrity sha512-U5HpXfwEy90kDKnOJJIG8Ge/5ErBqg0WhcWzBSddwWDHiR4vOVgSm6XN5JXW0wNaJYhP125X4tpTQFtEl8jBZg==
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-router-ssr-query/-/react-router-ssr-query-1.162.4.tgz#6902c113c2e156a9638293b7d064ad9496247376"
+  integrity sha512-ujlIsXq+Mai4CZPZL+O2K0MVapGIo+Vt7c9rN/L/Wlu5UbPIlxnpLZHO17cambD5CrF7h5/oOLN3Q1Y8dpac7w==
   dependencies:
     "@tanstack/router-ssr-query-core" "1.162.2"
 
-"@tanstack/react-router@1.162.2", "@tanstack/react-router@^1.132.0":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-router/-/react-router-1.162.2.tgz#d6868d5a1bca0c5840321877cb1145112abd65c9"
-  integrity sha512-tZL7ASKTrLZ3HDxyNxSYqRCPKof267/SWlfOXmEyL+yI4zjp5QT9RHq12MJrbOGqCT8TsGGknNdimHBODltQWQ==
+"@tanstack/react-router@1.162.4", "@tanstack/react-router@^1.132.0":
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-router/-/react-router-1.162.4.tgz#b7daf6c00db02f7d69f0f609cdfe0a66750857aa"
+  integrity sha512-FMUMoTVZk+gFn1upTSxr7LenD3LK5Gi+pjSLf5IB2aT1uutHiFYEYWV0JunPry4Ac4OPOxMf9G0YM3Yyd8iSFw==
   dependencies:
     "@tanstack/history" "1.161.4"
     "@tanstack/react-store" "^0.9.1"
@@ -1718,39 +1718,39 @@
     tiny-invariant "^1.3.3"
     tiny-warning "^1.0.3"
 
-"@tanstack/react-start-client@1.162.2":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-start-client/-/react-start-client-1.162.2.tgz#490bf064e81f70d7f1a60a6c1e21be03a180039f"
-  integrity sha512-+RIG45XsAtOvaBgqpWHmxoWLa33ugZM9tz6jUi8LMpAmUFqktcvriNfqVEI12nFPFpdWzuocCTFGLv8RgqEamQ==
+"@tanstack/react-start-client@1.162.4":
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-start-client/-/react-start-client-1.162.4.tgz#a6a2d646bc32fc59d4beb49d3f441758bd16d615"
+  integrity sha512-55LI6d3YiSPLRA3kKjEdQSajOKwr3zXUd990fWXDMgYBOMnkCqYlNVgRO/Fyy4IWz7JPer2T4n8PixcFO03eoQ==
   dependencies:
-    "@tanstack/react-router" "1.162.2"
+    "@tanstack/react-router" "1.162.4"
     "@tanstack/router-core" "1.162.2"
     "@tanstack/start-client-core" "1.162.2"
     tiny-invariant "^1.3.3"
     tiny-warning "^1.0.3"
 
-"@tanstack/react-start-server@1.162.2":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-start-server/-/react-start-server-1.162.2.tgz#93870b08a132b6726d2901681fd120ceb47f2a7f"
-  integrity sha512-hT6fQDULTUStcRSSp7nAIRmVg2l40pmYV+Aa5wwo8u4SCwdSrP50weE+xmUZ+wSrJ4NChKl4hmpQMbnLfgQIMg==
+"@tanstack/react-start-server@1.162.4":
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-start-server/-/react-start-server-1.162.4.tgz#89ed34ab58051428f78e2db45e1a2ff750c492c2"
+  integrity sha512-LxdkwZUiqqeHafl+zerCr3OappzgRl/73aYrUPGcW4eZvyUvH03pXyvg7aHkLq1KtGomXHyJU2zNZ8bnTS6stg==
   dependencies:
     "@tanstack/history" "1.161.4"
-    "@tanstack/react-router" "1.162.2"
+    "@tanstack/react-router" "1.162.4"
     "@tanstack/router-core" "1.162.2"
     "@tanstack/start-client-core" "1.162.2"
     "@tanstack/start-server-core" "1.162.2"
 
 "@tanstack/react-start@^1.132.0":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-start/-/react-start-1.162.2.tgz#d148b9b551a47ae8b90c42b30694306347ec2eed"
-  integrity sha512-UnJbEWZt3tt/xsTTkA0rdbCcJp1v4vULu1yO9Df6YOIyXrSnW3B70nLgGWDgOAJ/w37QKIKA7EAyt/b8TX8l3w==
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-start/-/react-start-1.162.4.tgz#d1e60f3b5ffbe37443840591df97f67e9ebe98d1"
+  integrity sha512-6MKomGKndIIchTqQYB7euTKv3UfNxp2L+FXrLREq2d8oK2EEQ/HeraFC5NqsrTHdf/PLxbWtpzoljLqD6a3BMA==
   dependencies:
-    "@tanstack/react-router" "1.162.2"
-    "@tanstack/react-start-client" "1.162.2"
-    "@tanstack/react-start-server" "1.162.2"
+    "@tanstack/react-router" "1.162.4"
+    "@tanstack/react-start-client" "1.162.4"
+    "@tanstack/react-start-server" "1.162.4"
     "@tanstack/router-utils" "^1.161.4"
     "@tanstack/start-client-core" "1.162.2"
-    "@tanstack/start-plugin-core" "1.162.2"
+    "@tanstack/start-plugin-core" "1.162.4"
     "@tanstack/start-server-core" "1.162.2"
     pathe "^2.0.3"
 
@@ -1806,10 +1806,10 @@
     tsx "^4.19.2"
     zod "^3.24.2"
 
-"@tanstack/router-plugin@1.162.2", "@tanstack/router-plugin@^1.132.0":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/router-plugin/-/router-plugin-1.162.2.tgz#3341da72c0b371e4dfe7fb40c3d4e29045fc703f"
-  integrity sha512-Hy4EkdbJ86UB5xifsZvrZEbEyQ6z8E9hgyhJ2mnkqNjyotQVKI+qpfqfexSRbAoF+wmHW8SX+5xjwLD/MQnNwg==
+"@tanstack/router-plugin@1.162.4", "@tanstack/router-plugin@^1.132.0":
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/router-plugin/-/router-plugin-1.162.4.tgz#4d085109f8c86b030d22985bab4fed7a0b8f326a"
+  integrity sha512-ZidWQxiEGFmLMoOkxO8oEv0KG0y62RQ70Xp13WSswqYwrLRVTE6dByO7u6dFLrSzfo1q3VvpLxG6qdWzF3Gu6Q==
   dependencies:
     "@babel/core" "^7.28.5"
     "@babel/plugin-syntax-jsx" "^7.27.1"
@@ -1862,10 +1862,10 @@
   resolved "https://registry.yarnpkg.com/@tanstack/start-fn-stubs/-/start-fn-stubs-1.161.4.tgz#250527e476fa16844b598eb0c54939ee332c33e3"
   integrity sha512-b8s6iSQ+ny0P4lGK0n3DKaL6EI7SECG0/89svDeYieVw2+MaFOJVcQo3rU3BUvmuOcIkgkE5IhdzkmzPXH6yfA==
 
-"@tanstack/start-plugin-core@1.162.2":
-  version "1.162.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/start-plugin-core/-/start-plugin-core-1.162.2.tgz#104f49f87f277d52f902d5dacf718a6887ee0a59"
-  integrity sha512-Iog+z7p2eZ5IcDT5QlxXy3IuO4psVWRlW/yyYC+0COXPBNA5t/SWBEct92VvFw5ZaR3qWsn//G7A7dOYIIG7eQ==
+"@tanstack/start-plugin-core@1.162.4":
+  version "1.162.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/start-plugin-core/-/start-plugin-core-1.162.4.tgz#7a343b26ce3888fcd05a5033f5e6edd6968777cb"
+  integrity sha512-NdBClBYOK2zpQdDiRUeKOtjqM9amwP++dI5WZAtXfugUJBxJQ4N4kXtA+KzFlwdgvT+yofz2bt/Um82xSFyCkA==
   dependencies:
     "@babel/code-frame" "7.27.1"
     "@babel/core" "^7.28.5"
@@ -1873,7 +1873,7 @@
     "@rolldown/pluginutils" "1.0.0-beta.40"
     "@tanstack/router-core" "1.162.2"
     "@tanstack/router-generator" "1.162.2"
-    "@tanstack/router-plugin" "1.162.2"
+    "@tanstack/router-plugin" "1.162.4"
     "@tanstack/router-utils" "1.161.4"
     "@tanstack/start-client-core" "1.162.2"
     "@tanstack/start-server-core" "1.162.2"
@@ -2583,9 +2583,9 @@ call-bound@^1.0.2:
     get-intrinsic "^1.3.0"
 
 caniuse-lite@^1.0.30001759:
-  version "1.0.30001772"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001772.tgz#aa8a176eba0006e78c965a8215c7a1ceb030122d"
-  integrity sha512-mIwLZICj+ntVTw4BT2zfp+yu/AqV6GMKfJVJMx3MwPxs+uk/uj2GLl2dH8LQbjiLDX66amCga5nKFyDgRR43kg==
+  version "1.0.30001774"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001774.tgz#0e576b6f374063abcd499d202b9ba1301be29b70"
+  integrity sha512-DDdwPGz99nmIEv216hKSgLD+D4ikHQHjBC/seF98N9CPqRX4M5mSxT9eTV6oyisnJcuzxtZy4n17yKKQYmYQOA==
 
 chai@^5.2.0:
   version "5.3.3"
@@ -4845,9 +4845,9 @@ vite-tsconfig-paths@^6.0.2:
     fsevents "~2.3.3"
 
 vitefu@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/vitefu/-/vitefu-1.1.1.tgz#c39b7e4c91bf2f6c590fb96e0758f394dff5795b"
-  integrity sha512-B/Fegf3i8zh0yFbpzZ21amWzHmuNlLlmJT6n7bu5e+pCHUKQIfXSYokrqOBGEMMe9UG2sostKQF9mml/vYaWJQ==
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/vitefu/-/vitefu-1.1.2.tgz#b63fcf3b606170702318b8c432663a3b9030f51d"
+  integrity sha512-zpKATdUbzbsycPFBN71nS2uzBUQiVnFoOrr2rvqv34S1lcAgMKKkjWleLGeiJlZ8lwCXvtWaRn7R3ZC16SYRuw==
 
 vitest@^3.0.5:
   version "3.2.4"
