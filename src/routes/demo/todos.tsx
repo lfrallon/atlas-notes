@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { z } from 'zod'
-import { CircleX, Trash } from 'lucide-react'
+import { CircleX, Trash, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 
 // types
 const searchSchema = z
@@ -303,12 +303,14 @@ function DemoDrizzle() {
     }
   }
 
-  const handleUpdateAllTodos = async () => {
+  const handleUpdateAllTodos = async (value: boolean) => {
     try {
-      const todosUnChecked = todos.filter((item) => !item.completed)
-      const todosToUpdate = todosUnChecked.map((item) => ({
+      const todosFiltered = todos.filter(
+        (item) => item.completed !== value && item.checked,
+      )
+      const todosToUpdate = todosFiltered.map((item) => ({
         id: item.id,
-        completed: true,
+        completed: value,
       }))
       await updateTodosMutation.mutateAsync({ data: todosToUpdate })
     } catch (error) {
@@ -409,15 +411,30 @@ function DemoDrizzle() {
                 <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
                   <button
                     className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                    onClick={handleUpdateAllTodos}
+                    onClick={() => handleUpdateAllTodos(true)}
                   >
-                    Mark all as completed
+                    <div className="flex items-center justify-center">
+                      <CheckCircle size={16} className="inline-block mr-2" />
+                      <div className="hidden lg:inline">Mark complete</div>
+                    </div>
+                  </button>
+                  <button
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-orange-400 hover:ring-orange-300 hover:text-orange-300 text-orange-400 bg-orange-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-orange-600/30 hover:shadow-orange-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    onClick={() => handleUpdateAllTodos(false)}
+                  >
+                    <div className="flex items-center justify-center">
+                      <XCircle size={16} className="inline-block mr-2" />
+                      <div className="hidden lg:inline">Mark incomplete</div>
+                    </div>
                   </button>
                   <button
                     className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
                     onClick={handleDeleteTodos}
                   >
-                    Delete
+                    <div className="flex items-center justify-center">
+                      <Trash2 size={16} className="inline-block mr-2" />
+                      <div className="hidden lg:inline">Delete</div>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -446,6 +463,9 @@ function DemoDrizzle() {
                   </th>
                   <th className="hidden sm:table-cell px-2 sm:px-4 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Created At
+                  </th>
+                  <th className="hidden sm:table-cell px-2 sm:px-4 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                    Updated At
                   </th>
                   <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Completed
@@ -493,39 +513,54 @@ function DemoDrizzle() {
                         {item.title}
                       </td>
                       <td className="hidden sm:table-cell px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
-                        {new Date(item.createdAt).toLocaleDateString('en-US', {
+                        {new Date(item.createdAt).toLocaleDateString('en-PH', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit',
+                          second: '2-digit',
                         })}
                       </td>
-                      <td className="flex justify-center items-center px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
-                        {item.completed ? (
-                          <div className="inline-flex items-center gap-1 px-2 py-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
-                              Completed
-                            </span>
-                            <span className="inline-flex justify-center items-center px-2 py-1 text-xs">
+                      <td className="hidden sm:table-cell px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                        {new Date(item.updatedAt).toLocaleDateString('en-PH', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                        <div className="flex justify-center items-center">
+                          {item.completed ? (
+                            <div className="inline-flex items-center gap-1 px-2 py-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
+                                Completed
+                              </span>
+                              <span className="inline-flex justify-center items-center px-2 py-1 text-xs">
+                                <button
+                                  onClick={() =>
+                                    handleUpdateTodo(item.id, false)
+                                  }
+                                  className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
+                                >
+                                  <CircleX size={16} />
+                                </button>
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
                               <button
-                                onClick={() => handleUpdateTodo(item.id, false)}
-                                className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
+                                onClick={() => handleUpdateTodo(item.id, true)}
+                                className="text-green-400 hover:text-green-300 transition-colors hover:cursor-pointer"
                               >
-                                <CircleX size={16} />
+                                Mark as completed
                               </button>
                             </span>
-                          </div>
-                        ) : (
-                          <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
-                            <button
-                              onClick={() => handleUpdateTodo(item.id, true)}
-                              className="text-green-400 hover:text-green-300 transition-colors hover:cursor-pointer"
-                            >
-                              Mark as completed
-                            </button>
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </td>
                       <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
                         <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
