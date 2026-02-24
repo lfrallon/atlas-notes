@@ -18,11 +18,84 @@ function BetterAuthDemo() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editCurrentPassword, setEditCurrentPassword] = useState('')
+  const [editNewPassword, setEditNewPassword] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
 
   const handleLogout = async () => {
     await authClient.signOut()
     await Promise.all([queryClient.invalidateQueries({ queryKey: ['todos'] })])
     await router.navigate({ to: '/demo/better-auth', reloadDocument: true })
+  }
+
+  const handleEditClick = () => {
+    if (session?.user) {
+      setEditName(session.user.name)
+      setEditEmail(session.user.email)
+      setEditCurrentPassword('')
+      setEditNewPassword('')
+      setEditError('')
+      setIsEditing(true)
+    }
+  }
+
+  const handleUpdateAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEditError('')
+    setEditLoading(true)
+
+    try {
+      // Validate password change requirements
+      if (editNewPassword && !editCurrentPassword) {
+        setEditError('Current password is required to change password')
+        setEditLoading(false)
+        return
+      }
+
+      let updateError: string | null = null
+
+      // Update name if changed
+      if (editName !== session?.user?.name) {
+        const result = await authClient.updateUser({ name: editName })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to update name'
+        }
+      }
+
+      // Update email if changed
+      if (editEmail !== session?.user?.email && !updateError) {
+        const result = await authClient.changeEmail({ newEmail: editEmail })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to update email'
+        }
+      }
+
+      // Change password if provided
+      if (editNewPassword && !updateError) {
+        const result = await authClient.changePassword({
+          currentPassword: editCurrentPassword,
+          newPassword: editNewPassword,
+        })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to change password'
+        }
+      }
+
+      if (updateError) {
+        setEditError(updateError)
+      } else {
+        setIsEditing(false)
+        await queryClient.invalidateQueries({ queryKey: ['user'] })
+      }
+    } catch (err) {
+      setEditError('An unexpected error occurred')
+    } finally {
+      setEditLoading(false)
+    }
   }
 
   if (isPending) {
@@ -34,6 +107,122 @@ function BetterAuthDemo() {
   }
 
   if (session?.user) {
+    if (isEditing) {
+      return (
+        <div className="flex justify-center py-10 px-4">
+          <div className="w-full max-w-md p-6">
+            <h1 className="text-lg font-semibold leading-none tracking-tight">
+              Update Account Details
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-6">
+              Update your account information
+            </p>
+
+            <form onSubmit={handleUpdateAccount} className="grid gap-4">
+              <div className="grid gap-2">
+                <label
+                  htmlFor="edit-name"
+                  className="text-sm font-medium leading-none"
+                >
+                  Name
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <label
+                  htmlFor="edit-email"
+                  className="text-sm font-medium leading-none"
+                >
+                  Email
+                </label>
+                <input
+                  id="edit-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                />
+              </div>
+
+              <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4 mt-2">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 font-medium">
+                  Leave blank to keep current password
+                </p>
+
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="edit-current-password"
+                    className="text-sm font-medium leading-none"
+                  >
+                    Current Password
+                  </label>
+                  <input
+                    id="edit-current-password"
+                    type="password"
+                    value={editCurrentPassword}
+                    onChange={(e) => setEditCurrentPassword(e.target.value)}
+                    className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="grid gap-2 mt-4">
+                  <label
+                    htmlFor="edit-new-password"
+                    className="text-sm font-medium leading-none"
+                  >
+                    New Password
+                  </label>
+                  <input
+                    id="edit-new-password"
+                    type="password"
+                    value={editNewPassword}
+                    onChange={(e) => setEditNewPassword(e.target.value)}
+                    className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    minLength={8}
+                  />
+                </div>
+              </div>
+
+              {editError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {editError}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 h-9 px-4 text-sm font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  disabled={editLoading}
+                  className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="flex justify-center py-10 px-4">
         <div className="w-full max-w-md p-6 space-y-6">
@@ -66,12 +255,20 @@ function BetterAuthDemo() {
             </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="w-full h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            Sign out
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleEditClick}
+              className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Edit Account
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     )

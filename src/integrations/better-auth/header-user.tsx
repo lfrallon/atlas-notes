@@ -1,6 +1,8 @@
 import { Link, useRouter } from '@tanstack/react-router'
-import { authClient } from '@/lib/auth-client'
 import { useQueryClient } from '@tanstack/react-query'
+
+// auth client
+import { authClient } from '@/lib/auth-client'
 
 export default function BetterAuthHeader() {
   const router = useRouter()
