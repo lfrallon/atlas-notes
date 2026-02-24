@@ -88,42 +88,43 @@ function DemoDrizzle() {
   const [todo, setTodo] = useState('')
   const [todos, setTodos] = useState<TodosStatus[]>([])
 
-  const { data, fetchNextPage } = useInfiniteQuery<TodosPage, Error>({
-    queryKey: [
-      'todos',
-      {
-        baseUrl: 'http://localhost:3006/api/v1/todos',
-        input: {
-          pageSize: 10,
-          orderBy: 'desc',
-        },
-      },
-    ],
-    queryFn: async ({ pageParam, queryKey }) =>
-      await getTodos({
-        pageParam: pageParam as SearchQuery,
-        queryKey: queryKey as [
-          string,
-          {
-            baseUrl: string
-            input?: TodosInput
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteQuery<TodosPage, Error>({
+      queryKey: [
+        'todos',
+        {
+          baseUrl: 'http://localhost:3006/api/v1/todos',
+          input: {
+            pageSize: 10,
+            orderBy: 'desc',
           },
-        ],
-      }),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) => {
-      if ('error' in lastPage) {
-        return undefined
-      }
-
-      if (lastPage.pageInfo.hasNextPage) {
-        return {
-          nextCursor: lastPage.pageInfo.nextCursor,
+        },
+      ],
+      queryFn: async ({ pageParam, queryKey }) =>
+        await getTodos({
+          pageParam: pageParam as SearchQuery,
+          queryKey: queryKey as [
+            string,
+            {
+              baseUrl: string
+              input?: TodosInput
+            },
+          ],
+        }),
+      initialPageParam: undefined,
+      getNextPageParam: (lastPage) => {
+        if ('error' in lastPage) {
+          return undefined
         }
-      }
-      return undefined
-    },
-  })
+
+        if (lastPage.pageInfo.hasNextPage) {
+          return {
+            nextCursor: lastPage.pageInfo.nextCursor,
+          }
+        }
+        return undefined
+      },
+    })
 
   const deleteTodosMutation = useMutation({
     mutationFn: async ({ data }: { data: { ids: string[] } }) => {
@@ -324,6 +325,18 @@ function DemoDrizzle() {
     if (todos.length === 0) return
     const isChecked = e.target.checked
     setTodos(todos.map((item) => ({ ...item, checked: isChecked })))
+  }
+
+  const fetchMoreTodos = async () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      try {
+        await fetchNextPage()
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : JSON.stringify(error)
+        console.log('🚀 ~ fetchMoreTodos ~ errorMessage:', errorMessage)
+      }
+    }
   }
 
   useEffect(() => {
@@ -551,10 +564,10 @@ function DemoDrizzle() {
                               </span>
                             </div>
                           ) : (
-                            <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-yellow-400 bg-yellow-600/20 text-xs">
+                            <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-orange-400 bg-orange-600/20 text-xs">
                               <button
                                 onClick={() => handleUpdateTodo(item.id, true)}
-                                className="text-green-400 hover:text-green-300 transition-colors hover:cursor-pointer"
+                                className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
                               >
                                 Mark as completed
                               </button>
@@ -580,12 +593,14 @@ function DemoDrizzle() {
             {data?.pages &&
               data.pages[data.pages.length - 1]?.pageInfo?.hasNextPage && (
                 <div className="flex justify-center mt-6 sm:mt-8">
-                  <button
-                    onClick={() => fetchNextPage()}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition-colors duration-200 text-sm sm:text-base"
-                  >
-                    Load More
-                  </button>
+                  <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-orange-400 bg-orange-600/20 text-xs">
+                    <button
+                      onClick={fetchMoreTodos}
+                      className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
+                    >
+                      Load More
+                    </button>
+                  </span>
                 </div>
               )}
           </div>
