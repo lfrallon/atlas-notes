@@ -11,7 +11,6 @@ import {
   Network,
   SquareFunction,
   StickyNote,
-  Store,
   X,
 } from 'lucide-react'
 import BetterAuthHeader from '../integrations/better-auth/header-user.tsx'
@@ -22,12 +21,16 @@ export default function Header() {
     Record<string, boolean>
   >({})
 
+  const handleOpenDrawer = () => {
+    setIsOpen(true)
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 p-4 flex items-center bg-gray-800 text-white shadow-lg">
         <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          onClick={handleOpenDrawer}
+          className="z-50 p-2 hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
           aria-label="Open menu"
         >
           <Menu size={24} />
@@ -197,19 +200,6 @@ export default function Header() {
           >
             <Globe size={20} />
             <span className="font-medium">Better Auth</span>
-          </Link>
-
-          <Link
-            to="/demo/store"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <Store size={20} />
-            <span className="font-medium">Store</span>
           </Link>
 
           <Link

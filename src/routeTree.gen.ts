@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTodosRouteImport } from './routes/demo/todos'
-import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMapsRouteImport } from './routes/demo/maps'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
@@ -31,11 +30,6 @@ const IndexRoute = IndexRouteImport.update({
 const DemoTodosRoute = DemoTodosRouteImport.update({
   id: '/demo/todos',
   path: '/demo/todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/demo/store',
-  path: '/demo/store',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoMapsRoute = DemoMapsRouteImport.update({
@@ -93,7 +87,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -108,7 +101,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -124,7 +116,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/todos': typeof DemoTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -141,7 +132,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/better-auth'
     | '/demo/maps'
-    | '/demo/store'
     | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -156,7 +146,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/better-auth'
     | '/demo/maps'
-    | '/demo/store'
     | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -171,7 +160,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo/better-auth'
     | '/demo/maps'
-    | '/demo/store'
     | '/demo/todos'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -187,7 +175,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoMapsRoute: typeof DemoMapsRoute
-  DemoStoreRoute: typeof DemoStoreRoute
   DemoTodosRoute: typeof DemoTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
@@ -213,13 +200,6 @@ declare module '@tanstack/react-router' {
       path: '/demo/todos'
       fullPath: '/demo/todos'
       preLoaderRoute: typeof DemoTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/demo/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/maps': {
@@ -299,7 +279,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoMapsRoute: DemoMapsRoute,
-  DemoStoreRoute: DemoStoreRoute,
   DemoTodosRoute: DemoTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTqTodosRoute: DemoApiTqTodosRoute,
