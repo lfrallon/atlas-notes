@@ -464,7 +464,7 @@ function DemoDrizzle() {
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={isAllSelected}
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/30 bg-white/10 text-indigo-600 cursor-pointer accent-indigo-600"
+                      className="w-4 h-4 sm:w-5 sm:h-5 rounded border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
                       aria-label="Select all rows"
                     />
                   </th>
@@ -513,7 +513,7 @@ function DemoDrizzle() {
                           type="checkbox"
                           checked={item.checked}
                           onChange={() => handleCheckboxChange(item.id)}
-                          className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/30 bg-white/10 text-indigo-600 cursor-pointer accent-indigo-600"
+                          className="w-4 h-4 sm:w-5 sm:h-5 rounded border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
                           aria-label={`Select item ${item.title}`}
                         />
                       </td>
@@ -593,7 +593,7 @@ function DemoDrizzle() {
             {data?.pages &&
               data.pages[data.pages.length - 1]?.pageInfo?.hasNextPage && (
                 <div className="flex justify-center mt-6 sm:mt-8">
-                  <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-orange-400 bg-orange-600/20 text-xs">
+                  <span className="inline-flex justify-center items-center gap-1 px-3 py-2 rounded-full text-orange-400 bg-orange-600/20 text-xs">
                     <button
                       onClick={fetchMoreTodos}
                       className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
