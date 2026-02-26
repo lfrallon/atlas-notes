@@ -391,6 +391,51 @@ function DemoDrizzle() {
         </div>
       </div>
 
+      {/* Selection Button/Indicator */}
+      {selectedCount > 0 && (
+        <div className="sticky top-13.5 sm:top-14.5 z-40 sm:px-6 pt-3 sm:pt-6 animate-in fade-in slide-in-from-top-2 duration-600">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 sm:border sm:border-indigo-400/50 sm:rounded-2xl p-4 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">
+                {selectedCount}
+              </span>
+              <span className="text-xs sm:text-sm font-semibold text-indigo-100">
+                item{selectedCount !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
+              <button
+                className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                onClick={() => handleUpdateAllTodos(true)}
+              >
+                <div className="flex items-center justify-center">
+                  <CheckCircle size={16} className="inline-block mr-2" />
+                  <div className="hidden lg:inline">Mark complete</div>
+                </div>
+              </button>
+              <button
+                className="sm:ml-auto w-full sm:w-auto ring-1 ring-orange-400 hover:ring-orange-300 hover:text-orange-300 text-orange-400 bg-orange-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-orange-600/30 hover:shadow-orange-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                onClick={() => handleUpdateAllTodos(false)}
+              >
+                <div className="flex items-center justify-center">
+                  <XCircle size={16} className="inline-block mr-2" />
+                  <div className="hidden lg:inline">Mark incomplete</div>
+                </div>
+              </button>
+              <button
+                className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                onClick={handleDeleteTodos}
+              >
+                <div className="flex items-center justify-center">
+                  <Trash2 size={16} className="inline-block mr-2" />
+                  <div className="hidden lg:inline">Delete</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full p-3 sm:p-6">
         <div
           className="rounded-xl sm:rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
@@ -408,51 +453,6 @@ function DemoDrizzle() {
               Manage your tasks efficiently
             </p>
           </div>
-
-          {/* Selection Button/Indicator */}
-          {selectedCount > 0 && (
-            <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 animate-in fade-in slide-in-from-top-2 duration-600">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 border border-indigo-400/50 rounded-lg sm:rounded-xl p-4 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">
-                    {selectedCount}
-                  </span>
-                  <span className="text-xs sm:text-sm font-semibold text-indigo-100">
-                    item{selectedCount !== 1 ? 's' : ''} selected
-                  </span>
-                </div>
-                <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
-                  <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                    onClick={() => handleUpdateAllTodos(true)}
-                  >
-                    <div className="flex items-center justify-center">
-                      <CheckCircle size={16} className="inline-block mr-2" />
-                      <div className="hidden lg:inline">Mark complete</div>
-                    </div>
-                  </button>
-                  <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-orange-400 hover:ring-orange-300 hover:text-orange-300 text-orange-400 bg-orange-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-orange-600/30 hover:shadow-orange-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                    onClick={() => handleUpdateAllTodos(false)}
-                  >
-                    <div className="flex items-center justify-center">
-                      <XCircle size={16} className="inline-block mr-2" />
-                      <div className="hidden lg:inline">Mark incomplete</div>
-                    </div>
-                  </button>
-                  <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                    onClick={handleDeleteTodos}
-                  >
-                    <div className="flex items-center justify-center">
-                      <Trash2 size={16} className="inline-block mr-2" />
-                      <div className="hidden lg:inline">Delete</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Table Structure */}
           <div className="overflow-x-auto px-4 sm:px-8 pb-6 sm:pb-8">
