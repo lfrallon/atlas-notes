@@ -289,28 +289,43 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@better-auth/core@1.5.3":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.5.3.tgz#40cd85b6ed110cbcaa71cbc219934f927e7c626d"
-  integrity sha512-fORsQjNZ6BQ7o96xMe7elz3Y4Y8DsqXmQrdyzt289G9rmzX4auwBCPTtE2cXTRTYGiVvH9bv0b97t1Uo/OWynQ==
+"@better-auth/core@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.5.4.tgz#3bff8e24daf21bb230a7ac0a93de306c5ef80ed8"
+  integrity sha512-k5AdwPRQETZn0vdB60EB9CDxxfllpJXKqVxTjyXIUSRz7delNGlU0cR/iRP3VfVJwvYR1NbekphBDNo+KGoEzQ==
   dependencies:
     "@standard-schema/spec" "^1.1.0"
     zod "^4.3.6"
 
-"@better-auth/kysely-adapter@1.5.3":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.5.3.tgz#69e6da4cc52fc3f82af8d5e112b8c1fc93a2888d"
-  integrity sha512-eAm1KPrlPXkH/qXUXnGBcHPDgCX153b6BSlc2QJ2IeqmiWym9D/6XORqBIZOl71JiP0Cifzocr2GLpnz0gt31Q==
+"@better-auth/drizzle-adapter@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.5.4.tgz#a0d4c0bd089646595d5cf406aa37da3d79d3fa19"
+  integrity sha512-4M4nMAWrDd3TmpV6dONkJjybBVKRZghe5Oj0NNyDEoXubxastQdO7Sb5B54I1rTx5yoMgsqaB+kbJnu/9UgjQg==
 
-"@better-auth/memory-adapter@1.5.3":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.5.3.tgz#0a82743c0b2ca1381d927e5514ec61141c57488c"
-  integrity sha512-QdeTI3bvUmaPkHsjcSMfroXyuGsgnxobv7wZVl57e+ox6yQVR1j4VKbqmCILP6PL6Rr2gpcBH/liHr8v5gqY5Q==
+"@better-auth/kysely-adapter@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.5.4.tgz#17b2e4d37c439b4c44cc5fa496339ba87d459b75"
+  integrity sha512-DPww7rIfz6Ed7dZlJSW9xMQ42VKaJLB5Cs+pPqd+UHKRyighKjf3VgvMIcAdFPc4olQ0qRHo3+ZJhFlBCxRhxA==
 
-"@better-auth/telemetry@1.5.3":
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.5.3.tgz#07f82288d0f5bd6af6745643e4305a16648203b2"
-  integrity sha512-ZX/r8AsWdB6BwH+Rb7H/SyJnGtPN6EDWrNxBQEDsqRrBJVcDLwAIz165P57RXci0WwtY872T0guKq+XVyy5rkA==
+"@better-auth/memory-adapter@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.5.4.tgz#256496035f5edf2e5ab92be87d537f99cdce8708"
+  integrity sha512-iiWYut9rbQqiAsgRBtj6+nxanwjapxRgpIJbiS2o81h7b9iclE0AiDA0Foes590gdFQvskNauZcCpuF8ytxthg==
+
+"@better-auth/mongo-adapter@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.5.4.tgz#f69a0d6f9dec390d6ba02f227b7021d6b21c154e"
+  integrity sha512-ArzJN5Obk6i6+vLK1HpPzLIcsjxZYXPPUvxVU8eyU5HyoUT2MlswWfPQ8UJAKPn0iq/T4PVp/wZcQMhWk1tuNA==
+
+"@better-auth/prisma-adapter@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.5.4.tgz#81db9f0a50e287ce31dd6711cd426f969ec9dc8b"
+  integrity sha512-ZQTbcBopw/ezjjbNFsfR3CRp0QciC4tJCarAnB5G9fZtUYbDjfY0vZOxIRmU4kI3x755CXQpGqTrkwmXaMRa3w==
+
+"@better-auth/telemetry@1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.5.4.tgz#9fae2ef9b0dd385a82a27cef47eaa6e4a2226c3b"
+  integrity sha512-mGXTY7Ecxo7uvlMr6TFCBUvlH0NUMOeE9LKgPhG4HyhBN6VfCEg/DD9PG0Z2IatmMWQbckkt7ox5A0eBpG9m5w==
   dependencies:
     "@better-auth/utils" "0.3.1"
     "@better-fetch/fetch" "1.1.21"
@@ -330,20 +345,20 @@
   resolved "https://registry.yarnpkg.com/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.4.2.tgz#b6b8eab81f0f9d8378e219dd321df20280e3bbd2"
   integrity sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==
 
-"@cloudflare/unenv-preset@2.14.0":
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/@cloudflare/unenv-preset/-/unenv-preset-2.14.0.tgz#97a45c1c5f3c8eab09b07ccb07006297da8ace71"
-  integrity sha512-XKAkWhi1nBdNsSEoNG9nkcbyvfUrSjSf+VYVPfOto3gLTZVc3F4g6RASCMh6IixBKCG2yDgZKQIHGKtjcnLnKg==
+"@cloudflare/unenv-preset@2.15.0":
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/@cloudflare/unenv-preset/-/unenv-preset-2.15.0.tgz#57f7d3357b1e0b975352aae850388b9b40c0b665"
+  integrity sha512-EGYmJaGZKWl+X8tXxcnx4v2bOZSjQeNI5dWFeXivgX9+YCT69AkzHHwlNbVpqtEUTbew8eQurpyOpeN8fg00nw==
 
 "@cloudflare/vite-plugin@^1.13.8":
-  version "1.26.0"
-  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.26.0.tgz#01bb30e32039eb098d85f2d86e0113e924f2e2a3"
-  integrity sha512-F5jSOj9JeWMp9iQa2x+Ocjz++SCfK6Phcca/YLkaddPw5ie7W1VvEWudQ/gxYtRd47mQ/PfCLkE9QGyy6OGEng==
+  version "1.26.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.26.1.tgz#7daf116214d3acb6e8632f60804b731222dd0346"
+  integrity sha512-CyebmOYAjnobU9DCn/4cUb3xipWSsqCQO+Syc0AteEl7q/A72RTvs2PHQt/O8Qj6hUutslQbmvswdL5KuDwuhw==
   dependencies:
-    "@cloudflare/unenv-preset" "2.14.0"
+    "@cloudflare/unenv-preset" "2.15.0"
     miniflare "4.20260301.1"
     unenv "2.0.0-rc.24"
-    wrangler "4.70.0"
+    wrangler "4.71.0"
     ws "8.18.0"
 
 "@cloudflare/workerd-darwin-64@1.20260301.1":
@@ -2056,9 +2071,9 @@
     undici-types "~7.18.0"
 
 "@types/node@^22.10.2":
-  version "22.19.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.19.13.tgz#c03cab3d1f0e5542fa358ecfff08f9b34834884e"
-  integrity sha512-akNQMv0wW5uyRpD2v2IEyRSZiR+BeGuoB6L310EgGObO44HSMNT8z1xzio28V8qOrgYaopIDNA18YgdXd+qTiw==
+  version "22.19.15"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.19.15.tgz#6091d99fdf7c08cb57dc8b1345d407ba9a1df576"
+  integrity sha512-F0R/h2+dsy5wJAUe3tAU6oqa2qbWY5TpNfL/RGmo1y38hiyO1w3x2jPtt76wmuaJI4DQnOBu21cNXQ2STIUUWg==
   dependencies:
     undici-types "~6.21.0"
 
@@ -2469,14 +2484,17 @@ baseline-browser-mapping@^2.9.0:
   integrity sha512-lIyg0szRfYbiy67j9KN8IyeD7q7hcmqnJ1ddWmNt19ItGpNN64mnllmxUNFIOdOm6by97jlL6wfpTTJrmnjWAA==
 
 better-auth@^1.4.12:
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.5.3.tgz#29e7acd3188168f37642796c4a58703ddaabe539"
-  integrity sha512-E+9kA9GMX1+gT3FfMCqRz0NufT4X/+tNhpOsHW1jLmyPZKinkHtfZkUffSBnG5qGkvfBaH/slT5c1fKttnmF5w==
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.5.4.tgz#fd9c050618b4e15d5147d59eaf86f2783d890e7c"
+  integrity sha512-ReykcEKx6Kp9560jG1wtlDBnftA7L7xb3ZZdDWm5yGXKKe2pUf+oBjH0fqekrkRII0m4XBVQbQ0mOrFv+3FdYg==
   dependencies:
-    "@better-auth/core" "1.5.3"
-    "@better-auth/kysely-adapter" "1.5.3"
-    "@better-auth/memory-adapter" "1.5.3"
-    "@better-auth/telemetry" "1.5.3"
+    "@better-auth/core" "1.5.4"
+    "@better-auth/drizzle-adapter" "1.5.4"
+    "@better-auth/kysely-adapter" "1.5.4"
+    "@better-auth/memory-adapter" "1.5.4"
+    "@better-auth/mongo-adapter" "1.5.4"
+    "@better-auth/prisma-adapter" "1.5.4"
+    "@better-auth/telemetry" "1.5.4"
     "@better-auth/utils" "0.3.1"
     "@better-fetch/fetch" "1.1.21"
     "@noble/ciphers" "^2.1.1"
@@ -3641,9 +3659,9 @@ jiti@^2.6.1:
   integrity sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==
 
 jose@^6.1.3:
-  version "6.1.3"
-  resolved "https://registry.yarnpkg.com/jose/-/jose-6.1.3.tgz#8453d7be88af7bb7d64a0481d6a35a0145ba3ea5"
-  integrity sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-6.2.0.tgz#a26cd03737fc7d7c803522747e47332826682646"
+  integrity sha512-xsfE1TcSCbUdo6U07tR0mvhg0flGxU8tPLbF03mirl2ukGQENhUg4ubGYQnhVH0b5stLlPM+WOqDkEl1R1y5sQ==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
@@ -4973,13 +4991,13 @@ workerd@1.20260301.1:
     "@cloudflare/workerd-linux-arm64" "1.20260301.1"
     "@cloudflare/workerd-windows-64" "1.20260301.1"
 
-wrangler@4.70.0, wrangler@^4.40.3:
-  version "4.70.0"
-  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.70.0.tgz#64139db7c6134990b4146abbf544c265319e874f"
-  integrity sha512-PNDZ9o4e+B5x+1bUbz62Hmwz6G9lw+I9pnYe/AguLddJFjfIyt2cmFOUOb3eOZSoXsrhcEPUg2YidYIbVwUkfw==
+wrangler@4.71.0, wrangler@^4.40.3:
+  version "4.71.0"
+  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.71.0.tgz#805094026634a4bce7947324ff952cec7da2008f"
+  integrity sha512-j6pSGAncOLNQDRzqtp0EqzYj52CldDP7uz/C9cxVrIgqa5p+cc0b4pIwnapZZAGv9E1Loa3tmPD0aXonH7KTkw==
   dependencies:
     "@cloudflare/kv-asset-handler" "0.4.2"
-    "@cloudflare/unenv-preset" "2.14.0"
+    "@cloudflare/unenv-preset" "2.15.0"
     blake3-wasm "2.1.5"
     esbuild "0.27.3"
     miniflare "4.20260301.1"
