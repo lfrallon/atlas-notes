@@ -22,7 +22,7 @@ const searchSchema = z
     nextCursor: z
       .object({
         id: z.string(),
-        createdAt: z.string(),
+        updatedAt: z.string(),
       })
       .optional(),
   })
@@ -61,7 +61,7 @@ type TodosPage = {
     hasNextPage: boolean
     nextCursor: {
       id: string
-      createdAt: string
+      updatedAt: string
     }
     totalPages: number
   }
@@ -76,7 +76,7 @@ async function getTodos({ pageParam, queryKey }: TFetchTodos) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
-    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&createdAt=${JSON.stringify(pageParam.nextCursor.createdAt)}` : ''}`,
+    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
     {
       credentials: 'include',
     },
@@ -431,7 +431,7 @@ function DemoDrizzle() {
                 onClick={() => {
                   setTodo({ id: '', title: '' })
                 }}
-                className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                className="h-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
               >
                 <X size={18} className="sm:w-5 sm:h-5" />
               </button>
