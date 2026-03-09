@@ -6,7 +6,15 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { z } from 'zod'
-import { CircleX, Trash, CheckCircle, XCircle, Trash2 } from 'lucide-react'
+import {
+  CircleX,
+  Trash,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  SquarePen,
+  X,
+} from 'lucide-react'
 
 // types
 const searchSchema = z
@@ -85,7 +93,10 @@ export const Route = createFileRoute('/demo/todos')({
 function DemoDrizzle() {
   const queryClient = useQueryClient()
 
-  const [todo, setTodo] = useState('')
+  const [todo, setTodo] = useState<{ id: string; title: string }>({
+    id: '',
+    title: '',
+  })
   const [todos, setTodos] = useState<TodosStatus[]>([])
 
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
@@ -195,11 +206,11 @@ function DemoDrizzle() {
   const submitTodo = async () => {
     try {
       addTodosMutation.mutateAsync(
-        { data: { title: todo } },
+        { data: { title: todo.title } },
         {
           onSuccess: (data) => {
             console.log('🚀 ~ submitTodo ~ data:', data)
-            setTodo('')
+            setTodo({ id: '', title: '' })
           },
           onError: (error) => {
             console.log('🚀 ~ submitTodo ~ error:', error.message)
@@ -208,7 +219,7 @@ function DemoDrizzle() {
       )
     } catch (error) {
       console.log('🚀 ~ submitTodo ~ error:', error)
-      setTodo('')
+      setTodo({ id: '', title: '' })
     }
   }
 
@@ -276,10 +287,18 @@ function DemoDrizzle() {
     }
   }
 
-  const handleUpdateTodo = async (id: string, completed: boolean) => {
+  const handleUpdateTodo = async ({
+    id,
+    completed,
+    title,
+  }: {
+    id: string
+    completed?: boolean
+    title?: string
+  }) => {
     try {
       await updateTodosMutation.mutateAsync(
-        { data: [{ id, completed }] },
+        { data: [{ id, completed, title }] },
         {
           onSuccess: async (response) => {
             if (response.ok) {
@@ -292,6 +311,9 @@ function DemoDrizzle() {
                 }[]
               }
               console.log('🚀 ~ handleUpdateTodo ~ result:', result.message)
+              if (title) {
+                setTodo({ id: '', title: '' })
+              }
             }
           },
           onError: (error) => {
@@ -302,6 +324,11 @@ function DemoDrizzle() {
     } catch (error) {
       console.log('🚀 ~ handleUpdateTodo ~ error:', error)
     }
+  }
+
+  const handleUpdateTodoTitle = (id: string) => {
+    const updateTodoTitle = todos.filter((item) => item.id === id)
+    setTodo({ id, title: updateTodoTitle[0].title })
   }
 
   const handleUpdateAllTodos = async (value: boolean) => {
@@ -354,6 +381,8 @@ function DemoDrizzle() {
     } else {
       setTodos([])
     }
+
+    setTodo({ id: '', title: '' })
   }, [data])
 
   const selectedCount = todos.filter((item) => item.checked).length
@@ -371,23 +400,51 @@ function DemoDrizzle() {
         <div className="flex gap-2">
           <input
             type="text"
-            value={todo}
-            onChange={(e) => setTodo(e.target.value)}
+            value={todo.title}
+            onChange={(e) =>
+              setTodo((val) => ({ ...val, title: e.target.value }))
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                submitTodo()
+                if (todo.id.trim().length !== 0) {
+                  handleUpdateTodo({ id: todo.id, title: todo.title })
+                } else {
+                  submitTodo()
+                }
               }
             }}
             placeholder="Enter a new todo..."
             className="flex-1 px-4 py-3 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           />
-          <button
-            disabled={todo.trim().length === 0}
-            onClick={submitTodo}
-            className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
-          >
-            Add todo
-          </button>
+          {todo.id.trim().length !== 0 ? (
+            <span className="flex gap-2 items-center">
+              <button
+                disabled={todo.id.trim().length === 0}
+                onClick={() => {
+                  handleUpdateTodo({ id: todo.id, title: todo.title })
+                }}
+                className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                Update
+              </button>
+              <button
+                onClick={() => {
+                  setTodo({ id: '', title: '' })
+                }}
+                className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                <X size={18} className="sm:w-5 sm:h-5" />
+              </button>
+            </span>
+          ) : (
+            <button
+              disabled={todo.title.trim().length === 0}
+              onClick={submitTodo}
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+            >
+              Add todo
+            </button>
+          )}
         </div>
       </div>
 
@@ -484,6 +541,9 @@ function DemoDrizzle() {
                     Completed
                   </th>
                   <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                    Edit
+                  </th>
+                  <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Remove
                   </th>
                 </tr>
@@ -555,7 +615,10 @@ function DemoDrizzle() {
                               <span className="inline-flex justify-center items-center px-2 py-1 text-xs">
                                 <button
                                   onClick={() =>
-                                    handleUpdateTodo(item.id, false)
+                                    handleUpdateTodo({
+                                      id: item.id,
+                                      completed: false,
+                                    })
                                   }
                                   className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
                                 >
@@ -566,7 +629,12 @@ function DemoDrizzle() {
                           ) : (
                             <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-orange-400 bg-orange-600/20 text-xs">
                               <button
-                                onClick={() => handleUpdateTodo(item.id, true)}
+                                onClick={() =>
+                                  handleUpdateTodo({
+                                    id: item.id,
+                                    completed: true,
+                                  })
+                                }
                                 className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
                               >
                                 Mark as completed
@@ -574,6 +642,16 @@ function DemoDrizzle() {
                             </span>
                           )}
                         </div>
+                      </td>
+                      <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                        <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
+                          <button
+                            onClick={() => handleUpdateTodoTitle(item.id)}
+                            className="text-amber-400 hover:text-amber-300 transition-colors hover:cursor-pointer"
+                          >
+                            <SquarePen size={18} className="sm:w-5 sm:h-5" />
+                          </button>
+                        </span>
                       </td>
                       <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
                         <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
