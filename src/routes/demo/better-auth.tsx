@@ -283,7 +283,7 @@ function BetterAuthDemo() {
       if (isSignUp) {
         const result = await authClient.signUp.email({
           permissions: ['Read', 'Write'],
-          roles: ['User'],
+          role: 'User',
           email,
           password,
           name,

@@ -11,29 +11,14 @@ import Header from '../components/Header'
 
 import appCss from '../styles.css?url'
 
-// auth provider
-import { AuthProvider } from '@/auth'
-
 // server functions
 import { getSession } from '@/server'
 
 // types
 import type { QueryClient } from '@tanstack/react-query'
-import type { Session, User } from '@/lib/auth-client'
-
-interface AuthState {
-  isAuthenticated: boolean
-  user: User | null
-  hasRole: (role: string) => boolean
-  hasAnyRole: (roles: string[]) => boolean
-  hasPermission: (permission: string) => boolean
-  hasAnyPermission: (permissions: string[]) => boolean
-  login: (username: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-}
+import type { Session } from '@/lib/auth-client'
 
 export interface RouterContext {
-  auth: AuthState | null
   queryClient: QueryClient
   session?: Session | null
 }
@@ -100,7 +85,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        <AuthProvider>{children}</AuthProvider>
+        {children}
         <Scripts />
       </body>
     </html>

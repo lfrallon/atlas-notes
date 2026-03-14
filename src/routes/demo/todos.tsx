@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import {
   useInfiniteQuery,
   useMutation,
@@ -15,6 +15,12 @@ import {
   SquarePen,
   X,
 } from 'lucide-react'
+
+// utils
+import { isAuthorised, type Role, roles } from '@/utils/auth'
+
+// server functions
+import { getSession } from '@/server'
 
 // types
 const searchSchema = z
@@ -87,6 +93,23 @@ async function getTodos({ pageParam, queryKey }: TFetchTodos) {
 }
 
 export const Route = createFileRoute('/demo/todos')({
+  beforeLoad: async ({ preload, context }) => {
+    if (preload) {
+      return
+    }
+
+    const data = await getSession(context.queryClient)
+
+    if (
+      !isAuthorised(data?.session?.user.role as Role, [roles.ADMIN, roles.USER])
+    ) {
+      throw redirect({ to: '/demo/better-auth' })
+    }
+
+    return {
+      session: data?.session,
+    }
+  },
   component: DemoDrizzle,
 })
 
