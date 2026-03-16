@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { APIProvider, Map } from '@vis.gl/react-google-maps'
+import { useEffect, useRef } from 'react'
+import * as Cesium from 'cesium'
+import 'cesium/Build/Cesium/Widgets/widgets.css'
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID
+const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
 
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
@@ -10,47 +11,68 @@ export const Route = createFileRoute('/demo/maps')({
 })
 
 function RouteComponent() {
-  if (!API_KEY) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  if (!CESIUM_TOKEN) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
         <p>
-          Missing <code>VITE_GOOGLE_MAPS_API_KEY</code>. Add your Google Maps key
-          to run a fully functional map.
+          Missing <code>VITE_CESIUM_ION_TOKEN</code>. Add your Cesium Ion token
+          to render the globe.
         </p>
       </div>
     )
   }
 
-  if (!MAP_ID) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
-        <p>
-          Missing <code>VITE_GOOGLE_MAPS_MAP_ID</code>. A vector map ID is required
-          for the globe/3D camera experience.
-        </p>
-      </div>
-    )
-  }
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    let viewer: Cesium.Viewer
+
+    async function initCesium() {
+      Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
+
+      viewer = new Cesium.Viewer(containerRef.current!, {
+        geocoder: Cesium.IonGeocodeProviderType.GOOGLE,
+        terrainProvider: await Cesium.createWorldTerrainAsync(),
+      })
+
+      viewer.scene.globe.enableLighting = true
+
+      // Apply custom imagery layer from Cesium Ion
+      const layers = viewer.imageryLayers.addImageryProvider(
+        await Cesium.IonImageryProvider.fromAssetId(3830186),
+      )
+
+      viewer.zoomTo(layers)
+
+      const position = Cesium.Cartesian3.fromDegrees(122, 10)
+
+      viewer.entities.add({
+        position,
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.RED,
+        },
+      })
+
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(122, 10, 2000000),
+      })
+    }
+
+    initCesium()
+
+    return () => {
+      viewer?.destroy()
+    }
+  }, [CESIUM_TOKEN])
 
   return (
-    <APIProvider apiKey={API_KEY}>
-      <Map
-        style={{ width: '100vw', height: '100vh' }}
-        mapId={MAP_ID}
-        renderingType="VECTOR"
-        mapTypeId="satellite"
-        defaultCenter={{ lat: 14.5995, lng: 120.9842 }}
-        defaultZoom={2}
-        defaultTilt={67.5}
-        defaultHeading={20}
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-        mapTypeControl
-        fullscreenControl
-        streetViewControl
-        zoomControl
-        rotateControl
-      />
-    </APIProvider>
+    <div
+      ref={containerRef}
+      style={{ width: '100vw', height: '100vh' }}
+      className="bg-black"
+    />
   )
 }
