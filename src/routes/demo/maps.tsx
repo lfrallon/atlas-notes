@@ -27,24 +27,29 @@ function RouteComponent() {
   useEffect(() => {
     if (!containerRef.current) return
 
-    let viewer: Cesium.Viewer
+    let viewer: Cesium.Viewer | undefined
+    let isUnmounted = false
 
     async function initCesium() {
       Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
 
-      viewer = new Cesium.Viewer(containerRef.current!, {
-        geocoder: Cesium.IonGeocodeProviderType.GOOGLE,
-        terrainProvider: await Cesium.createWorldTerrainAsync(),
+      const terrainProvider = await Cesium.createWorldTerrainAsync()
+      if (isUnmounted || !containerRef.current) return
+
+      viewer = new Cesium.Viewer(containerRef.current, {
+        terrainProvider,
+        baseLayerPicker: false,
+        timeline: false,
+        animation: false,
       })
 
       viewer.scene.globe.enableLighting = true
 
-      // Apply custom imagery layer from Cesium Ion
       const layers = viewer.imageryLayers.addImageryProvider(
         await Cesium.IonImageryProvider.fromAssetId(3830186),
       )
 
-      viewer.zoomTo(layers)
+      void viewer.zoomTo(layers)
 
       const position = Cesium.Cartesian3.fromDegrees(122, 10)
 
@@ -61,12 +66,13 @@ function RouteComponent() {
       })
     }
 
-    initCesium()
+    void initCesium()
 
     return () => {
+      isUnmounted = true
       viewer?.destroy()
     }
-  }, [CESIUM_TOKEN])
+  }, [])
 
   return (
     <div
