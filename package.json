@@ -33,6 +33,7 @@
     "@tanstack/store": "^0.8.0",
     "@vis.gl/react-google-maps": "^1.7.1",
     "better-auth": "^1.4.12",
+    "cesium": "^1.139.1",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.1",
     "lucide-react": "^0.561.0",
