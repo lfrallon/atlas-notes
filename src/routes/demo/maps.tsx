@@ -36,6 +36,8 @@ function RouteComponent() {
   useEffect(() => {
     if (!containerRef.current) return
 
+    let isDisposed = false
+
     Ion.defaultAccessToken = CESIUM_TOKEN
     const viewer = new Viewer(containerRef.current, {
       geocoder: true,
@@ -52,6 +54,11 @@ function RouteComponent() {
         const tileset = await createGooglePhotorealistic3DTileset({
           key: GOOGLE_MAPS_API_KEY,
         })
+
+        if (isDisposed || viewer.isDestroyed()) {
+          return
+        }
+
         const position = Cartesian3.fromDegrees(122, 10)
 
         viewer.scene.primitives.add(tileset)
@@ -66,13 +73,23 @@ function RouteComponent() {
           destination: Cartesian3.fromDegrees(122, 10, 2000000),
         })
       } catch (error) {
+        if (isDisposed || viewer.isDestroyed()) {
+          return
+        }
+
         console.error('Error loading tiles', error)
       }
     }
 
     loadTiles()
 
-    return () => viewer.destroy()
+    return () => {
+      isDisposed = true
+
+      if (!viewer.isDestroyed()) {
+        viewer.destroy()
+      }
+    }
   }, [])
 
   return (
