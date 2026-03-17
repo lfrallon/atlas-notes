@@ -33,6 +33,15 @@ function RouteComponent() {
   const [labelMode, setLabelMode] = useState<LabelLayerMode>('open-source')
   const [tilesError, setTilesError] = useState<string | null>(null)
 
+  if (!CESIUM_TOKEN || !GOOGLE_MAPS_API_KEY) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
+        <p>
+          Missing required maps env key(s):{' '}
+          {!CESIUM_TOKEN && <code>VITE_CESIUM_ION_TOKEN</code>}
+          {!CESIUM_TOKEN && !GOOGLE_MAPS_API_KEY && ', '}
+          {!GOOGLE_MAPS_API_KEY && <code>VITE_GOOGLE_MAPS_API_KEY</code>}.
+        </p>
   const hasGoogleMapsApiKey = Boolean(GOOGLE_MAPS_API_KEY)
 
   const labelModeOptions = useMemo(
