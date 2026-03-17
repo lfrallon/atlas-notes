@@ -95,6 +95,8 @@ function RouteComponent() {
   useEffect(() => {
     if (!CESIUM_TOKEN || !containerRef.current) return
 
+    let isDisposed = false
+
     Ion.defaultAccessToken = CESIUM_TOKEN
     const viewer = new Viewer(containerRef.current, {
       geocoder: true,
@@ -117,6 +119,12 @@ function RouteComponent() {
       }
 
       try {
+        const tileset = await createGooglePhotorealistic3DTileset({
+          key: GOOGLE_MAPS_API_KEY,
+        })
+
+        if (isDisposed || viewer.isDestroyed()) {
+          return
         if (GOOGLE_MAPS_API_KEY) {
           const tileset = await createGooglePhotorealistic3DTileset({
             key: GOOGLE_MAPS_API_KEY,
@@ -138,6 +146,10 @@ function RouteComponent() {
           destination: Cartesian3.fromDegrees(122, 10, 2000000),
         })
       } catch (error) {
+        if (isDisposed || viewer.isDestroyed()) {
+          return
+        }
+
         setTilesError(
           'Unable to load Google photorealistic 3D tiles. Verify your API key and billing/project settings.',
         )
@@ -148,6 +160,11 @@ function RouteComponent() {
     loadTiles()
 
     return () => {
+      isDisposed = true
+
+      if (!viewer.isDestroyed()) {
+        viewer.destroy()
+      }
       labelLayerRef.current = null
       viewerRef.current = null
       viewer.destroy()
