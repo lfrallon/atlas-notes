@@ -31,6 +31,7 @@ function RouteComponent() {
   const viewerRef = useRef<Viewer | null>(null)
   const labelLayerRef = useRef<ImageryLayer | null>(null)
   const [labelMode, setLabelMode] = useState<LabelLayerMode>('open-source')
+  const [tilesError, setTilesError] = useState<string | null>(null)
 
   const hasGoogleMapsApiKey = Boolean(GOOGLE_MAPS_API_KEY)
 
@@ -51,6 +52,37 @@ function RouteComponent() {
     [hasGoogleMapsApiKey],
   )
 
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-zinc-100">
+        <div className="max-w-xl space-y-4 rounded-lg border border-zinc-800 bg-zinc-900/80 p-6">
+          <h1 className="text-xl font-semibold">Missing Google Maps API key</h1>
+          <p>
+            Set <code>VITE_GOOGLE_MAPS_API_KEY</code> before rendering
+            photorealistic 3D tiles.
+          </p>
+          <div>
+            <h2 className="mb-1 font-medium">Local / development</h2>
+            <p className="text-sm text-zinc-300">
+              Add{' '}
+              <code className="rounded bg-zinc-800 px-1 py-0.5">
+                VITE_GOOGLE_MAPS_API_KEY=your_key_here
+              </code>{' '}
+              to your <code>.env</code> file, then restart the dev server.
+            </p>
+          </div>
+          <div>
+            <h2 className="mb-1 font-medium">Cloudflare deployment</h2>
+            <p className="text-sm text-zinc-300">
+              In Cloudflare Pages, add <code>VITE_GOOGLE_MAPS_API_KEY</code> as
+              an environment variable for your target environment and redeploy.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   useEffect(() => {
     if (!CESIUM_TOKEN || !containerRef.current) return
 
@@ -68,6 +100,13 @@ function RouteComponent() {
     viewerRef.current = viewer
 
     async function loadTiles() {
+      if (!GOOGLE_MAPS_API_KEY) {
+        setTilesError(
+          'Missing VITE_GOOGLE_MAPS_API_KEY. Configure it to load Google photorealistic 3D tiles.',
+        )
+        return
+      }
+
       try {
         if (GOOGLE_MAPS_API_KEY) {
           const tileset = await createGooglePhotorealistic3DTileset({
@@ -90,6 +129,9 @@ function RouteComponent() {
           destination: Cartesian3.fromDegrees(122, 10, 2000000),
         })
       } catch (error) {
+        setTilesError(
+          'Unable to load Google photorealistic 3D tiles. Verify your API key and billing/project settings.',
+        )
         console.error('Error loading tiles', error)
       }
     }
@@ -179,7 +221,9 @@ function RouteComponent() {
         </div>
 
         {labelMode === 'open-source' ? (
-          <p className="mt-3 text-xs text-zinc-300">{OPEN_SOURCE_LABEL_ATTRIBUTION}</p>
+          <p className="mt-3 text-xs text-zinc-300">
+            {OPEN_SOURCE_LABEL_ATTRIBUTION}
+          </p>
         ) : null}
 
         {labelMode === 'google' ? (
@@ -189,6 +233,11 @@ function RouteComponent() {
           </p>
         ) : null}
       </div>
+      {tilesError ? (
+        <div className="pointer-events-none absolute left-4 top-4 max-w-md rounded-md border border-red-900/80 bg-red-950/90 p-3 text-sm text-red-100">
+          {tilesError}
+        </div>
+      ) : null}
     </div>
   )
 }
