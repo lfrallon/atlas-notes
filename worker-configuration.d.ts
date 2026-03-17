@@ -6,6 +6,7 @@ declare namespace Cloudflare {
 		DATABASE_URL: string;
 		BETTER_AUTH_URL: string;
 		BETTER_AUTH_SECRET: string;
+		VITE_CESIUM_ION_TOKEN: string;
 		VITE_GOOGLE_MAPS_API_KEY: string;
 	}
 }
@@ -14,7 +15,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "DATABASE_URL" | "BETTER_AUTH_URL" | "BETTER_AUTH_SECRET" | "VITE_GOOGLE_MAPS_API_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "DATABASE_URL" | "BETTER_AUTH_URL" | "BETTER_AUTH_SECRET" | "VITE_CESIUM_ION_TOKEN" | "VITE_GOOGLE_MAPS_API_KEY">> {}
 }
 
 // Begin runtime types

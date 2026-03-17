@@ -22,12 +22,14 @@ export const Route = createFileRoute('/demo/maps')({
 function RouteComponent() {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  if (!CESIUM_TOKEN) {
+  if (!CESIUM_TOKEN || !GOOGLE_MAPS_API_KEY) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
         <p>
-          Missing <code>VITE_CESIUM_ION_TOKEN</code>. Add your Cesium Ion token
-          to render the globe.
+          Missing required maps env key(s):{' '}
+          {!CESIUM_TOKEN && <code>VITE_CESIUM_ION_TOKEN</code>}
+          {!CESIUM_TOKEN && !GOOGLE_MAPS_API_KEY && ', '}
+          {!GOOGLE_MAPS_API_KEY && <code>VITE_GOOGLE_MAPS_API_KEY</code>}.
         </p>
       </div>
     )
