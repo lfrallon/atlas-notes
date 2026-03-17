@@ -1,9 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
-import * as Cesium from 'cesium'
+import {
+  Cartesian3,
+  Color,
+  createGooglePhotorealistic3DTileset,
+  Ion,
+  Viewer,
+} from 'cesium'
+
+// css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
@@ -27,58 +36,48 @@ function RouteComponent() {
   useEffect(() => {
     if (!containerRef.current) return
 
-    let viewer: Cesium.Viewer | undefined
-    let isUnmounted = false
+    Ion.defaultAccessToken = CESIUM_TOKEN
+    const viewer = new Viewer(containerRef.current, {
+      geocoder: true,
+      baseLayerPicker: false,
+      timeline: false,
+      animation: false,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      homeButton: false,
+    })
 
-    async function initCesium() {
-      Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
+    async function loadTiles() {
+      try {
+        const tileset = await createGooglePhotorealistic3DTileset({
+          key: GOOGLE_MAPS_API_KEY,
+        })
+        const position = Cartesian3.fromDegrees(122, 10)
 
-      const terrainProvider = await Cesium.createWorldTerrainAsync()
-      if (isUnmounted || !containerRef.current) return
-
-      viewer = new Cesium.Viewer(containerRef.current, {
-        terrainProvider,
-        baseLayerPicker: false,
-        timeline: false,
-        animation: false,
-      })
-
-      viewer.scene.globe.enableLighting = true
-
-      const layers = viewer.imageryLayers.addImageryProvider(
-        await Cesium.IonImageryProvider.fromAssetId(3830186),
-      )
-
-      void viewer.zoomTo(layers)
-
-      const position = Cesium.Cartesian3.fromDegrees(122, 10)
-
-      viewer.entities.add({
-        position,
-        point: {
-          pixelSize: 10,
-          color: Cesium.Color.RED,
-        },
-      })
-
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(122, 10, 2000000),
-      })
+        viewer.scene.primitives.add(tileset)
+        viewer.entities.add({
+          position,
+          point: {
+            pixelSize: 10,
+            color: Color.GREEN,
+          },
+        })
+        viewer.camera.flyTo({
+          destination: Cartesian3.fromDegrees(122, 10, 2000000),
+        })
+      } catch (error) {
+        console.error('Error loading tiles', error)
+      }
     }
 
-    void initCesium()
+    loadTiles()
 
-    return () => {
-      isUnmounted = true
-      viewer?.destroy()
-    }
+    return () => viewer.destroy()
   }, [])
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100vw', height: '100vh' }}
-      className="bg-black"
-    />
+    <div className="relative h-screen w-screen items-center">
+      <div ref={containerRef} style={{ width: '100%', height: '100vh' }} />
+    </div>
   )
 }
