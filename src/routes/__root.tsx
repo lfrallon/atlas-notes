@@ -44,14 +44,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       },
     ],
   }),
-  beforeLoad: async ({ context, location }) => {
+  beforeLoad: async ({ context }) => {
     try {
       const data = await getSession(context.queryClient)
-
-      // if (!data) {
-      //   console.log('🚀 ~ data:', data)
-      //   // throw redirect({ to: '/' })
-      // }
 
       return {
         session: data?.session,

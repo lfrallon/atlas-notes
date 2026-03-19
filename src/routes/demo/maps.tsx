@@ -76,8 +76,8 @@ function RouteComponent() {
   }, [])
 
   return (
-    <div className="relative h-screen w-screen items-center">
-      <div ref={containerRef} style={{ width: '100%', height: '100vh' }} />
+    <div className="fixed h-screen w-screen">
+      <div ref={containerRef} className="w-full h-full" />
     </div>
   )
 }
