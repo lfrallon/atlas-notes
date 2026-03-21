@@ -24,7 +24,7 @@ function RouteComponent() {
 
   if (!CESIUM_TOKEN) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] w-full items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
         <p>
           Missing <code>VITE_CESIUM_ION_TOKEN</code>. Add your Cesium Ion token
           to render the globe.
@@ -76,8 +76,10 @@ function RouteComponent() {
   }, [])
 
   return (
-    <div className="fixed h-screen w-screen">
-      <div ref={containerRef} className="w-full h-full" />
+    <div className="min-h-[calc(100dvh-var(--app-header-height))] w-full overflow-hidden bg-zinc-950">
+      <div className="h-[calc(100dvh-var(--app-header-height))] w-full">
+        <div ref={containerRef} className="h-full w-full" />
+      </div>
     </div>
   )
 }
