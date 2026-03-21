@@ -80,14 +80,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body
+        className="min-h-dvh"
         style={
           {
             '--app-header-height': '4rem',
           } as CSSProperties
         }
       >
-        <Header />
-        {children}
+        <div className="flex min-h-dvh flex-col">
+          <Header />
+          <main className="flex-1 min-h-0">{children}</main>
+        </div>
         <Scripts />
       </body>
     </html>
