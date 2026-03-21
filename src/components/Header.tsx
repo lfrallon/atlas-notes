@@ -48,7 +48,7 @@ export default function Header() {
 
       <aside
         className={`fixed top-0 left-0 h-full w-80 bg-gray-900 text-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
