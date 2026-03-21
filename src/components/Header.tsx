@@ -27,7 +27,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 p-4 flex items-center bg-gray-800 text-white shadow-lg">
+      <header className="sticky top-0 z-40 flex h-16 items-center bg-gray-800 px-4 text-white shadow-lg">
         <button
           onClick={handleOpenDrawer}
           className="z-50 p-2 hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"

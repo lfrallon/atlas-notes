@@ -17,6 +17,7 @@ import { getSession } from '@/server'
 // types
 import type { QueryClient } from '@tanstack/react-query'
 import type { Session } from '@/lib/auth-client'
+import type { CSSProperties } from 'react'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -78,7 +79,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body
+        style={
+          {
+            '--app-header-height': '4rem',
+          } as CSSProperties
+        }
+      >
         <Header />
         {children}
         <Scripts />
