@@ -115,6 +115,8 @@ export const Route = createFileRoute('/demo/todos')({
 
 function DemoDrizzle() {
   const queryClient = useQueryClient()
+  const { session } = Route.useRouteContext()
+  const currentUser = session?.user
 
   const [todo, setTodo] = useState<{ id: string; title: string }>({
     id: '',
@@ -566,9 +568,12 @@ function DemoDrizzle() {
                   <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Edit
                   </th>
-                  <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
-                    Remove
-                  </th>
+                  {currentUser &&
+                    currentUser.permissions.includes('Delete') && (
+                      <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
+                        Remove
+                      </th>
+                    )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -676,16 +681,19 @@ function DemoDrizzle() {
                           </button>
                         </span>
                       </td>
-                      <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
-                        <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
-                          <button
-                            onClick={() => handleDeleteTodo(item.id)}
-                            className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
-                          >
-                            <Trash size={18} className="sm:w-5 sm:h-5" />
-                          </button>
-                        </span>
-                      </td>
+                      {currentUser &&
+                        currentUser.permissions.includes('Delete') && (
+                          <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                            <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
+                              <button
+                                onClick={() => handleDeleteTodo(item.id)}
+                                className="text-red-400 hover:text-red-300 transition-colors hover:cursor-pointer"
+                              >
+                                <Trash size={18} className="sm:w-5 sm:h-5" />
+                              </button>
+                            </span>
+                          </td>
+                        )}
                     </tr>
                   ))
                 )}
