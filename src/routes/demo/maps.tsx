@@ -3,8 +3,9 @@ import { useEffect, useRef } from 'react'
 import {
   Cartesian3,
   Color,
-  createGooglePhotorealistic3DTileset,
+  // createGooglePhotorealistic3DTileset,
   Ion,
+  IonImageryProvider,
   Viewer,
 } from 'cesium'
 
@@ -12,7 +13,7 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+// const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
@@ -49,12 +50,15 @@ function RouteComponent() {
 
     async function loadTiles() {
       try {
-        const tileset = await createGooglePhotorealistic3DTileset({
-          key: GOOGLE_MAPS_API_KEY,
-        })
+        // const tileset = await createGooglePhotorealistic3DTileset({
+        //   key: GOOGLE_MAPS_API_KEY,
+        // })
         const position = Cartesian3.fromDegrees(122, 10)
 
-        viewer.scene.primitives.add(tileset)
+        viewer.scene.imageryLayers.addImageryProvider(
+          await IonImageryProvider.fromAssetId(3830185),
+        )
+        // viewer.scene.primitives.add(tileset)
         viewer.entities.add({
           position,
           point: {
