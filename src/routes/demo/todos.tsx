@@ -504,15 +504,17 @@ function DemoDrizzle() {
                   <div className="hidden lg:inline">Mark incomplete</div>
                 </div>
               </button>
-              <button
-                className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                onClick={handleDeleteTodos}
-              >
-                <div className="flex items-center justify-center">
-                  <Trash2 size={16} className="inline-block mr-2" />
-                  <div className="hidden lg:inline">Delete</div>
-                </div>
-              </button>
+              {currentUser && currentUser.permissions.includes('Delete') && (
+                <button
+                  className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                  onClick={handleDeleteTodos}
+                >
+                  <div className="flex items-center justify-center">
+                    <Trash2 size={16} className="inline-block mr-2" />
+                    <div className="hidden lg:inline">Delete</div>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
         </div>
