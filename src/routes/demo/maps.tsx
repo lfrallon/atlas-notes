@@ -46,6 +46,7 @@ const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
 const LABEL_MAX_VISIBLE = 28
+const SELECTED_PREVIEW_ID = 'selected-preview'
 
 function extractMessageIdFromPick(picked: unknown): string | null {
   if (!picked || typeof picked !== 'object') return null
@@ -362,7 +363,7 @@ function RouteComponent() {
     const viewer = viewerRef.current
     if (!viewer) return
 
-    const existingPreview = viewer.entities.getById('message-preview')
+    const existingPreview = viewer.entities.getById(SELECTED_PREVIEW_ID)
     if (existingPreview) {
       viewer.entities.remove(existingPreview)
     }
@@ -370,7 +371,7 @@ function RouteComponent() {
     if (!selectedMessage) return
 
     viewer.entities.add({
-      id: 'message-preview',
+      id: SELECTED_PREVIEW_ID,
       position: Cartesian3.fromDegrees(
         selectedMessage.longitude,
         selectedMessage.latitude,
