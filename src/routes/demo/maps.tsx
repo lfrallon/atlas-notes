@@ -6,6 +6,7 @@ import {
   Cartesian3,
   Cartographic,
   Color,
+  ConstantProperty,
   HorizontalOrigin,
   Ion,
   IonImageryProvider,
@@ -45,6 +46,30 @@ type MapMessageApiRecord = {
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
+const LABEL_MAX_VISIBLE = 28
+const SELECTED_PREVIEW_ID = 'selected-preview'
+
+function extractMessageIdFromPick(picked: unknown): string | null {
+  if (!picked || typeof picked !== 'object') return null
+
+  const pickedEntity = (picked as { id?: unknown }).id
+
+  if (typeof pickedEntity === 'string') {
+    return pickedEntity.startsWith('message-') ? pickedEntity : null
+  }
+
+  if (
+    pickedEntity &&
+    typeof pickedEntity === 'object' &&
+    'id' in pickedEntity &&
+    typeof (pickedEntity as { id: unknown }).id === 'string'
+  ) {
+    const entityId = (pickedEntity as { id: string }).id
+    return entityId.startsWith('message-') ? entityId : null
+  }
+
+  return null
+}
 
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
@@ -60,6 +85,10 @@ function RouteComponent() {
   const [isPinning, setIsPinning] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  )
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
     lat: number
@@ -76,6 +105,13 @@ function RouteComponent() {
     if (!selectedPosition) return null
     return `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`
   }, [selectedPosition])
+
+  const selectedMessage = useMemo(() => {
+    if (!selectedMessageId) return null
+    return messages.find(
+      (message) => `message-${message.id}` === selectedMessageId,
+    )
+  }, [messages, selectedMessageId])
 
   async function fetchMapMessages() {
     const response = await fetch(MAP_MESSAGES_API_URL, {
@@ -134,6 +170,14 @@ function RouteComponent() {
 
     viewer.screenSpaceEventHandler.setInputAction(
       (event: { position: Cartesian2 }) => {
+        const pickedHit = viewer.scene.pick(event.position)
+        const pickedMessageId = extractMessageIdFromPick(pickedHit)
+
+        if (!isPinningRef.current && pickedMessageId) {
+          setSelectedMessageId(pickedMessageId)
+          return
+        }
+
         if (!isPinningRef.current) return
 
         const pickedFromDepth = viewer.scene.pickPositionSupported
@@ -155,6 +199,14 @@ function RouteComponent() {
         })
       },
       ScreenSpaceEventType.LEFT_CLICK,
+    )
+
+    viewer.screenSpaceEventHandler.setInputAction(
+      (event: { endPosition: Cartesian2 }) => {
+        const picked = viewer.scene.pick(event.endPosition)
+        setHoveredMessageId(extractMessageIdFromPick(picked))
+      },
+      ScreenSpaceEventType.MOUSE_MOVE,
     )
 
     async function loadTiles() {
@@ -220,14 +272,14 @@ function RouteComponent() {
           translucencyByDistance: FLOAT_ALPHA,
         },
         label: {
-          text: shortMessage,
+          text: `✦ ${shortMessage}`,
           font: '500 13px Inter, system-ui, sans-serif',
           fillColor: Color.WHITE,
           style: 2,
           outlineColor: Color.fromCssColorString('#020617').withAlpha(0.85),
           outlineWidth: 3,
           showBackground: true,
-          backgroundColor: Color.fromCssColorString('#0f172a').withAlpha(0.7),
+          backgroundColor: Color.fromCssColorString('#0f172a').withAlpha(0.74),
           horizontalOrigin: HorizontalOrigin.CENTER,
           verticalOrigin: VerticalOrigin.BOTTOM,
           pixelOffset: pulseOffset,
@@ -239,6 +291,131 @@ function RouteComponent() {
       })
     }
   }, [messages])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    viewer.entities.values.forEach((entity) => {
+      const entityId = entity.id.toString()
+      if (!entityId.startsWith('message-')) return
+
+      const isSelected = entityId === selectedMessageId
+      const isHovered = entityId === hoveredMessageId
+
+      if (entity.point) {
+        entity.point.pixelSize = new ConstantProperty(
+          isSelected ? 16 : isHovered ? 14 : 12,
+        )
+        entity.point.color = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#f0abfc').withAlpha(0.98)
+            : isHovered
+              ? Color.fromCssColorString('#67e8f9').withAlpha(0.98)
+              : Color.fromCssColorString('#22d3ee').withAlpha(0.95),
+        )
+        entity.point.outlineWidth = new ConstantProperty(isSelected ? 3 : 2)
+      }
+
+      if (entity.label) {
+        entity.label.backgroundColor = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#6d28d9').withAlpha(0.78)
+            : isHovered
+              ? Color.fromCssColorString('#155e75').withAlpha(0.78)
+              : Color.fromCssColorString('#0f172a').withAlpha(0.74),
+        )
+        entity.label.scale = new ConstantProperty(
+          isSelected ? 1.06 : isHovered ? 1.03 : 1,
+        )
+      }
+    })
+  }, [hoveredMessageId, selectedMessageId, messages])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const applyLabelVisibility = () => {
+      if (!viewer.scene) return
+      const cameraPosition = viewer.camera.positionWC
+      const ranked = messages
+        .map((item) => {
+          const position = Cartesian3.fromDegrees(
+            item.longitude,
+            item.latitude,
+            24,
+          )
+          return {
+            id: `message-${item.id}`,
+            distance: Cartesian3.distance(cameraPosition, position),
+          }
+        })
+        .sort((a, b) => a.distance - b.distance)
+
+      const visibleIds = new Set(
+        ranked.slice(0, LABEL_MAX_VISIBLE).map((message) => message.id),
+      )
+      if (selectedMessageId) visibleIds.add(selectedMessageId)
+
+      viewer.entities.values.forEach((entity) => {
+        const entityId = entity.id.toString()
+        if (!entityId.startsWith('message-') || !entity.label) return
+        entity.label.show = new ConstantProperty(visibleIds.has(entityId))
+      })
+    }
+
+    applyLabelVisibility()
+    viewer.camera.changed.addEventListener(applyLabelVisibility)
+
+    return () => {
+      if (viewer.isDestroyed()) return
+      viewer.camera.changed.removeEventListener(applyLabelVisibility)
+    }
+  }, [messages, selectedMessageId])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const existingPreview = viewer.entities.getById(SELECTED_PREVIEW_ID)
+    if (existingPreview) {
+      viewer.entities.remove(existingPreview)
+    }
+
+    if (!selectedMessage) return
+
+    viewer.entities.add({
+      id: SELECTED_PREVIEW_ID,
+      position: Cartesian3.fromDegrees(
+        selectedMessage.longitude,
+        selectedMessage.latitude,
+        30,
+      ),
+      label: {
+        text: selectedMessage.mapMessage,
+        font: '600 14px Inter, system-ui, sans-serif',
+        fillColor: Color.WHITE,
+        style: 2,
+        outlineColor: Color.fromCssColorString('#0f172a').withAlpha(0.95),
+        outlineWidth: 3,
+        showBackground: true,
+        backgroundColor: Color.fromCssColorString('#312e81').withAlpha(0.8),
+        horizontalOrigin: HorizontalOrigin.LEFT,
+        verticalOrigin: VerticalOrigin.BOTTOM,
+        pixelOffset: new Cartesian2(18, -50),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        scaleByDistance: new NearFarScalar(700, 1, 5_000_000, 0.55),
+        translucencyByDistance: new NearFarScalar(700, 1, 5_000_000, 0.15),
+      },
+    })
+
+    return () => {
+      if (viewer.isDestroyed()) return
+      const preview = viewer.entities.getById(SELECTED_PREVIEW_ID)
+      if (preview) viewer.entities.remove(preview)
+    }
+  }, [selectedMessage])
 
   async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
@@ -308,7 +485,7 @@ function RouteComponent() {
               setIsPinning(true)
               setSelectedPosition(null)
             }}
-            className="mt-3 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-950 transition hover:bg-cyan-400"
+            className="mt-3 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
           >
             {isPinning ? 'Choose location on globe…' : 'Add map message'}
           </button>
@@ -318,47 +495,64 @@ function RouteComponent() {
         </div>
 
         {isPinning && (
-          <div className="pointer-events-auto rounded-2xl border border-cyan-400/40 bg-zinc-900/85 p-4 text-zinc-100 shadow-2xl backdrop-blur-md">
-            <p className="text-sm font-semibold text-cyan-200">
-              Compose message
-            </p>
-            <p className="mt-1 text-xs text-zinc-400">
-              {selectedLabel
-                ? `Selected coordinates: ${selectedLabel}`
-                : 'Pick a location by clicking the globe.'}
-            </p>
-            <textarea
-              value={draftMessage}
-              onChange={(event) => setDraftMessage(event.target.value)}
-              placeholder="Share a quick note for this location..."
-              className="mt-3 min-h-24 w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 outline-none ring-cyan-300/60 placeholder:text-zinc-500 focus:ring"
-              maxLength={140}
-            />
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="text-xs text-zinc-500">
-                {draftMessage.trim().length}/140 chars
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-500"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition enabled:hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {isSubmitting ? 'Publishing…' : 'Publish pin'}
-                </button>
+          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+            <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+              <p className="text-sm font-semibold text-cyan-100">
+                Compose message
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="rounded-full border border-cyan-300/45 bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-100 shadow-sm shadow-cyan-700/20">
+                  Drop mode
+                </span>
+                <span className="rounded-full border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
+                  {selectedLabel ? selectedLabel : 'Waiting for location'}
+                </span>
+              </div>
+              <input
+                type="text"
+                value={draftMessage}
+                onChange={(event) => setDraftMessage(event.target.value)}
+                placeholder="Share a quick note for this location..."
+                className="mt-3 h-10 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-sm text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring"
+                maxLength={140}
+              />
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-xs text-zinc-400">
+                  {draftMessage.trim().length}/140
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="rounded-lg border border-zinc-600 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    className="rounded-lg bg-cyan-300 px-2.5 py-1.5 text-xs font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {isSubmitting ? 'Publishing…' : 'Publish'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {selectedMessage ? (
+        <div className="pointer-events-none absolute bottom-6 right-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-2xl border border-fuchsia-300/35 bg-zinc-950/80 p-3 text-zinc-100 shadow-xl shadow-black/40 backdrop-blur-md">
+          <p className="text-[11px] uppercase tracking-wide text-fuchsia-200/90">
+            Pin preview
+          </p>
+          <p className="mt-1 text-xs text-zinc-300">
+            Expanded bubble follows the selected marker.
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }
