@@ -1,6 +1,7 @@
 import {
   foreignKey,
   pgTable,
+  doublePrecision,
   serial,
   text,
   timestamp,
@@ -15,6 +16,8 @@ export const todos = pgTable(
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow(),
     updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow(),
     userId: text('user_id').notNull(),
+    latitude: doublePrecision('latitude'),
+    longitude: doublePrecision('longitude'),
   },
   (table) => [
     foreignKey({

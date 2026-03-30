@@ -21,15 +21,15 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
-// const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
-type MessageRecord = {
-  id: string
-  message: string
-  lng: number
-  lat: number
-  height: number
-  createdAt: number
+type MapMessageRecord = {
+  id: number
+  title: string
+  mapMessage: string
+  latitude: number
+  longitude: number
+  createdAt: string | null
+  userId: string
 }
 
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
@@ -45,15 +45,18 @@ function RouteComponent() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
   const isPinningRef = useRef(false)
-  const [messages, setMessages] = useState<MessageRecord[]>([])
+  const [messages, setMessages] = useState<MapMessageRecord[]>([])
   const [draftMessage, setDraftMessage] = useState('')
   const [isPinning, setIsPinning] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
     lat: number
   } | null>(null)
 
-  const canSubmit = draftMessage.trim().length > 0 && !!selectedPosition
+  const canSubmit =
+    draftMessage.trim().length > 0 && !!selectedPosition && !isSubmitting
 
   useEffect(() => {
     isPinningRef.current = isPinning
@@ -63,6 +66,23 @@ function RouteComponent() {
     if (!selectedPosition) return null
     return `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`
   }, [selectedPosition])
+
+  async function fetchMapMessages() {
+    const response = await fetch('/api/map-messages')
+
+    if (!response.ok) {
+      throw new Error('Unable to fetch map messages.')
+    }
+
+    const data = (await response.json()) as MapMessageRecord[]
+    setMessages(data)
+  }
+
+  useEffect(() => {
+    fetchMapMessages().catch(() => {
+      setErrorMessage('Could not load map messages. Please try again.')
+    })
+  }, [])
 
   if (!CESIUM_TOKEN) {
     return (
@@ -95,10 +115,9 @@ function RouteComponent() {
       (event: { position: Cartesian2 }) => {
         if (!isPinningRef.current) return
 
-        const pickedFromDepth =
-          viewer.scene.pickPositionSupported
-            ? viewer.scene.pickPosition(event.position)
-            : undefined
+        const pickedFromDepth = viewer.scene.pickPositionSupported
+          ? viewer.scene.pickPosition(event.position)
+          : undefined
         const picked =
           pickedFromDepth ??
           viewer.camera.pickEllipsoid(
@@ -119,14 +138,9 @@ function RouteComponent() {
 
     async function loadTiles() {
       try {
-        // const tileset = await createGooglePhotorealistic3DTileset({
-        //   key: GOOGLE_MAPS_API_KEY,
-        // })
-
         viewer.scene.imageryLayers.addImageryProvider(
           await IonImageryProvider.fromAssetId(3830185),
         )
-        // viewer.scene.primitives.add(tileset)
 
         viewer.camera.flyTo({
           destination: Cartesian3.fromDegrees(122, 10, 2000000),
@@ -153,18 +167,23 @@ function RouteComponent() {
       .forEach((entity) => viewer.entities.remove(entity))
 
     for (const item of messages) {
+      const createdAtEpoch = item.createdAt
+        ? new Date(item.createdAt).getTime()
+        : Date.now()
+
       const pulseOffset = new CallbackProperty((time?: JulianDate) => {
         const safeTime = time ?? JulianDate.now()
-        const phase = (JulianDate.toDate(safeTime).getTime() - item.createdAt) / 600
+        const phase =
+          (JulianDate.toDate(safeTime).getTime() - createdAtEpoch) / 600
         const bob = Math.sin(phase) * 4
         return new Cartesian2(0, -24 + bob)
       }, false)
 
-      const position = Cartesian3.fromDegrees(item.lng, item.lat, item.height)
+      const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 24)
       const shortMessage =
-        item.message.length > 48
-          ? `${item.message.slice(0, 45).trimEnd()}…`
-          : item.message
+        item.mapMessage.length > 48
+          ? `${item.mapMessage.slice(0, 45).trimEnd()}…`
+          : item.mapMessage
 
       viewer.entities.add({
         id: `message-${item.id}`,
@@ -200,24 +219,45 @@ function RouteComponent() {
     }
   }, [messages])
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
 
-    setMessages((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        message: draftMessage.trim(),
-        lng: selectedPosition.lng,
-        lat: selectedPosition.lat,
-        height: 24,
-        createdAt: Date.now(),
-      },
-    ])
+    setIsSubmitting(true)
+    setErrorMessage(null)
 
-    setDraftMessage('')
-    setIsPinning(false)
-    setSelectedPosition(null)
+    try {
+      const response = await fetch('/api/map-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mapMessage: draftMessage.trim(),
+          latitude: selectedPosition.lat,
+          longitude: selectedPosition.lng,
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(payload?.error ?? 'Unable to publish map message.')
+      }
+
+      await fetchMapMessages()
+      setDraftMessage('')
+      setIsPinning(false)
+      setSelectedPosition(null)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to publish map message.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleCancel() {
@@ -250,6 +290,9 @@ function RouteComponent() {
           >
             {isPinning ? 'Choose location on globe…' : 'Add map message'}
           </button>
+          {errorMessage ? (
+            <p className="mt-2 text-xs text-rose-300">{errorMessage}</p>
+          ) : null}
         </div>
 
         {isPinning && (
@@ -287,7 +330,7 @@ function RouteComponent() {
                   disabled={!canSubmit}
                   className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition enabled:hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Publish pin
+                  {isSubmitting ? 'Publishing…' : 'Publish pin'}
                 </button>
               </div>
             </div>
