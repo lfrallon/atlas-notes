@@ -16,7 +16,6 @@ import {
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
-  ConstantProperty,
 } from 'cesium'
 
 // css
