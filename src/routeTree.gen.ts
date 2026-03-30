@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTodosRouteImport } from './routes/demo/todos'
 import { Route as DemoMapsRouteImport } from './routes/demo/maps'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as ApiMapMessagesRouteImport } from './routes/api/map-messages'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
@@ -41,11 +40,6 @@ const DemoMapsRoute = DemoMapsRouteImport.update({
 const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
   id: '/demo/better-auth',
   path: '/demo/better-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMapMessagesRoute = ApiMapMessagesRouteImport.update({
-  id: '/api/map-messages',
-  path: '/api/map-messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -91,7 +85,6 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/map-messages': typeof ApiMapMessagesRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/todos': typeof DemoTodosRoute
@@ -106,7 +99,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/map-messages': typeof ApiMapMessagesRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/todos': typeof DemoTodosRoute
@@ -122,7 +114,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/map-messages': typeof ApiMapMessagesRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/maps': typeof DemoMapsRoute
   '/demo/todos': typeof DemoTodosRoute
@@ -139,7 +130,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/api/map-messages'
     | '/demo/better-auth'
     | '/demo/maps'
     | '/demo/todos'
@@ -154,7 +144,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/map-messages'
     | '/demo/better-auth'
     | '/demo/maps'
     | '/demo/todos'
@@ -169,7 +158,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/api/map-messages'
     | '/demo/better-auth'
     | '/demo/maps'
     | '/demo/todos'
@@ -185,7 +173,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiMapMessagesRoute: typeof ApiMapMessagesRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoMapsRoute: typeof DemoMapsRoute
   DemoTodosRoute: typeof DemoTodosRoute
@@ -227,13 +214,6 @@ declare module '@tanstack/react-router' {
       path: '/demo/better-auth'
       fullPath: '/demo/better-auth'
       preLoaderRoute: typeof DemoBetterAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/map-messages': {
-      id: '/api/map-messages'
-      path: '/api/map-messages'
-      fullPath: '/api/map-messages'
-      preLoaderRoute: typeof ApiMapMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -297,7 +277,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiMapMessagesRoute: ApiMapMessagesRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoMapsRoute: DemoMapsRoute,
   DemoTodosRoute: DemoTodosRoute,

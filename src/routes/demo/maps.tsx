@@ -21,15 +21,25 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
+const MAP_MESSAGES_API_BASE_URL =
+  import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
+const MAP_MESSAGES_API_URL = `${MAP_MESSAGES_API_BASE_URL}/map-messages`
 
 type MapMessageRecord = {
-  id: number
-  title: string
+  id: string
   mapMessage: string
   latitude: number
   longitude: number
   createdAt: string | null
-  userId: string
+}
+
+type MapMessageApiRecord = {
+  id: number | string
+  title?: string
+  mapMessage?: string
+  latitude: number
+  longitude: number
+  createdAt: string | null
 }
 
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
@@ -68,14 +78,25 @@ function RouteComponent() {
   }, [selectedPosition])
 
   async function fetchMapMessages() {
-    const response = await fetch('/api/map-messages')
+    const response = await fetch(MAP_MESSAGES_API_URL, {
+      credentials: 'include',
+    })
 
     if (!response.ok) {
       throw new Error('Unable to fetch map messages.')
     }
 
-    const data = (await response.json()) as MapMessageRecord[]
-    setMessages(data)
+    const data = (await response.json()) as MapMessageApiRecord[]
+
+    setMessages(
+      data.map((item) => ({
+        id: String(item.id),
+        mapMessage: item.mapMessage ?? item.title ?? '',
+        latitude: item.latitude,
+        longitude: item.longitude,
+        createdAt: item.createdAt,
+      })),
+    )
   }
 
   useEffect(() => {
@@ -226,8 +247,9 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch('/api/map-messages', {
+      const response = await fetch(MAP_MESSAGES_API_URL, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
