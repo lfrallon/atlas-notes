@@ -16,6 +16,7 @@ import {
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
+  ConstantProperty,
 } from 'cesium'
 
 // css
@@ -86,7 +87,9 @@ function RouteComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  )
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
     lat: number
@@ -106,7 +109,9 @@ function RouteComponent() {
 
   const selectedMessage = useMemo(() => {
     if (!selectedMessageId) return null
-    return messages.find((message) => `message-${message.id}` === selectedMessageId)
+    return messages.find(
+      (message) => `message-${message.id}` === selectedMessageId,
+    )
   }, [messages, selectedMessageId])
 
   async function fetchMapMessages() {
@@ -333,6 +338,7 @@ function RouteComponent() {
     if (!viewer || viewer.isDestroyed()) return
 
     const applyLabelVisibility = () => {
+      if (!viewer.scene) return
       const cameraPosition = viewer.camera.positionWC
       const ranked = messages
         .map((item) => {
@@ -490,7 +496,7 @@ function RouteComponent() {
         </div>
 
         {isPinning && (
-          <div className="pointer-events-auto rounded-2xl bg-gradient-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
             <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
               <p className="text-sm font-semibold text-cyan-100">
                 Compose message
