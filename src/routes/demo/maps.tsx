@@ -6,6 +6,7 @@ import {
   Cartesian3,
   Cartographic,
   Color,
+  ConstantProperty,
   HorizontalOrigin,
   Ion,
   IonImageryProvider,
@@ -46,6 +47,7 @@ const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
 const LABEL_MAX_VISIBLE = 28
+const SELECTED_PREVIEW_ID = 'selected-preview'
 
 function extractMessageIdFromPick(picked: unknown): string | null {
   if (!picked || typeof picked !== 'object') return null
@@ -288,7 +290,7 @@ function RouteComponent() {
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer) return
+    if (!viewer || viewer.isDestroyed()) return
 
     viewer.entities.values.forEach((entity) => {
       const entityId = entity.id.toString()
@@ -298,29 +300,37 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.pixelSize = isSelected ? 16 : isHovered ? 14 : 12
-        entity.point.color = isSelected
-          ? Color.fromCssColorString('#f0abfc').withAlpha(0.98)
-          : isHovered
-            ? Color.fromCssColorString('#67e8f9').withAlpha(0.98)
-            : Color.fromCssColorString('#22d3ee').withAlpha(0.95)
-        entity.point.outlineWidth = isSelected ? 3 : 2
+        entity.point.pixelSize = new ConstantProperty(
+          isSelected ? 16 : isHovered ? 14 : 12,
+        )
+        entity.point.color = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#f0abfc').withAlpha(0.98)
+            : isHovered
+              ? Color.fromCssColorString('#67e8f9').withAlpha(0.98)
+              : Color.fromCssColorString('#22d3ee').withAlpha(0.95),
+        )
+        entity.point.outlineWidth = new ConstantProperty(isSelected ? 3 : 2)
       }
 
       if (entity.label) {
-        entity.label.backgroundColor = isSelected
-          ? Color.fromCssColorString('#6d28d9').withAlpha(0.78)
-          : isHovered
-            ? Color.fromCssColorString('#155e75').withAlpha(0.78)
-            : Color.fromCssColorString('#0f172a').withAlpha(0.74)
-        entity.label.scale = isSelected ? 1.06 : isHovered ? 1.03 : 1
+        entity.label.backgroundColor = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#6d28d9').withAlpha(0.78)
+            : isHovered
+              ? Color.fromCssColorString('#155e75').withAlpha(0.78)
+              : Color.fromCssColorString('#0f172a').withAlpha(0.74),
+        )
+        entity.label.scale = new ConstantProperty(
+          isSelected ? 1.06 : isHovered ? 1.03 : 1,
+        )
       }
     })
   }, [hoveredMessageId, selectedMessageId, messages])
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer) return
+    if (!viewer || viewer.isDestroyed()) return
 
     const applyLabelVisibility = () => {
       const cameraPosition = viewer.camera.positionWC
@@ -346,7 +356,7 @@ function RouteComponent() {
       viewer.entities.values.forEach((entity) => {
         const entityId = entity.id.toString()
         if (!entityId.startsWith('message-') || !entity.label) return
-        entity.label.show = visibleIds.has(entityId)
+        entity.label.show = new ConstantProperty(visibleIds.has(entityId))
       })
     }
 
@@ -354,15 +364,16 @@ function RouteComponent() {
     viewer.camera.changed.addEventListener(applyLabelVisibility)
 
     return () => {
+      if (viewer.isDestroyed()) return
       viewer.camera.changed.removeEventListener(applyLabelVisibility)
     }
   }, [messages, selectedMessageId])
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer) return
+    if (!viewer || viewer.isDestroyed()) return
 
-    const existingPreview = viewer.entities.getById('message-preview')
+    const existingPreview = viewer.entities.getById(SELECTED_PREVIEW_ID)
     if (existingPreview) {
       viewer.entities.remove(existingPreview)
     }
@@ -370,7 +381,7 @@ function RouteComponent() {
     if (!selectedMessage) return
 
     viewer.entities.add({
-      id: 'message-preview',
+      id: SELECTED_PREVIEW_ID,
       position: Cartesian3.fromDegrees(
         selectedMessage.longitude,
         selectedMessage.latitude,
@@ -393,6 +404,12 @@ function RouteComponent() {
         translucencyByDistance: new NearFarScalar(700, 1, 5_000_000, 0.15),
       },
     })
+
+    return () => {
+      if (viewer.isDestroyed()) return
+      const preview = viewer.entities.getById(SELECTED_PREVIEW_ID)
+      if (preview) viewer.entities.remove(preview)
+    }
   }, [selectedMessage])
 
   async function handleSubmit() {
