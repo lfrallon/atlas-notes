@@ -15,6 +15,7 @@ import {
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
+  ConstantProperty,
 } from 'cesium'
 
 // css
@@ -85,7 +86,9 @@ function RouteComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
+    null,
+  )
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
     lat: number
@@ -105,7 +108,9 @@ function RouteComponent() {
 
   const selectedMessage = useMemo(() => {
     if (!selectedMessageId) return null
-    return messages.find((message) => `message-${message.id}` === selectedMessageId)
+    return messages.find(
+      (message) => `message-${message.id}` === selectedMessageId,
+    )
   }, [messages, selectedMessageId])
 
   async function fetchMapMessages() {
@@ -299,31 +304,53 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.pixelSize = isSelected ? 16 : isHovered ? 14 : 12
+        entity.point.pixelSize = new CallbackProperty(
+          () => (isSelected ? 16 : isHovered ? 14 : 12),
+          false,
+        )
         entity.point.color = isSelected
-          ? Color.fromCssColorString('#f0abfc').withAlpha(0.98)
+          ? new ConstantProperty(
+              Color.fromCssColorString('#f0abfc').withAlpha(0.98),
+            )
           : isHovered
-            ? Color.fromCssColorString('#67e8f9').withAlpha(0.98)
-            : Color.fromCssColorString('#22d3ee').withAlpha(0.95)
-        entity.point.outlineWidth = isSelected ? 3 : 2
+            ? new ConstantProperty(
+                Color.fromCssColorString('#67e8f9').withAlpha(0.98),
+              )
+            : new ConstantProperty(
+                Color.fromCssColorString('#22d3ee').withAlpha(0.95),
+              )
+        entity.point.outlineWidth = new CallbackProperty(
+          () => (isSelected ? 3 : 2),
+          false,
+        )
       }
 
       if (entity.label) {
         entity.label.backgroundColor = isSelected
-          ? Color.fromCssColorString('#6d28d9').withAlpha(0.78)
+          ? new ConstantProperty(
+              Color.fromCssColorString('#6d28d9').withAlpha(0.78),
+            )
           : isHovered
-            ? Color.fromCssColorString('#155e75').withAlpha(0.78)
-            : Color.fromCssColorString('#0f172a').withAlpha(0.74)
-        entity.label.scale = isSelected ? 1.06 : isHovered ? 1.03 : 1
+            ? new ConstantProperty(
+                Color.fromCssColorString('#155e75').withAlpha(0.78),
+              )
+            : new ConstantProperty(
+                Color.fromCssColorString('#0f172a').withAlpha(0.74),
+              )
+        entity.label.scale = new CallbackProperty(
+          () => (isSelected ? 1.06 : isHovered ? 1.03 : 1),
+          false,
+        )
       }
     })
   }, [hoveredMessageId, selectedMessageId, messages])
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer) return
+    if (!viewer || !viewer.scene) return
 
     const applyLabelVisibility = () => {
+      if (!viewer.scene) return
       const cameraPosition = viewer.camera.positionWC
       const ranked = messages
         .map((item) => {
@@ -347,7 +374,7 @@ function RouteComponent() {
       viewer.entities.values.forEach((entity) => {
         const entityId = entity.id.toString()
         if (!entityId.startsWith('message-') || !entity.label) return
-        entity.label.show = visibleIds.has(entityId)
+        entity.label.show = new ConstantProperty(visibleIds.has(entityId))
       })
     }
 
@@ -474,7 +501,7 @@ function RouteComponent() {
         </div>
 
         {isPinning && (
-          <div className="pointer-events-auto rounded-2xl bg-gradient-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
             <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
               <p className="text-sm font-semibold text-cyan-100">
                 Compose message
