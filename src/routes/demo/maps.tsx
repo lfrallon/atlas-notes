@@ -95,8 +95,12 @@ function RouteComponent() {
       (event: { position: Cartesian2 }) => {
         if (!isPinningRef.current) return
 
+        const pickedFromDepth =
+          viewer.scene.pickPositionSupported
+            ? viewer.scene.pickPosition(event.position)
+            : undefined
         const picked =
-          viewer.scene.pickPosition(event.position) ??
+          pickedFromDepth ??
           viewer.camera.pickEllipsoid(
             event.position,
             viewer.scene.globe.ellipsoid,
