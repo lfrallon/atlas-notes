@@ -32,6 +32,7 @@ type MapMessageRecord = {
   latitude: number
   longitude: number
   createdAt: string | null
+  userId?: string
 }
 
 type MapMessageApiRecord = {
@@ -41,6 +42,7 @@ type MapMessageApiRecord = {
   latitude: number
   longitude: number
   createdAt: string | null
+  userId?: string
 }
 
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
@@ -424,13 +426,14 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch(MAP_MESSAGES_API_URL, {
+      const response = await fetch(`${MAP_MESSAGES_API_URL}/add`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          title: 'Map Message',
           mapMessage: draftMessage.trim(),
           latitude: selectedPosition.lat,
           longitude: selectedPosition.lng,
