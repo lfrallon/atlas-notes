@@ -3,6 +3,7 @@ import {
   keepPreviousData,
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQueryClient,
 } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -46,6 +47,11 @@ type MapMessagesInput = {
   pageSize?: number
   orderBy?: 'asc' | 'desc'
   bbox?: string
+}
+
+type HotspotConfig = {
+  id: 'us' | 'uk' | 'india' | 'japan' | 'brazil' | 'western-europe'
+  bbox: string
 }
 
 type MapViewport = {
@@ -102,6 +108,16 @@ const LABEL_MAX_VISIBLE = 28
 const SELECTED_PREVIEW_ID = 'selected-preview'
 const CAMERA_SETTLE_DEBOUNCE_MS = 300
 const BBOX_ROUNDING_FACTOR = 10
+const HOTSPOT_PAGE_SIZE = 80
+const MAX_RENDERED_MESSAGES = 500
+const HOTSPOTS: HotspotConfig[] = [
+  { id: 'us', bbox: '-125,24,-66,49' },
+  { id: 'uk', bbox: '-8,49,2,59' },
+  { id: 'india', bbox: '68,6,97,37' },
+  { id: 'japan', bbox: '129,31,146,46' },
+  { id: 'brazil', bbox: '-74,-34,-34,5' },
+  { id: 'western-europe', bbox: '-11,36,18,61' },
+]
 
 function getZoomBucket(height: number): MapViewport['zoomBucket'] {
   if (height > 2_000_000) return 'broad'
@@ -178,6 +194,18 @@ async function getMapMessages({ pageParam, queryKey }: TFetchMapMessages) {
   return data
 }
 
+function toMessageNodes(data?: MapMessagesPage) {
+  if (!data) return []
+
+  return data.nodes.map((node) => ({
+    id: String(node.id),
+    mapMessage: node.mapMessage,
+    latitude: node.latitude,
+    longitude: node.longitude,
+    createdAt: node.createdAt,
+  }))
+}
+
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
   component: RouteComponent,
@@ -198,6 +226,7 @@ function RouteComponent() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
     null,
   )
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
     lat: number
@@ -258,20 +287,70 @@ function RouteComponent() {
     staleTime: 45_000,
   })
 
-  const messages = useMemo(() => {
+  const hotspotQueries = useQueries({
+    queries: HOTSPOTS.map((hotspot) => ({
+      queryKey: ['map-messages', { hotspot: hotspot.id }],
+      queryFn: async () =>
+        await getMapMessages({
+          pageParam: undefined,
+          queryKey: [
+            'map-messages',
+            {
+              baseUrl: MAP_MESSAGES_API_URL,
+              input: {
+                pageSize: HOTSPOT_PAGE_SIZE,
+                orderBy: 'desc',
+                bbox: hotspot.bbox,
+              },
+              bboxKey: hotspot.id,
+              zoomBucket: 'broad',
+            },
+          ],
+        }),
+      staleTime: 10 * 60_000,
+    })),
+  })
+
+  const viewportMessages = useMemo(() => {
     if (!data || Object.keys(data).length === 0) return []
     if ('error' in data.pages[0]) return []
 
-    return data.pages.flatMap((item) =>
-      item.nodes.map((node) => ({
-        id: String(node.id),
-        mapMessage: node.mapMessage,
-        latitude: node.latitude,
-        longitude: node.longitude,
-        createdAt: node.createdAt,
-      })),
-    )
+    return data.pages.flatMap((item) => toMessageNodes(item))
   }, [data])
+
+  const mergedHotspotMessages = useMemo(() => {
+    const merged = hotspotQueries.flatMap((hotspotQuery) =>
+      toMessageNodes(hotspotQuery.data),
+    )
+    return Array.from(
+      new Map(merged.map((message) => [message.id, message])).values(),
+    )
+  }, [hotspotQueries])
+
+  const sourceMessages = useMemo(() => {
+    if (hasUserInteracted) return viewportMessages
+
+    return Array.from(
+      new Map(
+        [...viewportMessages, ...mergedHotspotMessages].map((message) => [
+          message.id,
+          message,
+        ]),
+      ).values(),
+    )
+  }, [hasUserInteracted, viewportMessages, mergedHotspotMessages])
+
+  const messages = useMemo(() => {
+    if (sourceMessages.length <= MAX_RENDERED_MESSAGES) return sourceMessages
+
+    return [...sourceMessages]
+      .sort(
+        (a, b) =>
+          (new Date(b.createdAt ?? 0).getTime() || 0) -
+          (new Date(a.createdAt ?? 0).getTime() || 0),
+      )
+      .slice(0, MAX_RENDERED_MESSAGES)
+  }, [sourceMessages])
 
   const addMapMessagesMutation = useMutation({
     mutationFn: async ({
@@ -354,6 +433,30 @@ function RouteComponent() {
 
     viewerRef.current = viewer
 
+    for (const hotspot of HOTSPOTS) {
+      queryClient.prefetchQuery({
+        queryKey: ['map-messages', { hotspot: hotspot.id }],
+        queryFn: async () =>
+          await getMapMessages({
+            pageParam: undefined,
+            queryKey: [
+              'map-messages',
+              {
+                baseUrl: MAP_MESSAGES_API_URL,
+                input: {
+                  pageSize: HOTSPOT_PAGE_SIZE,
+                  orderBy: 'desc',
+                  bbox: hotspot.bbox,
+                },
+                bboxKey: hotspot.id,
+                zoomBucket: 'broad',
+              },
+            ],
+          }),
+        staleTime: 10 * 60_000,
+      })
+    }
+
     viewer.screenSpaceEventHandler.setInputAction(
       (event: { position: Cartesian2 }) => {
         const pickedHit = viewer.scene.pick(event.position)
@@ -393,6 +496,19 @@ function RouteComponent() {
         setHoveredMessageId(extractMessageIdFromPick(picked))
       },
       ScreenSpaceEventType.MOUSE_MOVE,
+    )
+
+    viewer.screenSpaceEventHandler.setInputAction(
+      () => setHasUserInteracted(true),
+      ScreenSpaceEventType.WHEEL,
+    )
+    viewer.screenSpaceEventHandler.setInputAction(
+      () => setHasUserInteracted(true),
+      ScreenSpaceEventType.PINCH_START,
+    )
+    viewer.screenSpaceEventHandler.setInputAction(
+      () => setHasUserInteracted(true),
+      ScreenSpaceEventType.LEFT_DOWN,
     )
 
     async function loadTiles() {
@@ -439,7 +555,7 @@ function RouteComponent() {
       viewerRef.current = null
       viewer.destroy()
     }
-  }, [])
+  }, [queryClient])
 
   useEffect(() => {
     const viewer = viewerRef.current
