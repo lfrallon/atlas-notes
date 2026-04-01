@@ -1,5 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { z } from 'zod'
 import {
   CallbackProperty,
   Cartesian2,
@@ -21,12 +27,50 @@ import {
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
-const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
-const MAP_MESSAGES_API_BASE_URL =
-  import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
-const MAP_MESSAGES_API_URL = `${MAP_MESSAGES_API_BASE_URL}/map-messages`
+// types
+const searchSchema = z
+  .object({
+    nextCursor: z
+      .object({
+        id: z.string(),
+        updatedAt: z.string(),
+      })
+      .optional(),
+  })
+  .optional()
 
-type MapMessageRecord = {
+type SearchQuery = z.infer<typeof searchSchema>
+
+type MapMessagesInput = {
+  pageSize?: number
+  orderBy?: 'asc' | 'desc'
+}
+
+type TFetchMapMessages = {
+  pageParam: SearchQuery
+  queryKey: [
+    string,
+    {
+      baseUrl: string
+      input?: MapMessagesInput
+    },
+  ]
+}
+
+type MapMessagesPage = {
+  nodes: Array<MapMessagesNodes>
+  pageInfo: {
+    hasNextPage: boolean
+    nextCursor: {
+      id: string
+      updatedAt: string
+    }
+    totalPages: number
+  }
+  totalCount: number
+}
+
+interface MapMessagesNodes {
   id: string
   mapMessage: string
   latitude: number
@@ -35,16 +79,10 @@ type MapMessageRecord = {
   userId?: string
 }
 
-type MapMessageApiRecord = {
-  id: number | string
-  title?: string
-  mapMessage?: string
-  latitude: number
-  longitude: number
-  createdAt: string | null
-  userId?: string
-}
-
+const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
+const MAP_MESSAGES_API_BASE_URL =
+  import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
+const MAP_MESSAGES_API_URL = `${MAP_MESSAGES_API_BASE_URL}/map-messages`
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
@@ -73,16 +111,31 @@ function extractMessageIdFromPick(picked: unknown): string | null {
   return null
 }
 
+async function getMapMessages({ pageParam, queryKey }: TFetchMapMessages) {
+  const [, { baseUrl, input }] = queryKey
+
+  const response = await fetch(
+    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
+    {
+      credentials: 'include',
+    },
+  )
+
+  const data: MapMessagesPage = await response.json()
+  return data
+}
+
 export const Route = createFileRoute('/demo/maps')({
   ssr: false,
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const queryClient = useQueryClient()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
   const isPinningRef = useRef(false)
-  const [messages, setMessages] = useState<MapMessageRecord[]>([])
+  const [messages, setMessages] = useState<MapMessagesNodes[]>([])
   const [draftMessage, setDraftMessage] = useState('')
   const [isPinning, setIsPinning] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -95,6 +148,71 @@ function RouteComponent() {
     lng: number
     lat: number
   } | null>(null)
+
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteQuery<MapMessagesPage, Error>({
+      queryKey: [
+        'map-messages',
+        {
+          baseUrl: MAP_MESSAGES_API_URL,
+          input: {
+            pageSize: 10,
+            orderBy: 'desc',
+          },
+        },
+      ],
+      queryFn: async ({ pageParam, queryKey }) =>
+        await getMapMessages({
+          pageParam: pageParam as SearchQuery,
+          queryKey: queryKey as [
+            string,
+            {
+              baseUrl: string
+              input?: MapMessagesInput
+            },
+          ],
+        }),
+      initialPageParam: undefined,
+      getNextPageParam: (lastPage) => {
+        if ('error' in lastPage) {
+          return undefined
+        }
+
+        if (lastPage.pageInfo.hasNextPage) {
+          return {
+            nextCursor: lastPage.pageInfo.nextCursor,
+          }
+        }
+        return undefined
+      },
+    })
+
+  const addMapMessagesMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: {
+        title: string
+        mapMessage: string
+        latitude: number
+        longitude: number
+      }
+    }) =>
+      fetch(`${MAP_MESSAGES_API_URL}/add`, {
+        method: 'POST',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+      ])
+    },
+  })
 
   const canSubmit =
     draftMessage.trim().length > 0 && !!selectedPosition && !isSubmitting
@@ -115,33 +233,31 @@ function RouteComponent() {
     )
   }, [messages, selectedMessageId])
 
-  async function fetchMapMessages() {
-    const response = await fetch(MAP_MESSAGES_API_URL, {
-      credentials: 'include',
-    })
+  useEffect(() => {
+    if (!data || Object.keys(data).length === 0) return
 
-    if (!response.ok) {
-      throw new Error('Unable to fetch map messages.')
+    if ('error' in data.pages[0]) {
+      setErrorMessage('Could not load map messages. Please try again.')
+      setMessages([])
+      return
     }
 
-    const data = (await response.json()) as MapMessageApiRecord[]
+    const nodes = data.pages.flatMap((item) => item.nodes)
 
-    setMessages(
-      data.map((item) => ({
-        id: String(item.id),
-        mapMessage: item.mapMessage ?? item.title ?? '',
-        latitude: item.latitude,
-        longitude: item.longitude,
-        createdAt: item.createdAt,
-      })),
-    )
-  }
-
-  useEffect(() => {
-    fetchMapMessages().catch(() => {
-      setErrorMessage('Could not load map messages. Please try again.')
-    })
-  }, [])
+    if (Array.isArray(nodes) && nodes.length > 0) {
+      setMessages(
+        nodes.map((item) => ({
+          id: String(item.id),
+          mapMessage: item.mapMessage,
+          latitude: item.latitude,
+          longitude: item.longitude,
+          createdAt: item.createdAt,
+        })),
+      )
+    } else {
+      setMessages([])
+    }
+  }, [data])
 
   if (!CESIUM_TOKEN) {
     return (
@@ -426,28 +542,33 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch(`${MAP_MESSAGES_API_URL}/add`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+      addMapMessagesMutation.mutateAsync(
+        {
+          data: {
+            title: 'Map Message',
+            mapMessage: draftMessage.trim(),
+            latitude: selectedPosition.lat,
+            longitude: selectedPosition.lng,
+          },
         },
-        body: JSON.stringify({
-          title: 'Map Message',
-          mapMessage: draftMessage.trim(),
-          latitude: selectedPosition.lat,
-          longitude: selectedPosition.lng,
-        }),
-      })
+        {
+          onSuccess: async (response) => {
+            if (!response.ok) {
+              const payload = (await response.json().catch(() => null)) as {
+                error?: string
+              } | null
+              throw new Error(
+                payload?.error ?? 'Unable to publish map message.',
+              )
+            }
 
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: string
-        } | null
-        throw new Error(payload?.error ?? 'Unable to publish map message.')
-      }
+            setDraftMessage('')
+            setIsPinning(false)
+            setSelectedPosition(null)
+          },
+        },
+      )
 
-      await fetchMapMessages()
       setDraftMessage('')
       setIsPinning(false)
       setSelectedPosition(null)
