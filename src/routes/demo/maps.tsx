@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
@@ -44,6 +45,15 @@ type SearchQuery = z.infer<typeof searchSchema>
 type MapMessagesInput = {
   pageSize?: number
   orderBy?: 'asc' | 'desc'
+  bbox?: string
+}
+
+type MapViewport = {
+  west: number
+  south: number
+  east: number
+  north: number
+  zoomBucket: 'broad' | 'medium' | 'close'
 }
 
 type TFetchMapMessages = {
@@ -52,7 +62,9 @@ type TFetchMapMessages = {
     string,
     {
       baseUrl: string
-      input?: MapMessagesInput
+      input: MapMessagesInput
+      bboxKey: string
+      zoomBucket: MapViewport['zoomBucket']
     },
   ]
 }
@@ -88,6 +100,47 @@ const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
 const LABEL_MAX_VISIBLE = 28
 const SELECTED_PREVIEW_ID = 'selected-preview'
+const CAMERA_SETTLE_DEBOUNCE_MS = 300
+const BBOX_ROUNDING_FACTOR = 10
+
+function getZoomBucket(height: number): MapViewport['zoomBucket'] {
+  if (height > 2_000_000) return 'broad'
+  if (height > 600_000) return 'medium'
+  return 'close'
+}
+
+function roundToBucket(value: number) {
+  return Math.round(value * BBOX_ROUNDING_FACTOR) / BBOX_ROUNDING_FACTOR
+}
+
+function getViewportFromViewer(viewer: Viewer): MapViewport | null {
+  const rectangle = viewer.camera.computeViewRectangle(
+    viewer.scene.globe.ellipsoid,
+  )
+  if (!rectangle) return null
+
+  const west = CesiumMath.toDegrees(rectangle.west)
+  const south = CesiumMath.toDegrees(rectangle.south)
+  const east = CesiumMath.toDegrees(rectangle.east)
+  const north = CesiumMath.toDegrees(rectangle.north)
+  const zoomBucket = getZoomBucket(viewer.camera.positionCartographic.height)
+
+  return { west, south, east, north, zoomBucket }
+}
+
+function buildBbox(viewport: MapViewport) {
+  return `${viewport.west},${viewport.south},${viewport.east},${viewport.north}`
+}
+
+function buildBboxKey(viewport: MapViewport) {
+  return `${roundToBucket(viewport.west)},${roundToBucket(viewport.south)},${roundToBucket(viewport.east)},${roundToBucket(viewport.north)}`
+}
+
+function getPageSizeForZoomBucket(zoomBucket: MapViewport['zoomBucket']) {
+  if (zoomBucket === 'broad') return 100
+  if (zoomBucket === 'medium') return 250
+  return 500
+}
 
 function extractMessageIdFromPick(picked: unknown): string | null {
   if (!picked || typeof picked !== 'object') return null
@@ -115,7 +168,7 @@ async function getMapMessages({ pageParam, queryKey }: TFetchMapMessages) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
-    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
+    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${input?.bbox ? `&bbox=${encodeURIComponent(input.bbox)}` : ''}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
     {
       credentials: 'include',
     },
@@ -134,8 +187,9 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
+  const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
-  const [messages, setMessages] = useState<MapMessagesNodes[]>([])
+  const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
   const [isPinning, setIsPinning] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -149,43 +203,75 @@ function RouteComponent() {
     lat: number
   } | null>(null)
 
-  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useInfiniteQuery<MapMessagesPage, Error>({
-      queryKey: [
-        'map-messages',
-        {
-          baseUrl: MAP_MESSAGES_API_URL,
-          input: {
-            pageSize: 10,
-            orderBy: 'desc',
-          },
-        },
-      ],
-      queryFn: async ({ pageParam, queryKey }) =>
-        await getMapMessages({
-          pageParam: pageParam as SearchQuery,
-          queryKey: queryKey as [
-            string,
-            {
-              baseUrl: string
-              input?: MapMessagesInput
-            },
-          ],
-        }),
-      initialPageParam: undefined,
-      getNextPageParam: (lastPage) => {
-        if ('error' in lastPage) {
-          return undefined
-        }
-
-        if (lastPage.pageInfo.hasNextPage) {
-          return {
-            nextCursor: lastPage.pageInfo.nextCursor,
-          }
-        }
-        return undefined
+  const viewportQueryState = useMemo(() => {
+    if (!viewport) return null
+    const bboxKey = buildBboxKey(viewport)
+    return {
+      bboxKey,
+      zoomBucket: viewport.zoomBucket,
+      input: {
+        pageSize: getPageSizeForZoomBucket(viewport.zoomBucket),
+        orderBy: 'desc' as const,
+        bbox: buildBbox(viewport),
       },
-    })
+    }
+  }, [viewport])
+
+  const { data } = useInfiniteQuery<MapMessagesPage, Error>({
+    queryKey: [
+      'map-messages',
+      {
+        baseUrl: MAP_MESSAGES_API_URL,
+        input: viewportQueryState?.input ?? {},
+        bboxKey: viewportQueryState?.bboxKey ?? 'unknown',
+        zoomBucket: viewportQueryState?.zoomBucket ?? 'broad',
+      },
+    ],
+    enabled: !!viewportQueryState,
+    queryFn: async ({ pageParam, queryKey }) =>
+      await getMapMessages({
+        pageParam: pageParam as SearchQuery,
+        queryKey: queryKey as [
+          string,
+          {
+            baseUrl: string
+            input: MapMessagesInput
+            bboxKey: string
+            zoomBucket: MapViewport['zoomBucket']
+          },
+        ],
+      }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      if ('error' in lastPage) {
+        return undefined
+      }
+
+      if (lastPage.pageInfo.hasNextPage) {
+        return {
+          nextCursor: lastPage.pageInfo.nextCursor,
+        }
+      }
+      return undefined
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 45_000,
+  })
+
+  const messages = useMemo(() => {
+    if (!data || Object.keys(data).length === 0) return []
+    if ('error' in data.pages[0]) return []
+
+    return data.pages.flatMap((item) =>
+      item.nodes.map((node) => ({
+        id: String(node.id),
+        mapMessage: node.mapMessage,
+        latitude: node.latitude,
+        longitude: node.longitude,
+        createdAt: node.createdAt,
+      })),
+    )
+  }, [data])
 
   const addMapMessagesMutation = useMutation({
     mutationFn: async ({
@@ -235,27 +321,9 @@ function RouteComponent() {
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
-
     if ('error' in data.pages[0]) {
       setErrorMessage('Could not load map messages. Please try again.')
-      setMessages([])
       return
-    }
-
-    const nodes = data.pages.flatMap((item) => item.nodes)
-
-    if (Array.isArray(nodes) && nodes.length > 0) {
-      setMessages(
-        nodes.map((item) => ({
-          id: String(item.id),
-          mapMessage: item.mapMessage,
-          latitude: item.latitude,
-          longitude: item.longitude,
-          createdAt: item.createdAt,
-        })),
-      )
-    } else {
-      setMessages([])
     }
   }, [data])
 
@@ -343,7 +411,31 @@ function RouteComponent() {
 
     loadTiles()
 
+    const syncViewport = () => {
+      const nextViewport = getViewportFromViewer(viewer)
+      if (nextViewport) {
+        setViewport(nextViewport)
+      }
+    }
+
+    syncViewport()
+
+    const onCameraChanged = () => {
+      if (cameraDebounceRef.current) {
+        clearTimeout(cameraDebounceRef.current)
+      }
+      cameraDebounceRef.current = setTimeout(() => {
+        syncViewport()
+      }, CAMERA_SETTLE_DEBOUNCE_MS)
+    }
+
+    viewer.camera.changed.addEventListener(onCameraChanged)
+
     return () => {
+      if (cameraDebounceRef.current) {
+        clearTimeout(cameraDebounceRef.current)
+      }
+      viewer.camera.changed.removeEventListener(onCameraChanged)
       viewerRef.current = null
       viewer.destroy()
     }
