@@ -51,6 +51,24 @@ The `/demo/maps` route requires the following client-exposed environment variabl
 
 > Google Photorealistic 3D Tiles also requires a valid Google Cloud project/billing/API setup in addition to providing the API key.
 
+
+### Prod verification (maps)
+
+- [ ] Run `npm run build`
+- [ ] Run `npm run preview`
+- [ ] Open `/demo/maps`
+- [ ] Confirm the following network requests return HTTP 200:
+  - `/cesium/Workers/*.js`
+  - `/cesium/Assets/*`
+  - `/cesium/ThirdParty/*`
+  - `/cesium/Widgets/*`
+
+Optional CI smoke check (after `vite build`):
+
+```bash
+npm run smoke:maps-assets
+```
+
 ## Setting up Better Auth
 
 1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
