@@ -7,12 +7,20 @@ import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 
-
 const config = defineConfig({
+  build: {
+    chunkSizeWarningLimit: 11_500,
+  },
+  server: {
+    port: 3000,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  define: {
+    CESIUM_BASE_URL: JSON.stringify('/cesium'),
   },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
@@ -37,9 +45,6 @@ const config = defineConfig({
       ],
     }),
   ],
-  define: {
-    CESIUM_BASE_URL: JSON.stringify('/cesium'),
-  },
 })
 
 export default config
