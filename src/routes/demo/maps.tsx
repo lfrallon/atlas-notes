@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
+import ReactPlayer from 'react-player'
 import {
   CallbackProperty,
   Cartesian2,
@@ -95,6 +96,7 @@ interface MapMessagesNodes {
   longitude: number
   createdAt: string | null
   userId?: string
+  videoUrl?: string | null
 }
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
@@ -105,7 +107,6 @@ const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
 const LABEL_MAX_VISIBLE = 28
-const SELECTED_PREVIEW_ID = 'selected-preview'
 const CAMERA_SETTLE_DEBOUNCE_MS = 300
 const BBOX_ROUNDING_FACTOR = 10
 const HOTSPOT_PAGE_SIZE = 80
@@ -203,6 +204,7 @@ function toMessageNodes(data?: MapMessagesPage) {
     latitude: node.latitude,
     longitude: node.longitude,
     createdAt: node.createdAt,
+    videoUrl: node.videoUrl,
   }))
 }
 
@@ -219,6 +221,7 @@ function RouteComponent() {
   const isPinningRef = useRef(false)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
+  const [draftVideoUrl, setDraftVideoUrl] = useState('')
   const [isPinning, setIsPinning] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -361,6 +364,7 @@ function RouteComponent() {
         mapMessage: string
         latitude: number
         longitude: number
+        videoUrl?: string
       }
     }) =>
       fetch(`${MAP_MESSAGES_API_URL}/add`, {
@@ -462,12 +466,14 @@ function RouteComponent() {
         const pickedHit = viewer.scene.pick(event.position)
         const pickedMessageId = extractMessageIdFromPick(pickedHit)
 
-        if (!isPinningRef.current && pickedMessageId) {
-          setSelectedMessageId(pickedMessageId)
+        if (!isPinningRef.current) {
+          if (pickedMessageId) {
+            setSelectedMessageId(pickedMessageId)
+          } else {
+            setSelectedMessageId(null)
+          }
           return
         }
-
-        if (!isPinningRef.current) return
 
         const pickedFromDepth = viewer.scene.pickPositionSupported
           ? viewer.scene.pickPosition(event.position)
@@ -588,10 +594,10 @@ function RouteComponent() {
         id: `message-${item.id}`,
         position,
         point: {
-          pixelSize: 12,
-          color: Color.fromCssColorString('#22d3ee').withAlpha(0.95),
-          outlineColor: Color.fromCssColorString('#0f172a').withAlpha(0.8),
-          outlineWidth: 2,
+          pixelSize: 14,
+          color: Color.fromCssColorString('#06b6d4').withAlpha(1),
+          outlineColor: Color.fromCssColorString('#ffffff').withAlpha(0.9),
+          outlineWidth: 2.5,
           heightReference: 0,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           scaleByDistance: MARKER_SCALE,
@@ -599,13 +605,13 @@ function RouteComponent() {
         },
         label: {
           text: `✦ ${shortMessage}`,
-          font: '500 13px Inter, system-ui, sans-serif',
-          fillColor: Color.WHITE,
+          font: '600 14px Inter, system-ui, sans-serif',
+          fillColor: Color.fromCssColorString('#ffffff'),
           style: 2,
-          outlineColor: Color.fromCssColorString('#020617').withAlpha(0.85),
-          outlineWidth: 3,
+          outlineColor: Color.fromCssColorString('#000000').withAlpha(0.9),
+          outlineWidth: 4,
           showBackground: true,
-          backgroundColor: Color.fromCssColorString('#0f172a').withAlpha(0.74),
+          backgroundColor: Color.fromCssColorString('#000000').withAlpha(0.7),
           horizontalOrigin: HorizontalOrigin.CENTER,
           verticalOrigin: VerticalOrigin.BOTTOM,
           pixelOffset: pulseOffset,
@@ -631,16 +637,16 @@ function RouteComponent() {
 
       if (entity.point) {
         entity.point.pixelSize = new ConstantProperty(
-          isSelected ? 16 : isHovered ? 14 : 12,
+          isSelected ? 20 : isHovered ? 18 : 14,
         )
         entity.point.color = new ConstantProperty(
           isSelected
-            ? Color.fromCssColorString('#f0abfc').withAlpha(0.98)
+            ? Color.fromCssColorString('#f0abfc').withAlpha(1)
             : isHovered
-              ? Color.fromCssColorString('#67e8f9').withAlpha(0.98)
-              : Color.fromCssColorString('#22d3ee').withAlpha(0.95),
+              ? Color.fromCssColorString('#67e8f9').withAlpha(1)
+              : Color.fromCssColorString('#06b6d4').withAlpha(1),
         )
-        entity.point.outlineWidth = new ConstantProperty(isSelected ? 3 : 2)
+        entity.point.outlineWidth = new ConstantProperty(isSelected ? 3.5 : 2.5)
       }
 
       if (entity.label) {
@@ -700,49 +706,6 @@ function RouteComponent() {
     }
   }, [messages, selectedMessageId])
 
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed()) return
-
-    const existingPreview = viewer.entities.getById(SELECTED_PREVIEW_ID)
-    if (existingPreview) {
-      viewer.entities.remove(existingPreview)
-    }
-
-    if (!selectedMessage) return
-
-    viewer.entities.add({
-      id: SELECTED_PREVIEW_ID,
-      position: Cartesian3.fromDegrees(
-        selectedMessage.longitude,
-        selectedMessage.latitude,
-        30,
-      ),
-      label: {
-        text: selectedMessage.mapMessage,
-        font: '600 14px Inter, system-ui, sans-serif',
-        fillColor: Color.WHITE,
-        style: 2,
-        outlineColor: Color.fromCssColorString('#0f172a').withAlpha(0.95),
-        outlineWidth: 3,
-        showBackground: true,
-        backgroundColor: Color.fromCssColorString('#312e81').withAlpha(0.8),
-        horizontalOrigin: HorizontalOrigin.LEFT,
-        verticalOrigin: VerticalOrigin.BOTTOM,
-        pixelOffset: new Cartesian2(18, -50),
-        disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        scaleByDistance: new NearFarScalar(700, 1, 5_000_000, 0.55),
-        translucencyByDistance: new NearFarScalar(700, 1, 5_000_000, 0.15),
-      },
-    })
-
-    return () => {
-      if (viewer.isDestroyed()) return
-      const preview = viewer.entities.getById(SELECTED_PREVIEW_ID)
-      if (preview) viewer.entities.remove(preview)
-    }
-  }, [selectedMessage])
-
   async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
 
@@ -757,6 +720,7 @@ function RouteComponent() {
             mapMessage: draftMessage.trim(),
             latitude: selectedPosition.lat,
             longitude: selectedPosition.lng,
+            ...(draftVideoUrl.trim() ? { videoUrl: draftVideoUrl.trim() } : {}),
           },
         },
         {
@@ -771,6 +735,7 @@ function RouteComponent() {
             }
 
             setDraftMessage('')
+            setDraftVideoUrl('')
             setIsPinning(false)
             setSelectedPosition(null)
           },
@@ -778,6 +743,7 @@ function RouteComponent() {
       )
 
       setDraftMessage('')
+      setDraftVideoUrl('')
       setIsPinning(false)
       setSelectedPosition(null)
     } catch (error) {
@@ -793,6 +759,7 @@ function RouteComponent() {
 
   function handleCancel() {
     setDraftMessage('')
+    setDraftVideoUrl('')
     setSelectedPosition(null)
     setIsPinning(false)
   }
@@ -800,7 +767,7 @@ function RouteComponent() {
   return (
     <div className="relative min-h-[calc(100dvh-var(--app-header-height))] w-full overflow-hidden bg-zinc-950">
       <div className="h-[calc(100dvh-var(--app-header-height))] w-full">
-        <div ref={containerRef} className="h-full w-full" />
+        <div ref={containerRef} className={`h-full w-full ${isPinning && !selectedPosition ? '[&_canvas]:!cursor-crosshair' : ''}`} />
       </div>
 
       <div className="pointer-events-none absolute left-4 top-4 z-10 flex w-[min(26rem,calc(100%-2rem))] flex-col gap-3">
@@ -848,6 +815,27 @@ function RouteComponent() {
                 className="mt-3 h-10 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-sm text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring"
                 maxLength={140}
               />
+              <input
+                type="url"
+                value={draftVideoUrl}
+                onChange={(event) => setDraftVideoUrl(event.target.value)}
+                placeholder="Optional video URL (e.g. YouTube)..."
+                className="mt-2 h-10 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-sm text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring"
+              />
+              {draftVideoUrl.trim() ? (
+                <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                  <ReactPlayer
+                    src={draftVideoUrl.trim()}
+                    width="100%"
+                    height="100%"
+                    controls
+                    style={{ position: 'absolute', top: 0, left: 0 }}
+                  />
+                  <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                    Preview
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-2 flex items-center justify-between gap-2">
                 <span className="text-xs text-zinc-400">
                   {draftMessage.trim().length}/140
@@ -876,13 +864,61 @@ function RouteComponent() {
       </div>
 
       {selectedMessage ? (
-        <div className="pointer-events-none absolute bottom-6 right-4 z-10 w-[min(22rem,calc(100%-2rem))] rounded-2xl border border-fuchsia-300/35 bg-zinc-950/80 p-3 text-zinc-100 shadow-xl shadow-black/40 backdrop-blur-md">
-          <p className="text-[11px] uppercase tracking-wide text-fuchsia-200/90">
-            Pin preview
-          </p>
-          <p className="mt-1 text-xs text-zinc-300">
-            Expanded bubble follows the selected marker.
-          </p>
+        <div 
+          className="pointer-events-auto absolute bottom-6 right-6 z-10 flex w-[min(24rem,calc(100%-2rem))] flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl"
+          style={{ animation: 'slideIn 300ms ease-out forwards' }}
+        >
+          <button 
+            type="button"
+            onClick={() => setSelectedMessageId(null)}
+            className="absolute right-3 top-3 z-30 rounded-full bg-black/60 p-1.5 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
+            aria-label="Close card"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+          
+          {selectedMessage.videoUrl ? (
+            <div className="relative aspect-video w-full bg-black/80">
+              <ReactPlayer
+                src={selectedMessage.videoUrl}
+                width="100%"
+                height="100%"
+                playing
+                controls
+                loop
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              />
+              <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
+                Focus View
+              </div>
+            </div>
+          ) : null}
+          <div className="p-5">
+            <h3 className="text-sm font-semibold text-zinc-100">Location Record</h3>
+            <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 break-words">
+              {selectedMessage.mapMessage}
+            </p>
+            <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Coordinates</span>
+                <span className="mt-0.5 text-xs font-mono text-zinc-400">
+                  {selectedMessage.latitude.toFixed(4)}, {selectedMessage.longitude.toFixed(4)}
+                </span>
+              </div>
+              <div className="ml-auto flex flex-col items-end">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Timestamp</span>
+                <span className="mt-0.5 text-xs text-zinc-400">
+                  {selectedMessage.createdAt ? new Date(selectedMessage.createdAt).toLocaleString() : 'Unknown'}
+                </span>
+              </div>
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideIn {
+              from { opacity: 0; transform: translateY(16px) scale(0.98); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
         </div>
       ) : null}
     </div>
