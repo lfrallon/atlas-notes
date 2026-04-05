@@ -4758,9 +4758,9 @@ spotify-audio-element@^1.0.3:
   integrity sha512-QdKrJPkYCzaNwwz2vN2eDGyoW0KmQFmnwVprB41mpMzj4qujbqr6pegEchQeTn0b5PceKiLoVu0pp2QDpTcWnw==
 
 srvx@^0.11.2:
-  version "0.11.4"
-  resolved "https://registry.npmjs.org/srvx/-/srvx-0.11.4.tgz"
-  integrity sha512-m/2p87bqWZ94xpRN06qNBwh0xq/D0dXajnvPDSHFqrTogxuTWYNP1UHz6Cf+oY7D+NPLY35TJAp4ESIKn0WArQ==
+  version "0.11.15"
+  resolved "https://registry.yarnpkg.com/srvx/-/srvx-0.11.15.tgz#51c08f993bb116f5821ec929a466a29e8d5c7b61"
+  integrity sha512-iXsux0UcOjdvs0LCMa2Ws3WwcDUozA3JN3BquNXkaFPP7TpRqgunKdEgoZ/uwb1J6xaYHfxtz9Twlh6yzwM6Tg==
 
 stable-hash-x@^0.2.0:
   version "0.2.0"
