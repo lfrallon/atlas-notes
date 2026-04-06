@@ -26,6 +26,7 @@ import {
   VerticalOrigin,
   Viewer,
 } from 'cesium'
+import { MapPinPlus } from 'lucide-react'
 
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -767,11 +768,15 @@ function RouteComponent() {
   return (
     <div className="relative min-h-[calc(100dvh-var(--app-header-height))] w-full overflow-hidden bg-zinc-950">
       <div className="h-[calc(100dvh-var(--app-header-height))] w-full">
-        <div ref={containerRef} className={`h-full w-full ${isPinning && !selectedPosition ? '[&_canvas]:!cursor-crosshair' : ''}`} />
+        <div ref={containerRef} className={`h-full w-full ${isPinning && !selectedPosition ? '[&_canvas]:cursor-crosshair!' : ''}`} />
       </div>
 
-      <div className="pointer-events-none absolute left-4 top-4 z-10 flex w-[min(26rem,calc(100%-2rem))] flex-col gap-3">
-        <div className="pointer-events-auto rounded-2xl border border-zinc-700/70 bg-zinc-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md">
+      <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-10 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
+        {!isPinning && (<button type="button" onClick={() => setIsPinning(true)} className='sm:hidden pointer-events-auto flex justify-center items-center border border-zinc-700/70 bg-zinc-900/80 text-zinc-100 w-8.5 h-8 cursor-pointer'>
+          <MapPinPlus className='text-cyan-500 w-8 h-7.5' />
+        </button>
+        )}
+        <div className={`${isPinning ? "" : "hidden sm:block" } pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}>
           <p className="text-sm font-medium text-zinc-200">Community pins</p>
           <p className="mt-1 text-xs text-zinc-400">
             {isPinning
@@ -783,8 +788,9 @@ function RouteComponent() {
             onClick={() => {
               setIsPinning(true)
               setSelectedPosition(null)
+              setSelectedMessageId(null)
             }}
-            className="mt-3 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+            className="mt-3 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
           >
             {isPinning ? 'Choose location on globe…' : 'Add map message'}
           </button>
@@ -812,7 +818,7 @@ function RouteComponent() {
                 value={draftMessage}
                 onChange={(event) => setDraftMessage(event.target.value)}
                 placeholder="Share a quick note for this location..."
-                className="mt-3 h-10 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-sm text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring"
+                className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                 maxLength={140}
               />
               <input
@@ -820,7 +826,7 @@ function RouteComponent() {
                 value={draftVideoUrl}
                 onChange={(event) => setDraftVideoUrl(event.target.value)}
                 placeholder="Optional video URL (e.g. YouTube)..."
-                className="mt-2 h-10 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-sm text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring"
+                className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
               />
               {draftVideoUrl.trim() ? (
                 <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
@@ -844,7 +850,7 @@ function RouteComponent() {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="rounded-lg border border-zinc-600 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+                    className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
                   >
                     Cancel
                   </button>
@@ -852,7 +858,7 @@ function RouteComponent() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={!canSubmit}
-                    className="rounded-lg bg-cyan-300 px-2.5 py-1.5 text-xs font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
                   >
                     {isSubmitting ? 'Publishing…' : 'Publish'}
                   </button>
@@ -865,7 +871,7 @@ function RouteComponent() {
 
       {selectedMessage ? (
         <div 
-          className="pointer-events-auto absolute bottom-6 right-6 z-10 flex w-[min(24rem,calc(100%-2rem))] flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl"
+          className="pointer-events-auto absolute bottom-4 inset-x-3 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[24rem]"
           style={{ animation: 'slideIn 300ms ease-out forwards' }}
         >
           <button 
@@ -895,7 +901,7 @@ function RouteComponent() {
           ) : null}
           <div className="p-5">
             <h3 className="text-sm font-semibold text-zinc-100">Location Record</h3>
-            <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 break-words">
+            <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
               {selectedMessage.mapMessage}
             </p>
             <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
