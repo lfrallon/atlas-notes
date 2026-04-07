@@ -165,7 +165,10 @@ function getPageSizeForZoomBucket(zoomBucket: MapViewport['zoomBucket']) {
 const scratchSurfaceNormal = new Cartesian3()
 const scratchToCamera = new Cartesian3()
 
-function isPointVisibleFromCamera(scene: Scene, worldPoint: Cartesian3): boolean {
+function isPointVisibleFromCamera(
+  scene: Scene,
+  worldPoint: Cartesian3,
+): boolean {
   const globe = scene.globe
   const ellipsoid = globe?.ellipsoid
   if (!ellipsoid) return true
@@ -712,7 +715,7 @@ function RouteComponent() {
           ? new CallbackProperty(() => {
               const ms = Date.now()
               const alpha = 0.6 + Math.sin(ms / 150) * 0.4
-              return Color.fromCssColorString('#f0abfc').withAlpha(alpha)
+              return Color.fromCssColorString('#2D531A').withAlpha(alpha)
             }, false)
           : new ConstantProperty(
               isHovered
@@ -726,7 +729,7 @@ function RouteComponent() {
       if (entity.label) {
         entity.label.backgroundColor = new ConstantProperty(
           isSelected
-            ? Color.fromCssColorString('#6d28d9').withAlpha(0.78)
+            ? Color.fromCssColorString('#477023').withAlpha(0.78)
             : isHovered
               ? Color.fromCssColorString('#155e75').withAlpha(0.78)
               : Color.fromCssColorString('#0f172a').withAlpha(0.74),
