@@ -25,6 +25,8 @@ import {
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
+  SceneTransforms,
+  EllipsoidalOccluder,
 } from 'cesium'
 import { MapPinPlus } from 'lucide-react'
 
@@ -218,6 +220,7 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
+  const selectedCardRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
@@ -637,16 +640,25 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.pixelSize = new ConstantProperty(
-          isSelected ? 20 : isHovered ? 18 : 14,
-        )
-        entity.point.color = new ConstantProperty(
-          isSelected
-            ? Color.fromCssColorString('#f0abfc').withAlpha(1)
-            : isHovered
-              ? Color.fromCssColorString('#67e8f9').withAlpha(1)
-              : Color.fromCssColorString('#06b6d4').withAlpha(1),
-        )
+        entity.point.pixelSize = isSelected
+          ? new CallbackProperty(() => {
+              const ms = Date.now()
+              return 18 + Math.sin(ms / 150) * 6
+            }, false)
+          : new ConstantProperty(isHovered ? 18 : 14)
+
+        entity.point.color = isSelected
+          ? new CallbackProperty(() => {
+              const ms = Date.now()
+              const alpha = 0.6 + Math.sin(ms / 150) * 0.4
+              return Color.fromCssColorString('#f0abfc').withAlpha(alpha)
+            }, false)
+          : new ConstantProperty(
+              isHovered
+                ? Color.fromCssColorString('#67e8f9').withAlpha(1)
+                : Color.fromCssColorString('#06b6d4').withAlpha(1),
+            )
+
         entity.point.outlineWidth = new ConstantProperty(isSelected ? 3.5 : 2.5)
       }
 
@@ -706,6 +718,59 @@ function RouteComponent() {
       viewer.camera.changed.removeEventListener(applyLabelVisibility)
     }
   }, [messages, selectedMessageId])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || !selectedMessage || viewer.isDestroyed()) return
+
+    const position = Cartesian3.fromDegrees(
+      selectedMessage.longitude,
+      selectedMessage.latitude,
+      24,
+    )
+
+    const updateCardPosition = () => {
+      const card = selectedCardRef.current
+      if (!card || !viewer.scene) return
+
+      const windowPosition = SceneTransforms.worldToWindowCoordinates(
+        viewer.scene,
+        position,
+      )
+
+      if (windowPosition) {
+        const occluder = new EllipsoidalOccluder(
+          viewer.scene.globe.ellipsoid,
+          viewer.camera.positionWC,
+        )
+        const isVisible = occluder.isPointVisible(position)
+
+        if (isVisible) {
+          card.style.transform = `translate(${windowPosition.x}px, ${windowPosition.y}px) translate(-50%, 20px)`
+          card.style.opacity = '1'
+          card.style.pointerEvents = 'auto'
+          card.style.visibility = 'visible'
+        } else {
+          card.style.opacity = '0'
+          card.style.pointerEvents = 'none'
+          card.style.visibility = 'hidden'
+        }
+      } else {
+        card.style.opacity = '0'
+        card.style.pointerEvents = 'none'
+        card.style.visibility = 'hidden'
+      }
+    }
+
+    viewer.scene.preRender.addEventListener(updateCardPosition)
+    updateCardPosition()
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        viewer.scene.preRender.removeEventListener(updateCardPosition)
+      }
+    }
+  }, [selectedMessage])
 
   async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
@@ -768,15 +833,25 @@ function RouteComponent() {
   return (
     <div className="relative min-h-[calc(100dvh-var(--app-header-height))] w-full overflow-hidden bg-zinc-950">
       <div className="h-[calc(100dvh-var(--app-header-height))] w-full">
-        <div ref={containerRef} className={`h-full w-full ${isPinning && !selectedPosition ? '[&_canvas]:cursor-crosshair!' : ''}`} />
+        <div
+          ref={containerRef}
+          className={`h-full w-full ${isPinning && !selectedPosition ? '[&_canvas]:cursor-crosshair!' : ''}`}
+        />
       </div>
 
       <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-10 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
-        {!isPinning && (<button type="button" onClick={() => setIsPinning(true)} className='sm:hidden pointer-events-auto flex justify-center items-center border border-zinc-700/70 bg-zinc-900/80 text-zinc-100 w-8.5 h-8 cursor-pointer'>
-          <MapPinPlus className='text-cyan-500 w-8 h-7.5' />
-        </button>
+        {!isPinning && (
+          <button
+            type="button"
+            onClick={() => setIsPinning(true)}
+            className="sm:hidden pointer-events-auto flex justify-center items-center border border-zinc-700/70 bg-zinc-900/80 text-zinc-100 w-8.5 h-8 cursor-pointer"
+          >
+            <MapPinPlus className="text-cyan-500 w-8 h-7.5" />
+          </button>
         )}
-        <div className={`${isPinning ? "" : "hidden sm:block" } pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}>
+        <div
+          className={`${isPinning ? '' : 'hidden sm:block'} pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}
+        >
           <p className="text-sm font-medium text-zinc-200">Community pins</p>
           <p className="mt-1 text-xs text-zinc-400">
             {isPinning
@@ -870,19 +945,32 @@ function RouteComponent() {
       </div>
 
       {selectedMessage ? (
-        <div 
-          className="pointer-events-auto absolute bottom-4 inset-x-3 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[24rem]"
-          style={{ animation: 'slideIn 300ms ease-out forwards' }}
+        <div
+          ref={selectedCardRef}
+          className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
         >
-          <button 
+          <button
             type="button"
             onClick={() => setSelectedMessageId(null)}
             className="absolute right-3 top-3 z-30 rounded-full bg-black/60 p-1.5 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
             aria-label="Close card"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
-          
+
           {selectedMessage.videoUrl ? (
             <div className="relative aspect-video w-full bg-black/80">
               <ReactPlayer
@@ -900,21 +988,30 @@ function RouteComponent() {
             </div>
           ) : null}
           <div className="p-5">
-            <h3 className="text-sm font-semibold text-zinc-100">Location Record</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">
+              Location Record
+            </h3>
             <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
               {selectedMessage.mapMessage}
             </p>
             <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Coordinates</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  Coordinates
+                </span>
                 <span className="mt-0.5 text-xs font-mono text-zinc-400">
-                  {selectedMessage.latitude.toFixed(4)}, {selectedMessage.longitude.toFixed(4)}
+                  {selectedMessage.latitude.toFixed(4)},{' '}
+                  {selectedMessage.longitude.toFixed(4)}
                 </span>
               </div>
               <div className="ml-auto flex flex-col items-end">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">Timestamp</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                  Timestamp
+                </span>
                 <span className="mt-0.5 text-xs text-zinc-400">
-                  {selectedMessage.createdAt ? new Date(selectedMessage.createdAt).toLocaleString() : 'Unknown'}
+                  {selectedMessage.createdAt
+                    ? new Date(selectedMessage.createdAt).toLocaleString()
+                    : 'Unknown'}
                 </span>
               </div>
             </div>
