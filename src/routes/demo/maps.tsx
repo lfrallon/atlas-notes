@@ -259,6 +259,12 @@ function RouteComponent() {
     lng: number
     lat: number
   } | null>(null)
+  const [cursorPosition, setCursorPosition] = useState<{
+    lat: number
+    lng: number
+    x: number
+    y: number
+  } | null>(null)
 
   const viewportQueryState = useMemo(() => {
     if (!viewport) return null
@@ -415,6 +421,12 @@ function RouteComponent() {
     isPinningRef.current = isPinning
   }, [isPinning])
 
+  useEffect(() => {
+    if (!isPinning) {
+      setCursorPosition(null)
+    }
+  }, [isPinning])
+
   const selectedLabel = useMemo(() => {
     if (!selectedPosition) return null
     return `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`
@@ -525,6 +537,34 @@ function RouteComponent() {
       (event: { endPosition: Cartesian2 }) => {
         const picked = viewer.scene.pick(event.endPosition)
         setHoveredMessageId(extractMessageIdFromPick(picked))
+
+        if (!isPinningRef.current) {
+          setCursorPosition(null)
+          return
+        }
+
+        const pickedFromDepth = viewer.scene.pickPositionSupported
+          ? viewer.scene.pickPosition(event.endPosition)
+          : undefined
+        const pickedPosition =
+          pickedFromDepth ??
+          viewer.camera.pickEllipsoid(
+            event.endPosition,
+            viewer.scene.globe.ellipsoid,
+          )
+
+        if (!pickedPosition) {
+          setCursorPosition(null)
+          return
+        }
+
+        const cartographic = Cartographic.fromCartesian(pickedPosition)
+        setCursorPosition({
+          lat: CesiumMath.toDegrees(cartographic.latitude),
+          lng: CesiumMath.toDegrees(cartographic.longitude),
+          x: event.endPosition.x,
+          y: event.endPosition.y,
+        })
       },
       ScreenSpaceEventType.MOUSE_MOVE,
     )
@@ -821,6 +861,7 @@ function RouteComponent() {
             setDraftVideoUrl('')
             setIsPinning(false)
             setSelectedPosition(null)
+            setCursorPosition(null)
           },
         },
       )
@@ -829,6 +870,7 @@ function RouteComponent() {
       setDraftVideoUrl('')
       setIsPinning(false)
       setSelectedPosition(null)
+      setCursorPosition(null)
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -845,6 +887,7 @@ function RouteComponent() {
     setDraftVideoUrl('')
     setSelectedPosition(null)
     setIsPinning(false)
+    setCursorPosition(null)
   }
 
   return (
@@ -1039,6 +1082,20 @@ function RouteComponent() {
               to { opacity: 1; transform: translateY(0) scale(1); }
             }
           `}</style>
+        </div>
+      ) : null}
+
+      {isPinning && cursorPosition ? (
+        <div
+          className="pointer-events-none absolute z-20 rounded-lg border border-zinc-700/70 bg-zinc-900/80 px-2.5 py-1.5 text-xs text-zinc-100 shadow-xl backdrop-blur-md"
+          style={{
+            left: 0,
+            top: 0,
+            transform: `translate(${cursorPosition.x + 12}px, ${cursorPosition.y + 12}px)`,
+          }}
+        >
+          <p>Lat: {cursorPosition.lat.toFixed(5)}</p>
+          <p>Lng: {cursorPosition.lng.toFixed(5)}</p>
         </div>
       ) : null}
     </div>
