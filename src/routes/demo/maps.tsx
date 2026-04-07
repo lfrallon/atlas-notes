@@ -662,24 +662,25 @@ function RouteComponent() {
         id: `message-${item.id}`,
         position,
         point: {
-          pixelSize: 14,
-          color: Color.fromCssColorString('#06b6d4').withAlpha(1),
-          outlineColor: Color.fromCssColorString('#ffffff').withAlpha(0.9),
-          outlineWidth: 2.5,
+          pixelSize: 16,
+          color: Color.fromCssColorString('#38bdf8').withAlpha(0.98),
+          outlineColor: Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
+          outlineWidth: 3,
           heightReference: 0,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           scaleByDistance: MARKER_SCALE,
           translucencyByDistance: FLOAT_ALPHA,
         },
         label: {
-          text: `✦ ${shortMessage}`,
-          font: '600 14px Inter, system-ui, sans-serif',
-          fillColor: Color.fromCssColorString('#ffffff'),
+          text: `● ${shortMessage}`,
+          font: '600 13px Inter, system-ui, sans-serif',
+          fillColor: Color.fromCssColorString('#e2e8f0'),
           style: 2,
-          outlineColor: Color.fromCssColorString('#000000').withAlpha(0.9),
-          outlineWidth: 4,
+          outlineColor: Color.fromCssColorString('#020617').withAlpha(0.85),
+          outlineWidth: 3,
           showBackground: true,
-          backgroundColor: Color.fromCssColorString('#000000').withAlpha(0.7),
+          backgroundColor: Color.fromCssColorString('#0f172a').withAlpha(0.88),
+          backgroundPadding: new Cartesian2(16, 10),
           horizontalOrigin: HorizontalOrigin.CENTER,
           verticalOrigin: VerticalOrigin.BOTTOM,
           pixelOffset: pulseOffset,
@@ -707,35 +708,42 @@ function RouteComponent() {
         entity.point.pixelSize = isSelected
           ? new CallbackProperty(() => {
               const ms = Date.now()
-              return 18 + Math.sin(ms / 150) * 6
+              return 20 + Math.sin(ms / 150) * 5
             }, false)
-          : new ConstantProperty(isHovered ? 18 : 14)
+          : new ConstantProperty(isHovered ? 19 : 16)
 
         entity.point.color = isSelected
           ? new CallbackProperty(() => {
               const ms = Date.now()
               const alpha = 0.6 + Math.sin(ms / 150) * 0.4
-              return Color.fromCssColorString('#2D531A').withAlpha(alpha)
+              return Color.fromCssColorString('#a855f7').withAlpha(alpha)
             }, false)
           : new ConstantProperty(
               isHovered
-                ? Color.fromCssColorString('#67e8f9').withAlpha(1)
-                : Color.fromCssColorString('#06b6d4').withAlpha(1),
+                ? Color.fromCssColorString('#7dd3fc').withAlpha(1)
+                : Color.fromCssColorString('#38bdf8').withAlpha(0.98),
             )
 
-        entity.point.outlineWidth = new ConstantProperty(isSelected ? 3.5 : 2.5)
+        entity.point.outlineWidth = new ConstantProperty(isSelected ? 4 : 3)
       }
 
       if (entity.label) {
         entity.label.backgroundColor = new ConstantProperty(
           isSelected
-            ? Color.fromCssColorString('#477023').withAlpha(0.78)
+            ? Color.fromCssColorString('#581c87').withAlpha(0.86)
             : isHovered
-              ? Color.fromCssColorString('#155e75').withAlpha(0.78)
-              : Color.fromCssColorString('#0f172a').withAlpha(0.74),
+              ? Color.fromCssColorString('#0f766e').withAlpha(0.84)
+              : Color.fromCssColorString('#0f172a').withAlpha(0.88),
+        )
+        entity.label.backgroundPadding = new ConstantProperty(
+          isSelected
+            ? new Cartesian2(18, 12)
+            : isHovered
+              ? new Cartesian2(17, 11)
+              : new Cartesian2(16, 10),
         )
         entity.label.scale = new ConstantProperty(
-          isSelected ? 1.06 : isHovered ? 1.03 : 1,
+          isSelected ? 1.08 : isHovered ? 1.04 : 1,
         )
       }
     })
