@@ -25,8 +25,8 @@ import {
   ScreenSpaceEventType,
   VerticalOrigin,
   Viewer,
+  Scene,
   SceneTransforms,
-  EllipsoidalOccluder,
 } from 'cesium'
 import { MapPinPlus } from 'lucide-react'
 
@@ -160,6 +160,27 @@ function getPageSizeForZoomBucket(zoomBucket: MapViewport['zoomBucket']) {
   if (zoomBucket === 'broad') return 100
   if (zoomBucket === 'medium') return 250
   return 500
+}
+
+const scratchSurfaceNormal = new Cartesian3()
+const scratchToCamera = new Cartesian3()
+
+function isPointVisibleFromCamera(scene: Scene, worldPoint: Cartesian3): boolean {
+  const globe = scene.globe
+  const ellipsoid = globe?.ellipsoid
+  if (!ellipsoid) return true
+
+  const surfaceNormal = ellipsoid.geodeticSurfaceNormal(
+    worldPoint,
+    scratchSurfaceNormal,
+  )
+  const toCamera = Cartesian3.subtract(
+    scene.camera.positionWC,
+    worldPoint,
+    scratchToCamera,
+  )
+
+  return Cartesian3.dot(surfaceNormal, toCamera) > 0
 }
 
 function extractMessageIdFromPick(picked: unknown): string | null {
@@ -739,11 +760,7 @@ function RouteComponent() {
       )
 
       if (windowPosition) {
-        const occluder = new EllipsoidalOccluder(
-          viewer.scene.globe.ellipsoid,
-          viewer.camera.positionWC,
-        )
-        const isVisible = occluder.isPointVisible(position)
+        const isVisible = isPointVisibleFromCamera(viewer.scene, position)
 
         if (isVisible) {
           card.style.transform = `translate(${windowPosition.x}px, ${windowPosition.y}px) translate(-50%, 20px)`
