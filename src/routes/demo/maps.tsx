@@ -955,7 +955,7 @@ function RouteComponent() {
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-10 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
+      <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-50 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
         {!isPinning && (
           <button
             type="button"
