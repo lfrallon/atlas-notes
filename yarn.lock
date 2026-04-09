@@ -232,44 +232,44 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@better-auth/core@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.0.tgz#40a4017777985e3895a568f2f12e4c4ebe7cfd94"
-  integrity sha512-LmdPTyKRDn6iCcXBGlOHOyzpJl1W/3w64zrEbhhHaWmtdpzQWlY8awlWBoDTL9eL4TAusr9dDvwIbMYTvEqaeA==
+"@better-auth/core@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.1.tgz#bf5513c9813920c19fc839a03929e0a7b66ee3d8"
+  integrity sha512-HnRQEuuCT7tIc2GMuRGqudt0DNO8+LhoR3O1heY/nYMxbxPVOBm/f4UQFXeb5HYcHpDrwTO+woWpp318OQ++Uw==
   dependencies:
     "@opentelemetry/semantic-conventions" "^1.39.0"
     "@standard-schema/spec" "^1.1.0"
     zod "^4.3.6"
 
-"@better-auth/drizzle-adapter@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.0.tgz#7cd7f952e7e7ac72a8489acf7ff8a8baf37874c8"
-  integrity sha512-iMgvZlrL4FI63CGaxLqE5rgA2Q9VVmc2fQIP7N5E79nGAEpHtztstHFPlen9RDLRJA4xa3wuyVaPSILylwE+LA==
+"@better-auth/drizzle-adapter@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.1.tgz#226083e1add4fef153732b11b06f05d074f7431a"
+  integrity sha512-DgFDG8emuBxHYHA1xfUSCtMExsxOw6W3A1AVLA8TzYIg4qjkfDXcnI40ZPkDfsdnYm2WwQgJYRWP5KXlESakGA==
 
-"@better-auth/kysely-adapter@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.0.tgz#647b7dbce39f8ed83836c07afb48dd1464d8c128"
-  integrity sha512-ZLEp2j3jquX7wrPQ7tPOSRAjmMoHhdrsgkuH9Bp/fgNZV7M1eiwAY6fHRGKad6KIldoI+iazMUIm60v11fIHCg==
+"@better-auth/kysely-adapter@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.1.tgz#9c442a6686a2ebd593c8c4a0851937b540649846"
+  integrity sha512-P3X/nTpY5EoBD9HEF5I4gTCGL3lf7wIlzdQweL1+WIlJK0yw6jaSqyne82PvgbLs63BLKODrQ8KNy9yrQKwPBw==
 
-"@better-auth/memory-adapter@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.0.tgz#3e113c79892b80875d3c954e00c9838bb29b3b2c"
-  integrity sha512-FbLmz6ujltw8RDUkBzutwIfoV+q9Mu0gLVrfhDAb9INe+jLcaQikiIjFdVwPzpx+bOs6bWTDfylrlI6+Ytxs3Q==
+"@better-auth/memory-adapter@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.1.tgz#a3882c56d8181350e2411538be99b51a1efe9995"
+  integrity sha512-avyECOAv5LsSlIPoQpM++iMlc34YRde/B8klfbJpnqFE25NXtDTyxlv0xkp+RWETWqrnHs4vC+rLePylK7LwGg==
 
-"@better-auth/mongo-adapter@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.0.tgz#98410f366d45d4e58c441b691990ab8af4b67bf7"
-  integrity sha512-EYZwMpcpoaLRnfhEr+k+MTKS8SKi51TWh1b7bLSy+yHLL0PdbadFsGYZPgzLbZEaq4kUP0asMzXxA+blutjOQQ==
+"@better-auth/mongo-adapter@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.1.tgz#ebd28a78cb8831342edcce6c125d8b9a295856a2"
+  integrity sha512-ijK+5eePMV5Vgy88lvUgn0eP5jeWvV5wYPtpFFTu+n+jCpe5VEcqlpTdYiSP3s3MhW9QucoNg08ov0hhaiM83Q==
 
-"@better-auth/prisma-adapter@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.0.tgz#54ea61b3ee9753350fc94a9c726da2da9989d97e"
-  integrity sha512-8x/aqR1NckGiC49P02cxuH0wLzbJXvE/v2NnMEFo6h3uWq4ESYL0jTY9vNlFeVIKDyGSzrbteofzzG+yQv0wAQ==
+"@better-auth/prisma-adapter@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.1.tgz#cafeee8cf6b43e591ab7aab0d31779779336c3ff"
+  integrity sha512-KqNHKHFQM+Pc2SF/k5DbVAUzCXZqMIDx4QpFAmDt3Wo0tzvGl12g6/ph8bOM8LKScZAVPpkm3z+NRDbh5sKuuw==
 
-"@better-auth/telemetry@1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.0.tgz#c18e55ad706785ff79b5e2bb6d7ebf75172a7a13"
-  integrity sha512-JrJyx1ioswEAh8rB7mVxEFIDLl6AK3W3rtqc2MK6BgvcmKveWJ730Eoi/PNvi0b4tFk4kczmuQITm69uMbnTvQ==
+"@better-auth/telemetry@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.1.tgz#6d3db9a293a36c40874cd634f32155e1d631ffd4"
+  integrity sha512-UrY49vZ7RHvMlsVlivgvIsCECdl2DAQfmqI8aymY0GMWE6MjukrZ3iS+L+txKWrV7I8vt5itc468ntR1PuvbKw==
 
 "@better-auth/utils@0.4.0", "@better-auth/utils@^0.4.0":
   version "0.4.0"
@@ -1832,15 +1832,15 @@
   resolved "https://registry.yarnpkg.com/@tanstack/history/-/history-1.161.6.tgz#9011182f021ef7c9a6a30148570e2b1b99a12d2d"
   integrity sha512-NaOGLRrddszbQj9upGat6HG/4TKvXLvu+osAIgfxPYA+eIvYKv8GKDJOrY2D3/U9MRnKfMWD7bU4jeD4xmqyIg==
 
-"@tanstack/query-core@5.96.2":
-  version "5.96.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.96.2.tgz#766dab253476afd0b27959b66abb606d8d2dd9f5"
-  integrity sha512-hzI6cTVh4KNRk8UtoIBS7Lv9g6BnJPXvBKsvYH1aGWvv0347jT3BnSvztOE+kD76XGvZnRC/t6qdW1CaIfwCeA==
+"@tanstack/query-core@5.97.0":
+  version "5.97.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.97.0.tgz#538c66b9290cd57771c2e198c9d8f89d89299943"
+  integrity sha512-QdpLP5VzVMgo4VtaPppRA2W04UFjIqX+bxke/ZJhE5cfd5UPkRzqIAJQt9uXkQJjqE8LBOMbKv7f8HCsZltXlg==
 
-"@tanstack/query-devtools@5.96.2":
-  version "5.96.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/query-devtools/-/query-devtools-5.96.2.tgz#6301662b95d4a7a8b9b53e53d3a9091ae45e4d25"
-  integrity sha512-vBTB1Qhbm3nHSbEUtQwks/EdcAtFfEapr1WyBW4w2ExYKuXVi3jIxUIHf5MlSltiHuL7zNyUuanqT/7sI2sb6g==
+"@tanstack/query-devtools@5.97.0":
+  version "5.97.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-devtools/-/query-devtools-5.97.0.tgz#75c414442c8f1fed87af966dfc8e6e66273a3b10"
+  integrity sha512-ZMjAuYhQCKwKLKFMrD+HJDehHwWBVTGOuWBf4vEjR9unO+UGUjQ1mw2TuVbQKoLN/eRwB7qtlPsWBqobBoRBMQ==
 
 "@tanstack/react-devtools@^0.7.0":
   version "0.7.11"
@@ -1850,18 +1850,18 @@
     "@tanstack/devtools" "0.7.0"
 
 "@tanstack/react-query-devtools@^5.84.2":
-  version "5.96.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query-devtools/-/react-query-devtools-5.96.2.tgz#b44a19f1ebdb45a3e59fcf4e4361ff37500f382c"
-  integrity sha512-nTFKLGuTOFvmFRvcyZ3ArWC/DnMNPoBh6h/2yD6rsf7TCTJCQt+oUWOp2uKPTIuEPtF/vN9Kw5tl5mD1Kbposw==
+  version "5.97.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-devtools/-/react-query-devtools-5.97.0.tgz#e7df984c57635bff81d081f1b74116f09f95023b"
+  integrity sha512-X4/VZKCbBIRj8cVD/oZCKTwwPmFXrY1VOfwUT5qI/+/JZYAUS+8vGNMqwBXbaAu1ZsVzzDzkT/wtBE/5OtQYGg==
   dependencies:
-    "@tanstack/query-devtools" "5.96.2"
+    "@tanstack/query-devtools" "5.97.0"
 
 "@tanstack/react-query@^5.66.5":
-  version "5.96.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.96.2.tgz#a164abfb80eb5e7772bbcddfa7240f3fd8d0d7be"
-  integrity sha512-sYyzzJT4G0g02azzJ8o55VFFV31XvFpdUpG+unxS0vSaYsJnSPKGoI6WdPwUucJL1wpgGfwfmntNX/Ub1uOViA==
+  version "5.97.0"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.97.0.tgz#0df5f6320a4b62ae8ed5042bb59166b6426624ad"
+  integrity sha512-y4So4eGcQoK2WVMAcDNZE9ofB/p5v1OlKvtc1F3uqHwrtifobT7q+ZnXk2mRkc8E84HKYSlAE9z6HXl2V0+ySQ==
   dependencies:
-    "@tanstack/query-core" "5.96.2"
+    "@tanstack/query-core" "5.97.0"
 
 "@tanstack/react-router-devtools@^1.132.0":
   version "1.166.11"
@@ -2679,17 +2679,17 @@ bcp-47@^2.0.0:
     is-decimal "^2.0.0"
 
 better-auth@^1.4.12:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.0.tgz#62993174e4c5f3c5039f6bfcd9090fea0bbeae40"
-  integrity sha512-reEK4X37w/X0Wi0ZpNSo6w3j9F2tsA7ebWn2AmWTzkceiatkxcadRg9aK+Mirw2PY56GQqX9dBgqBG6XMNU/Zg==
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.1.tgz#c279a1e92566763672339bba16023e54ada1abb0"
+  integrity sha512-rXxR5G0xNezCiwlxdvU5L0BsYvlddvGfL61azo1w8IFrqck0jPOuE9zU28ZFJpQjfTNwXhWp0ddEqxY7zVZxmQ==
   dependencies:
-    "@better-auth/core" "1.6.0"
-    "@better-auth/drizzle-adapter" "1.6.0"
-    "@better-auth/kysely-adapter" "1.6.0"
-    "@better-auth/memory-adapter" "1.6.0"
-    "@better-auth/mongo-adapter" "1.6.0"
-    "@better-auth/prisma-adapter" "1.6.0"
-    "@better-auth/telemetry" "1.6.0"
+    "@better-auth/core" "1.6.1"
+    "@better-auth/drizzle-adapter" "1.6.1"
+    "@better-auth/kysely-adapter" "1.6.1"
+    "@better-auth/memory-adapter" "1.6.1"
+    "@better-auth/mongo-adapter" "1.6.1"
+    "@better-auth/prisma-adapter" "1.6.1"
+    "@better-auth/telemetry" "1.6.1"
     "@better-auth/utils" "0.4.0"
     "@better-fetch/fetch" "1.1.21"
     "@noble/ciphers" "^2.1.1"
@@ -4682,9 +4682,9 @@ rbush@^4.0.1:
     quickselect "^3.0.0"
 
 react-dom@^19.2.0:
-  version "19.2.4"
-  resolved "https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz"
-  integrity sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==
+  version "19.2.5"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.2.5.tgz#b8768b10837d0b8e9ca5b9e2d58dff3d880ea25e"
+  integrity sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==
   dependencies:
     scheduler "^0.27.0"
 
@@ -4736,9 +4736,9 @@ react-refresh@^0.18.0:
   integrity sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==
 
 react@^19.2.0:
-  version "19.2.4"
-  resolved "https://registry.npmjs.org/react/-/react-19.2.4.tgz"
-  integrity sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==
+  version "19.2.5"
+  resolved "https://registry.yarnpkg.com/react/-/react-19.2.5.tgz#c888ab8b8ef33e2597fae8bdb2d77edbdb42858b"
+  integrity sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==
 
 readdirp@~3.6.0:
   version "3.6.0"
@@ -4841,7 +4841,7 @@ saxes@^6.0.0:
 
 scheduler@^0.27.0:
   version "0.27.0"
-  resolved "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.27.0.tgz#0c4ef82d67d1e5c1e359e8fc76d3a87f045fe5bd"
   integrity sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==
 
 semver@^6.3.1:
