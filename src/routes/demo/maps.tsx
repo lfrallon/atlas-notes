@@ -28,7 +28,7 @@ import {
   Scene,
   SceneTransforms,
 } from 'cesium'
-import { MapPinPlus } from 'lucide-react'
+import { MapPin, MapPinPlus } from 'lucide-react'
 
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -245,6 +245,7 @@ function RouteComponent() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
   const selectedCardRef = useRef<HTMLDivElement | null>(null)
+  const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
@@ -840,6 +841,50 @@ function RouteComponent() {
     }
   }, [selectedMessage])
 
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || !selectedPosition || !isPinning || viewer.isDestroyed()) {
+      if (selectedPinRef.current) {
+        selectedPinRef.current.style.opacity = '0'
+      }
+      return
+    }
+
+    const position = Cartesian3.fromDegrees(
+      selectedPosition.lng,
+      selectedPosition.lat,
+      24,
+    )
+
+    const updateSelectedPinPosition = () => {
+      const pin = selectedPinRef.current
+      if (!pin || !viewer.scene) return
+
+      const windowPosition = SceneTransforms.worldToWindowCoordinates(
+        viewer.scene,
+        position,
+      )
+
+      if (windowPosition && isPointVisibleFromCamera(viewer.scene, position)) {
+        pin.style.transform = `translate(${windowPosition.x}px, ${windowPosition.y}px) translate(-50%, -100%)`
+        pin.style.opacity = '1'
+        pin.style.visibility = 'visible'
+      } else {
+        pin.style.opacity = '0'
+        pin.style.visibility = 'hidden'
+      }
+    }
+
+    viewer.scene.preRender.addEventListener(updateSelectedPinPosition)
+    updateSelectedPinPosition()
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        viewer.scene.preRender.removeEventListener(updateSelectedPinPosition)
+      }
+    }
+  }, [isPinning, selectedPosition])
+
   async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
 
@@ -1093,6 +1138,17 @@ function RouteComponent() {
               to { opacity: 1; transform: translateY(0) scale(1); }
             }
           `}</style>
+        </div>
+      ) : null}
+
+      {isPinning && selectedPosition ? (
+        <div
+          ref={selectedPinRef}
+          className="pointer-events-none absolute left-0 top-0 z-20 text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] transition-opacity duration-150"
+          style={{ opacity: 0, visibility: 'hidden' }}
+          aria-hidden="true"
+        >
+          <MapPin className="h-8 w-8 fill-rose-500/40" />
         </div>
       ) : null}
 
