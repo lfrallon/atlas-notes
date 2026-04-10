@@ -1144,11 +1144,15 @@ function RouteComponent() {
       {isPinning && selectedPosition ? (
         <div
           ref={selectedPinRef}
-          className="pointer-events-none absolute left-0 top-0 z-20 text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)] transition-opacity duration-150"
+          className="pointer-events-none absolute left-0 top-0 z-20 transition-opacity duration-150"
           style={{ opacity: 0, visibility: 'hidden' }}
           aria-hidden="true"
         >
-          <MapPin className="h-8 w-8 fill-rose-500/40" />
+          <div className="relative flex h-8 w-8 items-center justify-center text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)]">
+            <span className="map-pin-wave map-pin-wave-delay-1 absolute h-8 w-8 rounded-full border border-rose-300/70" />
+            <span className="map-pin-wave map-pin-wave-delay-2 absolute h-8 w-8 rounded-full border border-rose-300/50" />
+            <MapPin className="relative h-8 w-8 fill-rose-500/40" />
+          </div>
         </div>
       ) : null}
 
@@ -1165,6 +1169,26 @@ function RouteComponent() {
           <p>Lng: {cursorPosition.lng.toFixed(5)}</p>
         </div>
       ) : null}
+
+      <style>{`
+        @keyframes mapPinWave {
+          0% { transform: scale(0.65); opacity: 0.75; }
+          75% { opacity: 0.25; }
+          100% { transform: scale(1.95); opacity: 0; }
+        }
+
+        .map-pin-wave {
+          animation: mapPinWave 1.8s ease-out infinite;
+        }
+
+        .map-pin-wave-delay-1 {
+          animation-delay: 0s;
+        }
+
+        .map-pin-wave-delay-2 {
+          animation-delay: 0.9s;
+        }
+      `}</style>
     </div>
   )
 }
