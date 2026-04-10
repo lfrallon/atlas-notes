@@ -709,15 +709,17 @@ function RouteComponent() {
         entity.point.pixelSize = isSelected
           ? new CallbackProperty(() => {
               const ms = Date.now()
-              return 20 + Math.sin(ms / 150) * 5
+              const cycle = (ms % 1500) / 1500
+              return 16 + cycle * 14
             }, false)
           : new ConstantProperty(isHovered ? 19 : 16)
 
         entity.point.color = isSelected
           ? new CallbackProperty(() => {
               const ms = Date.now()
-              const alpha = 0.6 + Math.sin(ms / 150) * 0.4
-              return Color.fromCssColorString('#a855f7').withAlpha(alpha)
+              const cycle = (ms % 1500) / 1500
+              const alpha = 0.9 - cycle * 0.8
+              return Color.fromCssColorString('#34d399').withAlpha(alpha)
             }, false)
           : new ConstantProperty(
               isHovered
@@ -725,13 +727,27 @@ function RouteComponent() {
                 : Color.fromCssColorString('#38bdf8').withAlpha(0.98),
             )
 
-        entity.point.outlineWidth = new ConstantProperty(isSelected ? 4 : 3)
+        entity.point.outlineColor = isSelected
+          ? new ConstantProperty(
+              Color.fromCssColorString('#a7f3d0').withAlpha(0.9),
+            )
+          : new ConstantProperty(
+              Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
+            )
+
+        entity.point.outlineWidth = isSelected
+          ? new CallbackProperty(() => {
+              const ms = Date.now()
+              const cycle = (ms % 1500) / 1500
+              return 2 + cycle * 6
+            }, false)
+          : new ConstantProperty(3)
       }
 
       if (entity.label) {
         entity.label.backgroundColor = new ConstantProperty(
           isSelected
-            ? Color.fromCssColorString('#581c87').withAlpha(0.86)
+            ? Color.fromCssColorString('#064e3b').withAlpha(0.86)
             : isHovered
               ? Color.fromCssColorString('#0f766e').withAlpha(0.84)
               : Color.fromCssColorString('#0f172a').withAlpha(0.88),
@@ -1137,6 +1153,7 @@ function RouteComponent() {
               from { opacity: 0; transform: translateY(16px) scale(0.98); }
               to { opacity: 1; transform: translateY(0) scale(1); }
             }
+
           `}</style>
         </div>
       ) : null}
