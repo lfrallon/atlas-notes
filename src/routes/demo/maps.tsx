@@ -762,6 +762,10 @@ function RouteComponent() {
         entity.point.outlineWidth = new ConstantProperty(1)
       }
 
+      if (entity.label && isSelected) {
+        entity.label.show = new ConstantProperty(false)
+      }
+
       if (entity.cylinder && isSelected) {
         entity.cylinder.length = new ConstantProperty(1)
 
@@ -862,7 +866,7 @@ function RouteComponent() {
         const isVisible = isPointVisibleFromCamera(viewer.scene, position)
 
         if (isVisible) {
-          card.style.transform = `translate(${windowPosition.x}px, ${windowPosition.y}px) translate(-50%, 20px)`
+          card.style.transform = `translate(${windowPosition.x + 240}px, ${windowPosition.y - 30}px) translate(-50%, 20px)`
           card.style.opacity = '1'
           card.style.pointerEvents = 'auto'
           card.style.visibility = 'visible'
