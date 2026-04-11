@@ -785,6 +785,13 @@ function RouteComponent() {
             return Color.ORANGE.withAlpha(alpha)
           }, false),
         )
+      } else if (entity.cylinder) {
+        const hiddenRadius = new ConstantProperty(0.0001)
+        entity.cylinder.topRadius = hiddenRadius
+        entity.cylinder.bottomRadius = hiddenRadius
+        entity.cylinder.material = new ColorMaterialProperty(
+          new ConstantProperty(Color.ORANGE.withAlpha(0)),
+        )
       }
       // viewer.zoomTo(entity)
     })
