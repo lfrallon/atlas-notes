@@ -29,8 +29,6 @@ import {
   SceneTransforms,
   ColorMaterialProperty,
   Entity,
-  PinBuilder,
-  MaterialProperty,
 } from 'cesium'
 import { MapPin, MapPinPlus } from 'lucide-react'
 
@@ -716,7 +714,7 @@ function RouteComponent() {
 
     function getCameraDerivedBaseRadius(entity: Entity) {
       const entityPosition = entity.position?.getValue(JulianDate.now())
-      if (!entityPosition) return minRadiusMeters
+      if (!entityPosition || !viewer) return minRadiusMeters
 
       const distance = Cartesian3.distance(
         viewer.camera.positionWC,
