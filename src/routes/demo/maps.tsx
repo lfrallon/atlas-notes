@@ -706,10 +706,33 @@ function RouteComponent() {
     if (!viewer || viewer.isDestroyed()) return
 
     const duration = 1800
-    const baseRadius = 1500
+    const targetScreenRadiusPixels = 24
+    const minRadiusMeters = 120
+    const maxRadiusMeters = 120_000
 
     function easeOutCubic(t: number) {
       return 1 - Math.pow(1 - t, 3)
+    }
+
+    function getCameraDerivedBaseRadius(entity: Entity) {
+      const entityPosition = entity.position?.getValue(JulianDate.now())
+      if (!entityPosition) return minRadiusMeters
+
+      const distance = Cartesian3.distance(
+        viewer.camera.positionWC,
+        entityPosition,
+      )
+      const canvasHeight = viewer.scene.canvas.clientHeight
+      const frustum = viewer.camera.frustum as { fovy?: number }
+      const fovy = frustum.fovy
+
+      if (!canvasHeight || typeof fovy !== 'number') return minRadiusMeters
+
+      const metersPerPixel =
+        (2 * distance * Math.tan(fovy / 2)) / Math.max(canvasHeight, 1)
+      const radiusMeters = targetScreenRadiusPixels * metersPerPixel
+
+      return CesiumMath.clamp(radiusMeters, minRadiusMeters, maxRadiusMeters)
     }
 
     viewer.entities.values.forEach((entity) => {
@@ -744,19 +767,16 @@ function RouteComponent() {
       if (entity.cylinder && isSelected) {
         entity.cylinder.length = new ConstantProperty(1)
 
-        entity.cylinder.topRadius = new CallbackProperty(function () {
+        const animatedRadius = new CallbackProperty(function () {
+          const baseRadius = getCameraDerivedBaseRadius(entity)
           let t = (Date.now() % duration) / duration
           let eased = easeOutCubic(t)
           let scale = 0.65 + (1.95 - 0.65) * eased
           return baseRadius * scale
         }, false)
 
-        entity.cylinder.bottomRadius = new CallbackProperty(function () {
-          let t = (Date.now() % duration) / duration
-          let eased = easeOutCubic(t)
-          let scale = 0.65 + (1.95 - 0.65) * eased
-          return baseRadius * scale
-        }, false)
+        entity.cylinder.topRadius = animatedRadius
+        entity.cylinder.bottomRadius = animatedRadius
 
         entity.cylinder.material = new ColorMaterialProperty(
           new CallbackProperty(function () {
