@@ -27,6 +27,10 @@ import {
   Viewer,
   Scene,
   SceneTransforms,
+  ColorMaterialProperty,
+  Entity,
+  PinBuilder,
+  MaterialProperty,
 } from 'cesium'
 import { MapPin, MapPinPlus } from 'lucide-react'
 
@@ -656,12 +660,15 @@ function RouteComponent() {
       const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 24)
       const shortMessage =
         item.mapMessage.length > 48
-          ? `${item.mapMessage.slice(0, 45).trimEnd()}…`
+          ? `${item.mapMessage.slice(0, 45).trimEnd()}`
           : item.mapMessage
 
       viewer.entities.add({
         id: `message-${item.id}`,
         position,
+        cylinder: {
+          length: 1,
+        },
         point: {
           pixelSize: 16,
           color: Color.fromCssColorString('#38bdf8').withAlpha(0.98),
@@ -698,6 +705,13 @@ function RouteComponent() {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
+    const duration = 1800
+    const baseRadius = 1500
+
+    function easeOutCubic(t: number) {
+      return 1 - Math.pow(1 - t, 3)
+    }
+
     viewer.entities.values.forEach((entity) => {
       const entityId = entity.id.toString()
       if (!entityId.startsWith('message-')) return
@@ -706,63 +720,55 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.pixelSize = isSelected
-          ? new CallbackProperty(() => {
-              const ms = Date.now()
-              const cycle = (ms % 1500) / 1500
-              return 16 + cycle * 14
-            }, false)
-          : new ConstantProperty(isHovered ? 19 : 16)
+        entity.point.pixelSize = new ConstantProperty(
+          isSelected ? 6 : isHovered ? 14 : 12,
+        )
 
-        entity.point.color = isSelected
-          ? new CallbackProperty(() => {
-              const ms = Date.now()
-              const cycle = (ms % 1500) / 1500
-              const alpha = 0.9 - cycle * 0.8
-              return Color.fromCssColorString('#34d399').withAlpha(alpha)
-            }, false)
-          : new ConstantProperty(
-              isHovered
-                ? Color.fromCssColorString('#7dd3fc').withAlpha(1)
-                : Color.fromCssColorString('#38bdf8').withAlpha(0.98),
-            )
+        entity.point.color = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#FF4D00').withAlpha(0.9)
+            : isHovered
+              ? Color.fromCssColorString('#1DADC0').withAlpha(0.85)
+              : Color.fromCssColorString('#00AEEF').withAlpha(0.75),
+        )
 
-        entity.point.outlineColor = isSelected
-          ? new ConstantProperty(
-              Color.fromCssColorString('#a7f3d0').withAlpha(0.9),
-            )
-          : new ConstantProperty(
-              Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
-            )
+        entity.point.outlineColor = new ConstantProperty(
+          isSelected
+            ? Color.fromCssColorString('#FF7F00').withAlpha(0.8)
+            : Color.fromCssColorString('#00AEEF').withAlpha(0.8),
+        )
 
-        entity.point.outlineWidth = isSelected
-          ? new CallbackProperty(() => {
-              const ms = Date.now()
-              const cycle = (ms % 1500) / 1500
-              return 2 + cycle * 6
-            }, false)
-          : new ConstantProperty(3)
+        entity.point.outlineWidth = new ConstantProperty(1)
       }
 
-      if (entity.label) {
-        entity.label.backgroundColor = new ConstantProperty(
-          isSelected
-            ? Color.fromCssColorString('#064e3b').withAlpha(0.86)
-            : isHovered
-              ? Color.fromCssColorString('#0f766e').withAlpha(0.84)
-              : Color.fromCssColorString('#0f172a').withAlpha(0.88),
-        )
-        entity.label.backgroundPadding = new ConstantProperty(
-          isSelected
-            ? new Cartesian2(18, 12)
-            : isHovered
-              ? new Cartesian2(17, 11)
-              : new Cartesian2(16, 10),
-        )
-        entity.label.scale = new ConstantProperty(
-          isSelected ? 1.08 : isHovered ? 1.04 : 1,
+      if (entity.cylinder && isSelected) {
+        entity.cylinder.length = new ConstantProperty(1)
+
+        entity.cylinder.topRadius = new CallbackProperty(function () {
+          let t = (Date.now() % duration) / duration
+          let eased = easeOutCubic(t)
+          let scale = 0.65 + (1.95 - 0.65) * eased
+          return baseRadius * scale
+        }, false)
+
+        entity.cylinder.bottomRadius = new CallbackProperty(function () {
+          let t = (Date.now() % duration) / duration
+          let eased = easeOutCubic(t)
+          let scale = 0.65 + (1.95 - 0.65) * eased
+          return baseRadius * scale
+        }, false)
+
+        entity.cylinder.material = new ColorMaterialProperty(
+          new CallbackProperty(function () {
+            let t = (Date.now() % duration) / duration
+            let eased = easeOutCubic(t)
+            // smoother fade (more natural than linear)
+            let alpha = (1 - eased) * 0.75
+            return Color.ORANGE.withAlpha(alpha)
+          }, false),
         )
       }
+      // viewer.zoomTo(entity)
     })
   }, [hoveredMessageId, selectedMessageId, messages])
 
