@@ -35,6 +35,9 @@ import { MapPin, MapPinPlus } from 'lucide-react'
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
+// utils
+import { dmsCoordinates } from '@/utils/dms'
+
 // types
 const searchSchema = z
   .object({
@@ -453,16 +456,12 @@ function RouteComponent() {
     }
   }, [data])
 
-  if (!CESIUM_TOKEN) {
-    return (
-      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] w-full items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
-        <p>
-          Missing <code>VITE_CESIUM_ION_TOKEN</code>. Add your Cesium Ion token
-          to render the globe.
-        </p>
-      </div>
+  const { latitude, longitude } = useMemo(() => {
+    return dmsCoordinates(
+      Number(selectedLabel?.split(',')[0]),
+      Number(selectedLabel?.split(',')[1]),
     )
-  }
+  }, [selectedLabel])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -997,6 +996,17 @@ function RouteComponent() {
     setCursorPosition(null)
   }
 
+  if (!CESIUM_TOKEN) {
+    return (
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] w-full items-center justify-center bg-zinc-950 p-6 text-center text-zinc-100">
+        <p>
+          Missing <code>VITE_CESIUM_ION_TOKEN</code>. Add your Cesium Ion token
+          to render the globe.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="relative min-h-[calc(100dvh-var(--app-header-height))] w-full overflow-hidden bg-zinc-950">
       <div className="h-[calc(100dvh-var(--app-header-height))] w-full">
@@ -1052,7 +1062,9 @@ function RouteComponent() {
                   Drop mode
                 </span>
                 <span className="rounded-full border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
-                  {selectedLabel ? selectedLabel : 'Waiting for location'}
+                  {selectedLabel
+                    ? `${latitude.deg}°${latitude.mins}'${latitude.secs}"${latitude.bearing}, ${longitude.deg}°${longitude.mins}'${longitude.secs}"${longitude.bearing}`
+                    : 'Waiting for location'}
                 </span>
               </div>
               <input
@@ -1217,30 +1229,10 @@ function RouteComponent() {
             transform: `translate(${cursorPosition.x + 12}px, ${cursorPosition.y + 12}px)`,
           }}
         >
-          <p>Lat: {cursorPosition.lat.toFixed(5)}</p>
-          <p>Lng: {cursorPosition.lng.toFixed(5)}</p>
+          <p>Lat: {cursorPosition.lat.toFixed(4)}</p>
+          <p>Lng: {cursorPosition.lng.toFixed(4)}</p>
         </div>
       ) : null}
-
-      <style>{`
-        @keyframes mapPinWave {
-          0% { transform: scale(0.65); opacity: 0.75; }
-          75% { opacity: 0.25; }
-          100% { transform: scale(1.95); opacity: 0; }
-        }
-
-        .map-pin-wave {
-          animation: mapPinWave 1.8s ease-out infinite;
-        }
-
-        .map-pin-wave-delay-1 {
-          animation-delay: 0s;
-        }
-
-        .map-pin-wave-delay-2 {
-          animation-delay: 0.9s;
-        }
-      `}</style>
     </div>
   )
 }
