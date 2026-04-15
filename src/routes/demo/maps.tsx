@@ -740,22 +740,17 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.pixelSize = new ConstantProperty(
-          isSelected ? 6 : isHovered ? 14 : 12,
-        )
+        entity.point.show = new ConstantProperty(!isSelected)
+        entity.point.pixelSize = new ConstantProperty(isHovered ? 14 : 12)
 
         entity.point.color = new ConstantProperty(
-          isSelected
-            ? Color.fromCssColorString('#FF4D00').withAlpha(0.9)
-            : isHovered
-              ? Color.fromCssColorString('#1DADC0').withAlpha(0.85)
-              : Color.fromCssColorString('#00AEEF').withAlpha(0.75),
+          isHovered
+            ? Color.fromCssColorString('#1DADC0').withAlpha(0.85)
+            : Color.fromCssColorString('#00AEEF').withAlpha(0.75),
         )
 
         entity.point.outlineColor = new ConstantProperty(
-          isSelected
-            ? Color.fromCssColorString('#FF7F00').withAlpha(0.8)
-            : Color.fromCssColorString('#00AEEF').withAlpha(0.8),
+          Color.fromCssColorString('#00AEEF').withAlpha(0.8),
         )
 
         entity.point.outlineWidth = new ConstantProperty(1)
@@ -767,12 +762,13 @@ function RouteComponent() {
 
       if (entity.cylinder && isSelected) {
         entity.cylinder.length = new ConstantProperty(1)
+        entity.cylinder.outline = new ConstantProperty(true)
 
         const animatedRadius = new CallbackProperty(function () {
           const baseRadius = getCameraDerivedBaseRadius(entity)
-          let t = (Date.now() % duration) / duration
-          let eased = easeOutCubic(t)
-          let scale = 0.65 + (1.95 - 0.65) * eased
+          const t = (Date.now() % duration) / duration
+          const eased = easeOutCubic(t)
+          const scale = 0.65 + (1.95 - 0.65) * eased
           return baseRadius * scale
         }, false)
 
@@ -781,19 +777,29 @@ function RouteComponent() {
 
         entity.cylinder.material = new ColorMaterialProperty(
           new CallbackProperty(function () {
-            let t = (Date.now() % duration) / duration
-            let eased = easeOutCubic(t)
-            // smoother fade (more natural than linear)
-            let alpha = (1 - eased) * 0.75
+            const t = (Date.now() % duration) / duration
+            const eased = easeOutCubic(t)
+            const alpha = (1 - eased) * 0.15
             return Color.ORANGE.withAlpha(alpha)
           }, false),
         )
+
+        entity.cylinder.outlineColor = new CallbackProperty(function () {
+          const t = (Date.now() % duration) / duration
+          const eased = easeOutCubic(t)
+          const alpha = 0.2 + (1 - eased) * 0.7
+          return Color.ORANGE.withAlpha(alpha)
+        }, false)
       } else if (entity.cylinder) {
         const hiddenRadius = new ConstantProperty(0.0001)
         entity.cylinder.topRadius = hiddenRadius
         entity.cylinder.bottomRadius = hiddenRadius
+        entity.cylinder.outline = new ConstantProperty(false)
         entity.cylinder.material = new ColorMaterialProperty(
           new ConstantProperty(Color.ORANGE.withAlpha(0)),
+        )
+        entity.cylinder.outlineColor = new ConstantProperty(
+          Color.ORANGE.withAlpha(0),
         )
       }
       // viewer.zoomTo(entity)
