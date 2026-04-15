@@ -703,11 +703,7 @@ function RouteComponent() {
     if (!viewer || viewer.isDestroyed()) return
 
     const duration = 1800
-    const waveStages = [
-      { minScale: 0.55, maxScale: 1.1, fillAlpha: 0.2, outlineAlpha: 0.95 },
-      { minScale: 0.95, maxScale: 1.45, fillAlpha: 0.14, outlineAlpha: 0.75 },
-      { minScale: 1.35, maxScale: 1.95, fillAlpha: 0.1, outlineAlpha: 0.55 },
-    ] as const
+    const wavePhaseOffsets = [0, 1 / 3, 2 / 3] as const
     const targetScreenRadiusPixels = 24
     const minRadiusMeters = 120
     const maxRadiusMeters = 120_000
@@ -737,9 +733,47 @@ function RouteComponent() {
       return CesiumMath.clamp(radiusMeters, minRadiusMeters, maxRadiusMeters)
     }
 
+    function getWaveProgress(phaseOffset = 0) {
+      return ((Date.now() % duration) / duration + phaseOffset) % 1
+    }
+
+    function applyPulseWaveToCylinder(entity: Entity, phaseOffset = 0) {
+      if (!entity.cylinder) return
+
+      entity.cylinder.length = new ConstantProperty(1)
+      entity.cylinder.outline = new ConstantProperty(true)
+
+      const animatedRadius = new CallbackProperty(function () {
+        const baseRadius = getCameraDerivedBaseRadius(entity)
+        const eased = easeOutCubic(getWaveProgress(phaseOffset))
+        const scale = 0.55 + (1.95 - 0.55) * eased
+        return baseRadius * scale
+      }, false)
+
+      entity.cylinder.topRadius = animatedRadius
+      entity.cylinder.bottomRadius = animatedRadius
+
+      entity.cylinder.material = new ColorMaterialProperty(
+        new CallbackProperty(function () {
+          const eased = easeOutCubic(getWaveProgress(phaseOffset))
+          const alpha = (1 - eased) * 0.17
+          return Color.ORANGE.withAlpha(alpha)
+        }, false),
+      )
+
+      entity.cylinder.outlineColor = new CallbackProperty(function () {
+        const eased = easeOutCubic(getWaveProgress(phaseOffset))
+        const alpha = 0.2 + (1 - eased) * 0.78
+        return Color.ORANGE.withAlpha(alpha)
+      }, false)
+    }
+
+    const selectedWaveEntityIds = new Set<string>()
+
     viewer.entities.values.forEach((entity) => {
       const entityId = entity.id.toString()
       if (!entityId.startsWith('message-')) return
+      if (entityId.includes('-wave-')) return
 
       const isSelected = entityId === selectedMessageId
       const isHovered = entityId === hoveredMessageId
@@ -769,47 +803,27 @@ function RouteComponent() {
       }
 
       if (entity.cylinder && isSelected) {
-        entity.cylinder.length = new ConstantProperty(1)
-        entity.cylinder.outline = new ConstantProperty(true)
+        applyPulseWaveToCylinder(entity, wavePhaseOffsets[0])
 
-        const animatedRadius = new CallbackProperty(function () {
-          const baseRadius = getCameraDerivedBaseRadius(entity)
-          const normalizedTime = (Date.now() % duration) / duration
-          const stagePosition = normalizedTime * waveStages.length
-          const stageIndex = Math.floor(stagePosition) % waveStages.length
-          const stageProgress = stagePosition - stageIndex
-          const stage = waveStages[stageIndex]
-          const eased = easeOutCubic(stageProgress)
-          const scale = stage.minScale + (stage.maxScale - stage.minScale) * eased
-          return baseRadius * scale
-        }, false)
+        for (let waveIndex = 1; waveIndex < wavePhaseOffsets.length; waveIndex++) {
+          const waveEntityId = `${entityId}-wave-${waveIndex}`
+          selectedWaveEntityIds.add(waveEntityId)
 
-        entity.cylinder.topRadius = animatedRadius
-        entity.cylinder.bottomRadius = animatedRadius
+          let waveEntity = viewer.entities.getById(waveEntityId)
+          if (!waveEntity) {
+            waveEntity = viewer.entities.add({
+              id: waveEntityId,
+              position: entity.position,
+              cylinder: {
+                length: 1,
+              },
+            })
+          } else {
+            waveEntity.position = entity.position
+          }
 
-        entity.cylinder.material = new ColorMaterialProperty(
-          new CallbackProperty(function () {
-            const normalizedTime = (Date.now() % duration) / duration
-            const stagePosition = normalizedTime * waveStages.length
-            const stageIndex = Math.floor(stagePosition) % waveStages.length
-            const stageProgress = stagePosition - stageIndex
-            const stage = waveStages[stageIndex]
-            const eased = easeOutCubic(stageProgress)
-            const alpha = (1 - eased) * stage.fillAlpha
-            return Color.ORANGE.withAlpha(alpha)
-          }, false),
-        )
-
-        entity.cylinder.outlineColor = new CallbackProperty(function () {
-          const normalizedTime = (Date.now() % duration) / duration
-          const stagePosition = normalizedTime * waveStages.length
-          const stageIndex = Math.floor(stagePosition) % waveStages.length
-          const stageProgress = stagePosition - stageIndex
-          const stage = waveStages[stageIndex]
-          const eased = easeOutCubic(stageProgress)
-          const alpha = 0.2 + (1 - eased) * stage.outlineAlpha
-          return Color.ORANGE.withAlpha(alpha)
-        }, false)
+          applyPulseWaveToCylinder(waveEntity, wavePhaseOffsets[waveIndex])
+        }
       } else if (entity.cylinder) {
         const hiddenRadius = new ConstantProperty(0.0001)
         entity.cylinder.topRadius = hiddenRadius
@@ -823,6 +837,15 @@ function RouteComponent() {
         )
       }
       // viewer.zoomTo(entity)
+    })
+
+    const staleWaveEntities = viewer.entities.values.filter((entity) => {
+      const id = entity.id.toString()
+      return id.includes('-wave-') && !selectedWaveEntityIds.has(id)
+    })
+
+    staleWaveEntities.forEach((entity) => {
+      viewer.entities.remove(entity)
     })
   }, [hoveredMessageId, selectedMessageId, messages])
 
