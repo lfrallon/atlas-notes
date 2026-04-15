@@ -740,13 +740,16 @@ function RouteComponent() {
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
-        entity.point.show = new ConstantProperty(!isSelected)
-        entity.point.pixelSize = new ConstantProperty(isHovered ? 14 : 12)
+        entity.point.pixelSize = new ConstantProperty(
+          isSelected ? 6 : isHovered ? 14 : 12,
+        )
 
         entity.point.color = new ConstantProperty(
-          isHovered
-            ? Color.fromCssColorString('#1DADC0').withAlpha(0.85)
-            : Color.fromCssColorString('#00AEEF').withAlpha(0.75),
+          isSelected
+            ? Color.fromCssColorString('#FF4D00').withAlpha(0.9)
+            : isHovered
+              ? Color.fromCssColorString('#1DADC0').withAlpha(0.85)
+              : Color.fromCssColorString('#00AEEF').withAlpha(0.75),
         )
 
         entity.point.outlineColor = new ConstantProperty(
