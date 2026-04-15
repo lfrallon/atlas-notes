@@ -703,6 +703,11 @@ function RouteComponent() {
     if (!viewer || viewer.isDestroyed()) return
 
     const duration = 1800
+    const waveStages = [
+      { minScale: 0.55, maxScale: 1.1, fillAlpha: 0.2, outlineAlpha: 0.95 },
+      { minScale: 0.95, maxScale: 1.45, fillAlpha: 0.14, outlineAlpha: 0.75 },
+      { minScale: 1.35, maxScale: 1.95, fillAlpha: 0.1, outlineAlpha: 0.55 },
+    ] as const
     const targetScreenRadiusPixels = 24
     const minRadiusMeters = 120
     const maxRadiusMeters = 120_000
@@ -769,9 +774,13 @@ function RouteComponent() {
 
         const animatedRadius = new CallbackProperty(function () {
           const baseRadius = getCameraDerivedBaseRadius(entity)
-          const t = (Date.now() % duration) / duration
-          const eased = easeOutCubic(t)
-          const scale = 0.65 + (1.95 - 0.65) * eased
+          const normalizedTime = (Date.now() % duration) / duration
+          const stagePosition = normalizedTime * waveStages.length
+          const stageIndex = Math.floor(stagePosition) % waveStages.length
+          const stageProgress = stagePosition - stageIndex
+          const stage = waveStages[stageIndex]
+          const eased = easeOutCubic(stageProgress)
+          const scale = stage.minScale + (stage.maxScale - stage.minScale) * eased
           return baseRadius * scale
         }, false)
 
@@ -780,17 +789,25 @@ function RouteComponent() {
 
         entity.cylinder.material = new ColorMaterialProperty(
           new CallbackProperty(function () {
-            const t = (Date.now() % duration) / duration
-            const eased = easeOutCubic(t)
-            const alpha = (1 - eased) * 0.15
+            const normalizedTime = (Date.now() % duration) / duration
+            const stagePosition = normalizedTime * waveStages.length
+            const stageIndex = Math.floor(stagePosition) % waveStages.length
+            const stageProgress = stagePosition - stageIndex
+            const stage = waveStages[stageIndex]
+            const eased = easeOutCubic(stageProgress)
+            const alpha = (1 - eased) * stage.fillAlpha
             return Color.ORANGE.withAlpha(alpha)
           }, false),
         )
 
         entity.cylinder.outlineColor = new CallbackProperty(function () {
-          const t = (Date.now() % duration) / duration
-          const eased = easeOutCubic(t)
-          const alpha = 0.2 + (1 - eased) * 0.7
+          const normalizedTime = (Date.now() % duration) / duration
+          const stagePosition = normalizedTime * waveStages.length
+          const stageIndex = Math.floor(stagePosition) % waveStages.length
+          const stageProgress = stagePosition - stageIndex
+          const stage = waveStages[stageIndex]
+          const eased = easeOutCubic(stageProgress)
+          const alpha = 0.2 + (1 - eased) * stage.outlineAlpha
           return Color.ORANGE.withAlpha(alpha)
         }, false)
       } else if (entity.cylinder) {
