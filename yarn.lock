@@ -232,44 +232,44 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@better-auth/core@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.3.tgz#5bdca6ff42e22c9b59d05e86119a2267b7b80803"
-  integrity sha512-HefGR2SNfAi2RhT6XvSYViH4a0xoCGGL10bSDiv6sQGrmY6ulEQEV1X4nebTHeG0P6jdBmXAoEW3k37nhpk99w==
+"@better-auth/core@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.4.tgz#db05ba6c852cb585f7118e5226cb4cbbe0546710"
+  integrity sha512-G52PXrx+qQcwkmP5Kmjjl8kWl15DFaZF5H1n9jY7kuCJiVIJMnr4WTSGMIOt07OwD+CSy9b4IA5DpuADZC5znA==
   dependencies:
     "@opentelemetry/semantic-conventions" "^1.39.0"
     "@standard-schema/spec" "^1.1.0"
     zod "^4.3.6"
 
-"@better-auth/drizzle-adapter@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.3.tgz#c3670da69f4854de9e4f21b1bb53a8814fefd6db"
-  integrity sha512-P5erUYKoctOnOf+hd3umkOhOqJA+WuDByzmgnxZMBQLhgmusn5cgW10449B9aZu8HxIcU/tUQo/8ucwXHNzZ0A==
+"@better-auth/drizzle-adapter@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.4.tgz#72afc0748561f43201ecc64f831618a4095f4b41"
+  integrity sha512-LYyFTTZD/VcSh59taYZ2V5clHP4+udQYYZlW0KTiLTzljZcmuETuflGB7++WKSdCJg7KtLQzoM0rMo9PgT/Prw==
 
-"@better-auth/kysely-adapter@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.3.tgz#206c8693e069eda42dd4d690a6e9358d9d932034"
-  integrity sha512-4iZLGaajEdPMgtiTARINbNZGl6CPHSzlS0fl4ONWryP/52iakYhXYNBJIB70Ls1Xl+kEqYkBFmndfj/x4j18RQ==
+"@better-auth/kysely-adapter@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.4.tgz#07c1db2fc9ba6235af24ec012f242b4dee2e97b1"
+  integrity sha512-CVuvhy81gs66oHjjMTVKV1bfVCPivJzf9za8xghGB9wrkeMaZnPVKVqDobHf8juDfT5XRMQJmrcGLxubI2le/A==
 
-"@better-auth/memory-adapter@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.3.tgz#eabe05d8229c407a6ae82bfbae862e4885948157"
-  integrity sha512-0HCogGjUqVBl5j+7pkoovyIIAcCKsy8wiebDbTnedD99bCXQ+BhBAf8KQG1wMx6Nnc8fFwDuhSBhvTmCrdlmMQ==
+"@better-auth/memory-adapter@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.4.tgz#1b4d3a97dbfa39fe85532b4d0ce4e3f660881ecb"
+  integrity sha512-eV6jw1roUohNHRo4qdUXJdaRpNmyWqtC1ADC2AMSRF3f6d4XPW+FqtAYhE87ZBq7nWDVgjrtawoUSVHREc8PrQ==
 
-"@better-auth/mongo-adapter@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.3.tgz#64adf319cff93034e5e9adcbe755df063800bcb6"
-  integrity sha512-xer3hjuYaqcx/qMdZMXTUQz4ROLeS14Knas6OSY2gK8jgAidZO7twcb+wLgTbtJYmoXZqKFzSxoWuf6LxVvZCw==
+"@better-auth/mongo-adapter@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.4.tgz#1dbdd84a9107297a028b83d08ea3843122cb9e0c"
+  integrity sha512-N2pjOSuZHeNeRuqCXuEzSN2WFqexzb7KbtuxHislkXMIQtUiMNhM8NJMxCqnVj4t22qryim4hv0K59QfqqGXWQ==
 
-"@better-auth/prisma-adapter@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.3.tgz#a7d92a8ac5ca1c58d45bbe9ba8282d58e3541efd"
-  integrity sha512-vrlGEdrpzNH+S0AjnQt6T9jeIxqYDNRwq/1lOQ50wS5OAzSjtZQ+Q/UCrBTF8ZBrYzQq28zIAuk6k2+xhqxZpQ==
+"@better-auth/prisma-adapter@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.4.tgz#33bb207902ddb0d8c69a05ca20c2674c924d4dcf"
+  integrity sha512-h6zuYYI+p5yK1TLci0V9JKfIitThBDmRK88ipoZzmZH3EyWUQfXcgC05WwOMCuM3mH+A9Auu/hLiiM7/VRfJgw==
 
-"@better-auth/telemetry@1.6.3":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.3.tgz#01acf5bd66e94145962d765df269cef3c1c51275"
-  integrity sha512-Kw2LFnxBt36KF0Cfw46qcOaNtuqgr6kjJPDHKHCx3b7tbiSAEeEhZCc7wvWYbZPXkgI58IGi+bMrgnWjFCG1Zw==
+"@better-auth/telemetry@1.6.4":
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.4.tgz#357791b5cab79807009773deceed088a6dcf9e51"
+  integrity sha512-x6ctfiHcdUshXvrAgGaAprxJI6obZP09BUmQn0LcQX4KYbx0B5M8+DToyVmv30iEL8rEmGyL187XamXbY4FwYw==
 
 "@better-auth/utils@0.4.0", "@better-auth/utils@^0.4.0":
   version "0.4.0"
@@ -2690,17 +2690,17 @@ bcp-47@^2.0.0:
     is-decimal "^2.0.0"
 
 better-auth@^1.4.12:
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.3.tgz#449ef34848f2ad6f82e274208d1939271d49188d"
-  integrity sha512-jMsoSYQyO8nNRuLEoCP+OUShLyeIGU8ioPYqra0IteLjnS3WNjHj21YE/COSJ/V/f0H5SInZiF+uXcEEHREDMQ==
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.4.tgz#e1f8451e7875b49ae71d055cf2064a1d35063d36"
+  integrity sha512-yb/IDzoheBcoP8vI4jB0KkGCg0UabvEKo8GDBjcHW/w2Bb9ltlHzWuwcIauowhPezDcyRWUr2ub2HNO2rp6p7A==
   dependencies:
-    "@better-auth/core" "1.6.3"
-    "@better-auth/drizzle-adapter" "1.6.3"
-    "@better-auth/kysely-adapter" "1.6.3"
-    "@better-auth/memory-adapter" "1.6.3"
-    "@better-auth/mongo-adapter" "1.6.3"
-    "@better-auth/prisma-adapter" "1.6.3"
-    "@better-auth/telemetry" "1.6.3"
+    "@better-auth/core" "1.6.4"
+    "@better-auth/drizzle-adapter" "1.6.4"
+    "@better-auth/kysely-adapter" "1.6.4"
+    "@better-auth/memory-adapter" "1.6.4"
+    "@better-auth/mongo-adapter" "1.6.4"
+    "@better-auth/prisma-adapter" "1.6.4"
+    "@better-auth/telemetry" "1.6.4"
     "@better-auth/utils" "0.4.0"
     "@better-fetch/fetch" "1.1.21"
     "@noble/ciphers" "^2.1.1"
