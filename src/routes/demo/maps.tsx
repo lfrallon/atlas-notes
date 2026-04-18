@@ -763,7 +763,7 @@ function RouteComponent() {
 
       entity.cylinder.outlineColor = new CallbackProperty(function () {
         const eased = easeOutCubic(getWaveProgress(phaseOffset))
-        const alpha = 0.2 + (1 - eased) * 0.78
+        const alpha = (1 - eased) * 0.78
         return Color.ORANGE.withAlpha(alpha)
       }, false)
     }
@@ -805,7 +805,11 @@ function RouteComponent() {
       if (entity.cylinder && isSelected) {
         applyPulseWaveToCylinder(entity, wavePhaseOffsets[0])
 
-        for (let waveIndex = 1; waveIndex < wavePhaseOffsets.length; waveIndex++) {
+        for (
+          let waveIndex = 1;
+          waveIndex < wavePhaseOffsets.length;
+          waveIndex++
+        ) {
           const waveEntityId = `${entityId}-wave-${waveIndex}`
           selectedWaveEntityIds.add(waveEntityId)
 
