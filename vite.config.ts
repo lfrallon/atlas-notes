@@ -5,7 +5,6 @@ import viteReact from '@vitejs/plugin-react'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
-import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 const config = defineConfig({
   build: {
@@ -15,6 +14,7 @@ const config = defineConfig({
     port: 3000,
   },
   resolve: {
+    tsconfigPaths: true,
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
@@ -24,10 +24,6 @@ const config = defineConfig({
   },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
-    // this is the plugin that enables path aliases
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
     tailwindcss(),
     tanstackStart(),
     viteReact(),
