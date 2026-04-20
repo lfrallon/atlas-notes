@@ -29,6 +29,8 @@ import {
   SceneTransforms,
   ColorMaterialProperty,
   Entity,
+  MaterialProperty,
+  Property,
 } from 'cesium'
 import { MapPin, MapPinPlus } from 'lucide-react'
 
@@ -127,6 +129,64 @@ const HOTSPOTS: HotspotConfig[] = [
   { id: 'brazil', bbox: '-74,-34,-34,5' },
   { id: 'western-europe', bbox: '-11,36,18,61' },
 ]
+const duration = 2500
+const wavePhaseOffsets = [0, 1 / 3, 2 / 3] as const
+const targetScreenRadiusPixels = 24
+const minRadiusMeters = 120
+const maxRadiusMeters = 120_000
+
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3)
+}
+
+function getCameraDerivedBaseRadius(entity: Entity, viewer: Viewer) {
+  const entityPosition = entity.position?.getValue(JulianDate.now())
+  if (!entityPosition || !viewer) return minRadiusMeters
+
+  const distance = Cartesian3.distance(viewer.camera.positionWC, entityPosition)
+  const canvasHeight = viewer.scene.canvas.clientHeight
+  const frustum = viewer.camera.frustum as { fovy?: number }
+  const fovy = frustum.fovy
+
+  if (!canvasHeight || typeof fovy !== 'number') return minRadiusMeters
+
+  const metersPerPixel =
+    (2 * distance * Math.tan(fovy / 2)) / Math.max(canvasHeight, 1)
+  const radiusMeters = targetScreenRadiusPixels * metersPerPixel
+
+  return CesiumMath.clamp(radiusMeters, minRadiusMeters, maxRadiusMeters)
+}
+
+function getWaveProgress(phaseOffset = 0) {
+  return ((Date.now() % duration) / duration + phaseOffset) % 1
+}
+
+function applyPulseWaveToCylinder(
+  entity: Entity,
+  phaseOffset = 0,
+  viewer: Viewer,
+  material: MaterialProperty,
+  outlineColor: Property,
+) {
+  if (!entity.cylinder) return
+
+  entity.cylinder.length = new ConstantProperty(1)
+  entity.cylinder.outline = new ConstantProperty(true)
+
+  const animatedRadius = new CallbackProperty(function () {
+    const baseRadius = getCameraDerivedBaseRadius(entity, viewer)
+    const eased = easeOutCubic(getWaveProgress(phaseOffset))
+    const scale = 0.55 + (1.95 - 0.55) * eased
+    return baseRadius * scale
+  }, false)
+
+  entity.cylinder.topRadius = animatedRadius
+  entity.cylinder.bottomRadius = animatedRadius
+
+  entity.cylinder.material = material
+
+  entity.cylinder.outlineColor = outlineColor
+}
 
 function getZoomBucket(height: number): MapViewport['zoomBucket'] {
   if (height > 2_000_000) return 'broad'
@@ -463,6 +523,13 @@ function RouteComponent() {
     )
   }, [selectedLabel])
 
+  const formattedSelectedMessageCoordinates = useMemo(() => {
+    return dmsCoordinates(
+      Number(selectedMessage?.latitude),
+      selectedMessage?.longitude,
+    )
+  }, [selectedMessage])
+
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -635,6 +702,155 @@ function RouteComponent() {
 
   useEffect(() => {
     const viewer = viewerRef.current
+    if (!viewer || !isPinning || !selectedPosition) return
+
+    if (isPinning && selectedPosition) {
+      viewer.entities.removeById(`pinning-message`)
+    }
+
+    viewer.entities.add({
+      id: `pinning-message`,
+      position: Cartesian3.fromDegrees(
+        selectedPosition.lng,
+        selectedPosition.lat,
+        12,
+      ),
+      cylinder: {
+        length: 1,
+      },
+      point: {
+        pixelSize: 3,
+        color: Color.fromCssColorString('#ff2056').withAlpha(0.98),
+        outlineColor: Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
+        outlineWidth: 1,
+        heightReference: 0,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        scaleByDistance: MARKER_SCALE,
+        translucencyByDistance: FLOAT_ALPHA,
+      },
+    })
+
+    const selectedWaveEntityIds = new Set<string>()
+
+    viewer.entities.values.forEach((entity) => {
+      const entityId = entity.id.toString()
+      if (!entityId.startsWith('pinning-')) return
+      if (entityId.includes('-pinningwave-')) return
+
+      if (entity.point) {
+        entity.point.pixelSize = new ConstantProperty(3)
+
+        entity.point.color = new ConstantProperty(
+          Color.fromCssColorString('#ff2056').withAlpha(0.9),
+        )
+
+        entity.point.outlineColor = new ConstantProperty(
+          Color.fromCssColorString('#FFFFFF').withAlpha(0.4),
+        )
+
+        entity.point.outlineWidth = new ConstantProperty(1)
+      }
+
+      if (entity.label) {
+        entity.label.show = new ConstantProperty(false)
+      }
+
+      if (entity.cylinder) {
+        const materialOne = new ColorMaterialProperty(
+          new CallbackProperty(function () {
+            const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
+            const alpha = (1 - eased) * 0.17
+            return Color.RED.withAlpha(alpha)
+          }, false),
+        )
+
+        const outlineColorOne = new CallbackProperty(function () {
+          const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
+          const alpha = (1 - eased) * 0.78
+          return Color.RED.withAlpha(alpha)
+        }, false)
+        applyPulseWaveToCylinder(
+          entity,
+          wavePhaseOffsets[0],
+          viewer,
+          materialOne,
+          outlineColorOne,
+        )
+
+        for (
+          let waveIndex = 1;
+          waveIndex < wavePhaseOffsets.length;
+          waveIndex++
+        ) {
+          const waveEntityId = `${entityId}-pinningwave-${waveIndex}`
+          selectedWaveEntityIds.add(waveEntityId)
+
+          let waveEntity = viewer.entities.getById(waveEntityId)
+          if (!waveEntity) {
+            waveEntity = viewer.entities.add({
+              id: waveEntityId,
+              position: entity.position,
+              cylinder: {
+                length: 1,
+              },
+            })
+          } else {
+            waveEntity.position = entity.position
+          }
+
+          const materialTwo = new ColorMaterialProperty(
+            new CallbackProperty(function () {
+              const eased = easeOutCubic(
+                getWaveProgress(wavePhaseOffsets[waveIndex]),
+              )
+              const alpha = (1 - eased) * 0.17
+              return Color.RED.withAlpha(alpha)
+            }, false),
+          )
+
+          const outlineColorTwo = new CallbackProperty(function () {
+            const eased = easeOutCubic(
+              getWaveProgress(wavePhaseOffsets[waveIndex]),
+            )
+            const alpha = (1 - eased) * 0.78
+            return Color.RED.withAlpha(alpha)
+          }, false)
+
+          applyPulseWaveToCylinder(
+            waveEntity,
+            wavePhaseOffsets[waveIndex],
+            viewer,
+            materialTwo,
+            outlineColorTwo,
+          )
+        }
+      }
+    })
+
+    const staleWaveEntities = viewer.entities.values.filter((entity) => {
+      const id = entity.id.toString()
+      return id.includes('-pinningwave-') && !selectedWaveEntityIds.has(id)
+    })
+
+    staleWaveEntities.forEach((entity) => {
+      viewer.entities.remove(entity)
+    })
+
+    return () => {
+      viewer.entities.removeById(`pinning-message`)
+      const removePinnedEntities = viewer.entities.values.filter((entity) => {
+        const id = entity.id.toString()
+        return id.includes('-pinningwave-') && selectedWaveEntityIds.has(id)
+      })
+
+      removePinnedEntities.forEach((entity) => {
+        viewer.entities.remove(entity)
+      })
+    }
+  }, [isPinning, selectedPosition])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
     if (!viewer) return
 
     viewer.entities.values
@@ -654,7 +870,7 @@ function RouteComponent() {
         return new Cartesian2(0, -24 + bob)
       }, false)
 
-      const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 24)
+      const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 12)
       const shortMessage =
         item.mapMessage.length > 48
           ? `${item.mapMessage.slice(0, 45).trimEnd()}`
@@ -702,72 +918,6 @@ function RouteComponent() {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
 
-    const duration = 1800
-    const wavePhaseOffsets = [0, 1 / 3, 2 / 3] as const
-    const targetScreenRadiusPixels = 24
-    const minRadiusMeters = 120
-    const maxRadiusMeters = 120_000
-
-    function easeOutCubic(t: number) {
-      return 1 - Math.pow(1 - t, 3)
-    }
-
-    function getCameraDerivedBaseRadius(entity: Entity) {
-      const entityPosition = entity.position?.getValue(JulianDate.now())
-      if (!entityPosition || !viewer) return minRadiusMeters
-
-      const distance = Cartesian3.distance(
-        viewer.camera.positionWC,
-        entityPosition,
-      )
-      const canvasHeight = viewer.scene.canvas.clientHeight
-      const frustum = viewer.camera.frustum as { fovy?: number }
-      const fovy = frustum.fovy
-
-      if (!canvasHeight || typeof fovy !== 'number') return minRadiusMeters
-
-      const metersPerPixel =
-        (2 * distance * Math.tan(fovy / 2)) / Math.max(canvasHeight, 1)
-      const radiusMeters = targetScreenRadiusPixels * metersPerPixel
-
-      return CesiumMath.clamp(radiusMeters, minRadiusMeters, maxRadiusMeters)
-    }
-
-    function getWaveProgress(phaseOffset = 0) {
-      return ((Date.now() % duration) / duration + phaseOffset) % 1
-    }
-
-    function applyPulseWaveToCylinder(entity: Entity, phaseOffset = 0) {
-      if (!entity.cylinder) return
-
-      entity.cylinder.length = new ConstantProperty(1)
-      entity.cylinder.outline = new ConstantProperty(true)
-
-      const animatedRadius = new CallbackProperty(function () {
-        const baseRadius = getCameraDerivedBaseRadius(entity)
-        const eased = easeOutCubic(getWaveProgress(phaseOffset))
-        const scale = 0.55 + (1.95 - 0.55) * eased
-        return baseRadius * scale
-      }, false)
-
-      entity.cylinder.topRadius = animatedRadius
-      entity.cylinder.bottomRadius = animatedRadius
-
-      entity.cylinder.material = new ColorMaterialProperty(
-        new CallbackProperty(function () {
-          const eased = easeOutCubic(getWaveProgress(phaseOffset))
-          const alpha = (1 - eased) * 0.17
-          return Color.ORANGE.withAlpha(alpha)
-        }, false),
-      )
-
-      entity.cylinder.outlineColor = new CallbackProperty(function () {
-        const eased = easeOutCubic(getWaveProgress(phaseOffset))
-        const alpha = (1 - eased) * 0.78
-        return Color.ORANGE.withAlpha(alpha)
-      }, false)
-    }
-
     const selectedWaveEntityIds = new Set<string>()
 
     viewer.entities.values.forEach((entity) => {
@@ -803,7 +953,26 @@ function RouteComponent() {
       }
 
       if (entity.cylinder && isSelected) {
-        applyPulseWaveToCylinder(entity, wavePhaseOffsets[0])
+        const materialOne = new ColorMaterialProperty(
+          new CallbackProperty(function () {
+            const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
+            const alpha = (1 - eased) * 0.17
+            return Color.ORANGE.withAlpha(alpha)
+          }, false),
+        )
+
+        const outlineColorOne = new CallbackProperty(function () {
+          const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
+          const alpha = (1 - eased) * 0.78
+          return Color.ORANGE.withAlpha(alpha)
+        }, false)
+        applyPulseWaveToCylinder(
+          entity,
+          wavePhaseOffsets[0],
+          viewer,
+          materialOne,
+          outlineColorOne,
+        )
 
         for (
           let waveIndex = 1;
@@ -826,7 +995,31 @@ function RouteComponent() {
             waveEntity.position = entity.position
           }
 
-          applyPulseWaveToCylinder(waveEntity, wavePhaseOffsets[waveIndex])
+          const materialTwo = new ColorMaterialProperty(
+            new CallbackProperty(function () {
+              const eased = easeOutCubic(
+                getWaveProgress(wavePhaseOffsets[waveIndex]),
+              )
+              const alpha = (1 - eased) * 0.17
+              return Color.ORANGE.withAlpha(alpha)
+            }, false),
+          )
+
+          const outlineColorTwo = new CallbackProperty(function () {
+            const eased = easeOutCubic(
+              getWaveProgress(wavePhaseOffsets[waveIndex]),
+            )
+            const alpha = (1 - eased) * 0.78
+            return Color.ORANGE.withAlpha(alpha)
+          }, false)
+
+          applyPulseWaveToCylinder(
+            waveEntity,
+            wavePhaseOffsets[waveIndex],
+            viewer,
+            materialTwo,
+            outlineColorTwo,
+          )
         }
       } else if (entity.cylinder) {
         const hiddenRadius = new ConstantProperty(0.0001)
@@ -840,7 +1033,6 @@ function RouteComponent() {
           Color.ORANGE.withAlpha(0),
         )
       }
-      // viewer.zoomTo(entity)
     })
 
     const staleWaveEntities = viewer.entities.values.filter((entity) => {
@@ -1232,8 +1424,9 @@ function RouteComponent() {
                   Coordinates
                 </span>
                 <span className="mt-0.5 text-xs font-mono text-zinc-400">
-                  {selectedMessage.latitude.toFixed(4)},{' '}
-                  {selectedMessage.longitude.toFixed(4)}
+                  {formattedSelectedMessageCoordinates
+                    ? `${formattedSelectedMessageCoordinates.latitude.deg}°${formattedSelectedMessageCoordinates.latitude.mins}'${formattedSelectedMessageCoordinates.latitude.secs}"${formattedSelectedMessageCoordinates.latitude.bearing},${formattedSelectedMessageCoordinates.longitude.deg}°${formattedSelectedMessageCoordinates.longitude.mins}'${formattedSelectedMessageCoordinates.longitude.secs}"${formattedSelectedMessageCoordinates.longitude.bearing}`
+                    : ''}
                 </span>
               </div>
               <div className="ml-auto flex flex-col items-end">
@@ -1266,8 +1459,8 @@ function RouteComponent() {
           aria-hidden="true"
         >
           <div className="relative flex h-8 w-8 items-center justify-center text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)]">
-            <span className="map-pin-wave map-pin-wave-delay-1 absolute h-8 w-8 rounded-full border border-rose-300/70" />
-            <span className="map-pin-wave map-pin-wave-delay-2 absolute h-8 w-8 rounded-full border border-rose-300/50" />
+            {/* <span className="map-pin-wave map-pin-wave-delay-1 absolute top-4 h-8 w-8 rounded-full border border-rose-300/70" />
+            <span className="map-pin-wave map-pin-wave-delay-2 absolute top-4 h-8 w-8 rounded-full border border-rose-300/50" /> */}
             <MapPin className="relative h-8 w-8 fill-rose-500/40" />
           </div>
         </div>
