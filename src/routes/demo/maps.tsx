@@ -32,7 +32,7 @@ import {
   MaterialProperty,
   Property,
 } from 'cesium'
-import { MapPin, MapPinPlus } from 'lucide-react'
+import { MapPinPlus } from 'lucide-react'
 
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -713,7 +713,7 @@ function RouteComponent() {
       position: Cartesian3.fromDegrees(
         selectedPosition.lng,
         selectedPosition.lat,
-        12,
+        6,
       ),
       cylinder: {
         length: 1,
@@ -870,7 +870,7 @@ function RouteComponent() {
         return new Cartesian2(0, -24 + bob)
       }, false)
 
-      const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 12)
+      const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 6)
       const shortMessage =
         item.mapMessage.length > 48
           ? `${item.mapMessage.slice(0, 45).trimEnd()}`
@@ -883,7 +883,7 @@ function RouteComponent() {
           length: 1,
         },
         point: {
-          pixelSize: 16,
+          pixelSize: 12,
           color: Color.fromCssColorString('#38bdf8').withAlpha(0.98),
           outlineColor: Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
           outlineWidth: 3,
@@ -942,7 +942,9 @@ function RouteComponent() {
         )
 
         entity.point.outlineColor = new ConstantProperty(
-          Color.fromCssColorString('#00AEEF').withAlpha(0.8),
+          isHovered
+            ? Color.fromCssColorString('#FF4D00').withAlpha(0.9)
+            : Color.fromCssColorString('#00AEEF').withAlpha(0.8),
         )
 
         entity.point.outlineWidth = new ConstantProperty(1)
@@ -1451,7 +1453,7 @@ function RouteComponent() {
         </div>
       ) : null}
 
-      {isPinning && selectedPosition ? (
+      {/* {isPinning && selectedPosition ? (
         <div
           ref={selectedPinRef}
           className="pointer-events-none absolute left-0 top-0 z-20 transition-opacity duration-150"
@@ -1459,12 +1461,12 @@ function RouteComponent() {
           aria-hidden="true"
         >
           <div className="relative flex h-8 w-8 items-center justify-center text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)]">
-            {/* <span className="map-pin-wave map-pin-wave-delay-1 absolute top-4 h-8 w-8 rounded-full border border-rose-300/70" />
-            <span className="map-pin-wave map-pin-wave-delay-2 absolute top-4 h-8 w-8 rounded-full border border-rose-300/50" /> */}
+            <span className="map-pin-wave map-pin-wave-delay-1 absolute top-4 h-8 w-8 rounded-full border border-rose-300/70" />
+            <span className="map-pin-wave map-pin-wave-delay-2 absolute top-4 h-8 w-8 rounded-full border border-rose-300/50" />
             <MapPin className="relative h-8 w-8 fill-rose-500/40" />
           </div>
         </div>
-      ) : null}
+      ) : null} */}
 
       {isPinning && cursorPosition ? (
         <div
