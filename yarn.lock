@@ -232,44 +232,44 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@better-auth/core@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.5.tgz#834a72122f63e460af56ab86aef7f91a5baa305a"
-  integrity sha512-T3u4rVsJcMWShG2qfQUlU1HdkQGLYX0+lcR48QV2Cp2kpBOLOTYdt+p6zZtGm2Omx/ReEouRQyKy7pYtahRQuA==
+"@better-auth/core@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.6.tgz#834eaef2eb87fa3a73b638c8236bd4478de32eef"
+  integrity sha512-NdG2oTlbkA8TrxvFUL8QDpyTxY3JtCGwuf2qzg1nu9VroSV5ujWZz/N9CGQrZd7k0P41SYuXIl64Ysx3uDIymQ==
   dependencies:
     "@opentelemetry/semantic-conventions" "^1.39.0"
     "@standard-schema/spec" "^1.1.0"
     zod "^4.3.6"
 
-"@better-auth/drizzle-adapter@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.5.tgz#152ad367047c2ba5cbe5d31b36e9087a929106a0"
-  integrity sha512-9YjPW35+h66D+QA+YqEJ9pFP97ClLFR+QrTPZojkeP0PTYqpW0ErBK3p1pwRTJG88yK+o3Y4yOwoacMTBxz0jQ==
+"@better-auth/drizzle-adapter@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.6.tgz#7b35fbaebd8c1a8902e2866271340a8ee91f7410"
+  integrity sha512-guG4pXD7TDo0HWO/orvIvGN+2wpNjXNZ0qywx48IatMJSXqwb09mCeYwX0wOMRopVQu5if9LEQSH977ueKQvgA==
 
-"@better-auth/kysely-adapter@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.5.tgz#80adabe2f2ced6dd2f735c0eba40aeb10da23512"
-  integrity sha512-kbevd70qzKNR3ZHF7q6/e0XXYRCXanLB2rvmTd3T8WbNEd9kYMqKjgTGNxL1ri5N+PEDUK6zfHx/HrvaEOfoHw==
+"@better-auth/kysely-adapter@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.6.tgz#06c1717c994213db755da5506c3f9736bb50cdb7"
+  integrity sha512-k8IWYk+MnvD/+Oxswbzzc+ujYZFWuadqmh6y/oBHkDOm8Jgf52dwTml0pzNMksIj9tKIexBzXmDTuL7TTPfluw==
 
-"@better-auth/memory-adapter@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.5.tgz#668410197dea0fb3732926fcb4d12a30f8936748"
-  integrity sha512-5qFUpSdQi+RwHSmNyHMSsJIrFjed8d/ASS61L2xyW7sjBLTIuR7JcgS6hif5cQbtPeq+Qz+Wct5q8oKw33qyqQ==
+"@better-auth/memory-adapter@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.6.tgz#06fd22c71aa3bceccdfde3e212d7219e267dda17"
+  integrity sha512-S7TpQYbZwLeEa8mog5dzBGxv5pEhVDMF8J89fMCTb82TIHOOnFkBmStfbJZmPBV0Pwozoc+IV24R6ePxDWfrEA==
 
-"@better-auth/mongo-adapter@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.5.tgz#40204f4c011439303038c07b39745142a050c1ff"
-  integrity sha512-HvOUFTiSEFSGTzL/vE3FntTwQiZ79O/V+QcsCimR+65Bj3tOqdFaC1G2Yd1dQ9l2YHNXA9SNBrGekbk66RzJMw==
+"@better-auth/mongo-adapter@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.6.tgz#9da7789175a764ec5f9dfd1b40739b597d2c69f8"
+  integrity sha512-TngjKM3xdj6odQG2IXIE1bXPnMdzPtzXVGRFI4JNAMLFe932ntrSgZqAcbyl/iroQcScyX+DtI9ttNwdRf2S4w==
 
-"@better-auth/prisma-adapter@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.5.tgz#e4ce766d1e6fe85893e577841c66673665788fba"
-  integrity sha512-d7PUO5XoimYYDEG/DoYVbOSbyVYJBDuZgvY9pjf8INccBTCD1BzcyEJ9NQil4huXWj4fcNaGOt2FG0OI8NtWOA==
+"@better-auth/prisma-adapter@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.6.tgz#5cc7a49df9177f353edba427540703866613a745"
+  integrity sha512-aYuxHrh2WxYwXF1RwWdwz8pqS3aXEIUyxwHrmFRqWQ2cHJcemD2qFgaWTuwomRFU12/oAQTZy1NMmFQLr7crPA==
 
-"@better-auth/telemetry@1.6.5":
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.5.tgz#bcc3eff7e6668cd50bf6d1f7c852f68dc5f9c6dd"
-  integrity sha512-Ag3CjAP+tLretKPq+pYdU/gU4pFIcey/AoNQzw671wV5JQZXrMitS65INi8j8QuYfol2xgQrht5KVlcxGrkhHQ==
+"@better-auth/telemetry@1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.6.tgz#c9e72056da9753ec6b68b95d55b55786749a8254"
+  integrity sha512-yGpy0y6cJCZx7S8TqbgV+eOK1o99cjEParTxaW9uwqxphz/2QzVWgeAe6rSA6C8fXJQmOsVbz/LctqZaGjG+IA==
 
 "@better-auth/utils@0.4.0", "@better-auth/utils@^0.4.0":
   version "0.4.0"
@@ -334,40 +334,40 @@
   integrity sha512-8ovsRpwzPoEqPUzoErAYVv8l3FMZNeBVQfJTvtzP4AgLSRGZISRfuChFxHWUQd3n6cnrwkuTGxT+2cGo8EsyYg==
 
 "@cloudflare/vite-plugin@^1.13.8":
-  version "1.33.0"
-  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.33.0.tgz#baab13aff956374eceb9c05b697bccb2ea669830"
-  integrity sha512-x7JwilJdTK5BbN/9OovJpA82xIhFaPmdo33e7Ns/mZSOrtGSLja7nUK/fz2oykq9mwqVbSlFZnLFMSTWSSYFug==
+  version "1.33.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.33.1.tgz#57d40b906c3aa52e1d418fb859ee88d0e60085ba"
+  integrity sha512-bCwbMIPXW0bjvMWNiDEPmV4/Lc5nU/x3/yIGBrgMgxHa2caMvh6QaOplI7DUcHBpzMfz/0iQ0inVmyIuQ8eG4A==
   dependencies:
     "@cloudflare/unenv-preset" "2.16.0"
-    miniflare "4.20260420.0"
+    miniflare "4.20260421.0"
     unenv "2.0.0-rc.24"
-    wrangler "4.84.0"
+    wrangler "4.84.1"
     ws "8.18.0"
 
-"@cloudflare/workerd-darwin-64@1.20260420.1":
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-64/-/workerd-darwin-64-1.20260420.1.tgz#f0b00d57bf9fca347158b4d9576e8dc2ac56bbde"
-  integrity sha512-Y6HtAY+pS5INiD9HyO1JvvujZO24mD3eqRwPZlLXBkcT+wW8bTOve/8mVKErEzEtZ5LkuT3tJqG9py8TxQEBgw==
+"@cloudflare/workerd-darwin-64@1.20260421.1":
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-64/-/workerd-darwin-64-1.20260421.1.tgz#35227b588ca6416cffcbf7cf562b700f38253cc4"
+  integrity sha512-DLU5ZTZ1VHeZZnj0PuVJEMHKGisfLe2XShyImP5P/PPj/m/t7CLEJmPiI7FMxvT7ynArkckJl7m+Z5x7u4Kkdw==
 
-"@cloudflare/workerd-darwin-arm64@1.20260420.1":
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-arm64/-/workerd-darwin-arm64-1.20260420.1.tgz#9d39d517e4449750b63ae785defd8fc2ea4d09be"
-  integrity sha512-7aiRtZTc5S4aKcL6uIx+B3tCzb/bULjQmE67/03k0HtaDNzP20GnYmYpFCqleFqsdmIb4Tx8PkKPmsXI3AJLvQ==
+"@cloudflare/workerd-darwin-arm64@1.20260421.1":
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-arm64/-/workerd-darwin-arm64-1.20260421.1.tgz#8c011faff6bf4ee112b6b69a4b81473c8d10f309"
+  integrity sha512-Trotq3xRAkIcpC505WoxM8+kIH4JIvOJCNuRatyHcz9uF5S+ukgiVUFUlM+GIjw1uCM/Bda2St+vSniX1RZdpw==
 
-"@cloudflare/workerd-linux-64@1.20260420.1":
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-64/-/workerd-linux-64-1.20260420.1.tgz#613f1182ce77c791193e33906096ebb0c74b1753"
-  integrity sha512-J/DW149FPmug1wSM32zBF7My14xg+inIYwzS4bSAxyXR6tBiTxbhgFWQQz99nt08ZMstdKHRD6f6C/KQaleQcA==
+"@cloudflare/workerd-linux-64@1.20260421.1":
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-64/-/workerd-linux-64-1.20260421.1.tgz#b6d4fa15df4dfaeb36aa945eab6bec7f258d396c"
+  integrity sha512-938QjUv0z+QqK6BAvgwX/lCIZ2b224ZXoXtGTbhyNVMhB+mt4Dj24cj9qca4ekNXjVM7uTKp1yOHZO97fVSacw==
 
-"@cloudflare/workerd-linux-arm64@1.20260420.1":
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-arm64/-/workerd-linux-arm64-1.20260420.1.tgz#126c69a3a1a4203021507b8eb7ebd68ae81b3da6"
-  integrity sha512-a5I147McRM/L4YHu9EwOsoAyIExZndPRQoLx/33dbw/yUEnO825gvn5QZkCGXBVL2JwsPAyowB0Xliqrj+71Sw==
+"@cloudflare/workerd-linux-arm64@1.20260421.1":
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-arm64/-/workerd-linux-arm64-1.20260421.1.tgz#f7368ffe9d6100a51aa93bd13ebd5a3e189c4469"
+  integrity sha512-YI4+mLfwnJcKJ+iPyxzx+tp2Jy4o29BxBPSQGZxl/AZyvZ9eTKsmNZmtjEiT4i3O/M0tdO/B/d9ESDHbRCs2rQ==
 
-"@cloudflare/workerd-windows-64@1.20260420.1":
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-windows-64/-/workerd-windows-64-1.20260420.1.tgz#34994aad34c9e379df77200efb2ed02b93959fbd"
-  integrity sha512-ZrHqlHbJNU8P24EAOBaZ6B44G9P+po2z0DBwbAr8965aWR+vohy3cfmgE9uzNPAQfKNmvq7fmc4VwsRpERkg0w==
+"@cloudflare/workerd-windows-64@1.20260421.1":
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-windows-64/-/workerd-windows-64-1.20260421.1.tgz#0f2780fec52af191df47f7eec244cf7e5b0f50eb"
+  integrity sha512-q1SFgwlNH9lFmw74vh7EJbJtduo92Nx51mNOfd3/u6pux6AldcwRviYzKEEv3FEbtv6OBB7J8D5f8vtZj7Z6Sg==
 
 "@cspotcode/source-map-support@0.8.1":
   version "0.8.1"
@@ -1740,10 +1740,10 @@
   resolved "https://registry.npmjs.org/@svta/cml-xml/-/cml-xml-1.0.1.tgz"
   integrity sha512-11LkJa5kDEcsRMWkVI1ABH3KLCxGoiSVe4kQ293ItVj8ncTTQ7htmCGiJDjS+Cmy35UgF3e/vc0ysJIiWRTx2g==
 
-"@tailwindcss/node@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/node/-/node-4.2.3.tgz#6b07383fa3e253389b24f06239762e9174487023"
-  integrity sha512-dhXFXkW2dGvX4r/fi24gyXM0t1mFMrpykQjqrdA4SuavaMagm4SY1u5G2SCJwu1/0x/5RlZJ2VPjP3mKYQfCkA==
+"@tailwindcss/node@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/node/-/node-4.2.4.tgz#1f7fc0c1741037ded1fa92fbe62a786a197771ce"
+  integrity sha512-Ai7+yQPxz3ddrDQzFfBKdHEVBg0w3Zl83jnjuwxnZOsnH9pGn93QHQtpU0p/8rYWxvbFZHneni6p1BSLK4DkGA==
   dependencies:
     "@jridgewell/remapping" "^2.3.5"
     enhanced-resolve "^5.19.0"
@@ -1751,57 +1751,57 @@
     lightningcss "1.32.0"
     magic-string "^0.30.21"
     source-map-js "^1.2.1"
-    tailwindcss "4.2.3"
+    tailwindcss "4.2.4"
 
-"@tailwindcss/oxide-android-arm64@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-android-arm64/-/oxide-android-arm64-4.2.3.tgz#e1e1a2297e72140f7e3e290fba66019bc1d7bb74"
-  integrity sha512-0Jmt1U/zPqeKp1+fvgI3qMqrV5b/EcFIbE5Dl5KdPl5Ri6e+95nlYNjfB3w8hJBeASI4IQSnIMz0tdVP1AVO4g==
+"@tailwindcss/oxide-android-arm64@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-android-arm64/-/oxide-android-arm64-4.2.4.tgz#d533e52ee98d58f55d1d4753774251513ba8a911"
+  integrity sha512-e7MOr1SAn9U8KlZzPi1ZXGZHeC5anY36qjNwmZv9pOJ8E4Q6jmD1vyEHkQFmNOIN7twGPEMXRHmitN4zCMN03g==
 
-"@tailwindcss/oxide-darwin-arm64@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.2.3.tgz#acb04c20f4d7daeca871ea90feec834212703507"
-  integrity sha512-c+/Etn/nghKBhd9fh2diG+3SEV1VTTPLlqH209yleofi28H87Cy6g1vsd3W3kf6r/dR5g4G4TEwHxo2Ydn6yFw==
+"@tailwindcss/oxide-darwin-arm64@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.2.4.tgz#2a6250aa7d8791fc1b5797e64e09e51da57514a6"
+  integrity sha512-tSC/Kbqpz/5/o/C2sG7QvOxAKqyd10bq+ypZNf+9Fi2TvbVbv1zNpcEptcsU7DPROaSbVgUXmrzKhurFvo5eDg==
 
-"@tailwindcss/oxide-darwin-x64@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-darwin-x64/-/oxide-darwin-x64-4.2.3.tgz#ac9caa73e2106b7f160db8ce3ad3e27a92234dd5"
-  integrity sha512-1DrKKsdJTLuLWVdpaLZ0j/g9YbCZyP9xnwSqEvl3gY4ZHdXmX7TwVAHkoWUljOq7JK5zvzIGhrYmfE/2DJ5qaA==
+"@tailwindcss/oxide-darwin-x64@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-darwin-x64/-/oxide-darwin-x64-4.2.4.tgz#d647299812946b6ab5140c61a334c8ebc8d877de"
+  integrity sha512-yPyUXn3yO/ufR6+Kzv0t4fCg2qNr90jxXc5QqBpjlPNd0NqyDXcmQb/6weunH/MEDXW5dhyEi+agTDiqa3WsGg==
 
-"@tailwindcss/oxide-freebsd-x64@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-freebsd-x64/-/oxide-freebsd-x64-4.2.3.tgz#ed3562aa658cf8dca29fd151cbfe7b68698beb4d"
-  integrity sha512-HE6HHZYF8k7m80eVQ0RBvRGBdvvLvCpHiT38IRH9JSnBlt1T7gDzWoslWjmpXQFuqlRpzkCpbdKJa3NxWMfgVA==
+"@tailwindcss/oxide-freebsd-x64@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-freebsd-x64/-/oxide-freebsd-x64-4.2.4.tgz#019b7fce37aaf5ddfed0f231c536108292e87ffb"
+  integrity sha512-BoMIB4vMQtZsXdGLVc2z+P9DbETkiopogfWZKbWwM8b/1Vinbs4YcUwo+kM/KeLkX3Ygrf4/PsRndKaYhS8Eiw==
 
-"@tailwindcss/oxide-linux-arm-gnueabihf@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm-gnueabihf/-/oxide-linux-arm-gnueabihf-4.2.3.tgz#c594790fd79b8a0db969c562140553ad3ee9b032"
-  integrity sha512-Li2wVd2kkKlKkTdpo7ujHSv6kxD1UYMvulAraikyvVf6AKNZ/VHbm8XoSNimZ+dF7SOFaDD2VAT64SK7WKcbjQ==
+"@tailwindcss/oxide-linux-arm-gnueabihf@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm-gnueabihf/-/oxide-linux-arm-gnueabihf-4.2.4.tgz#c88a95d69095e84f811b302daa66f5287ad8ce0f"
+  integrity sha512-7pIHBLTHYRAlS7V22JNuTh33yLH4VElwKtB3bwchK/UaKUPpQ0lPQiOWcbm4V3WP2I6fNIJ23vABIvoy2izdwA==
 
-"@tailwindcss/oxide-linux-arm64-gnu@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm64-gnu/-/oxide-linux-arm64-gnu-4.2.3.tgz#c3e0c067951be506b10c6ae777d8cb5e5cd65fd0"
-  integrity sha512-otIiImZaHj9MiDK02ItoWxIVcMTZVAX2F1c32bg9y7ecV0AnN5JHDZqIO8LxWsTuig1d+Bjg0cBWn4A9sGJO9Q==
+"@tailwindcss/oxide-linux-arm64-gnu@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm64-gnu/-/oxide-linux-arm64-gnu-4.2.4.tgz#1292f1c222994bfe4a5e990ac0a701de6487dd02"
+  integrity sha512-+E4wxJ0ZGOzSH325reXTWB48l42i93kQqMvDyz5gqfRzRZ7faNhnmvlV4EPGJU3QJM/3Ab5jhJ5pCRUsKn6OQw==
 
-"@tailwindcss/oxide-linux-arm64-musl@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm64-musl/-/oxide-linux-arm64-musl-4.2.3.tgz#cb066c3aa547267bac9b789cfe1a5959ba4a4a8b"
-  integrity sha512-MmIA32rNEOrjh6wnevlR3OjjlCuwgZ4JMJo7Vrhk4Fk56Vxi7EeF7cekSKwvlrnfcn/ERC1LdcG3sFneU8WdoA==
+"@tailwindcss/oxide-linux-arm64-musl@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-arm64-musl/-/oxide-linux-arm64-musl-4.2.4.tgz#afb6492b22616f0d9d3346d39c1a6e285f994a08"
+  integrity sha512-bBADEGAbo4ASnppIziaQJelekCxdMaxisrk+fB7Thit72IBnALp9K6ffA2G4ruj90G9XRS2VQ6q2bCKbfFV82g==
 
-"@tailwindcss/oxide-linux-x64-gnu@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-x64-gnu/-/oxide-linux-x64-gnu-4.2.3.tgz#c488da6fc11062113e007131044fc9c8c8f4fd00"
-  integrity sha512-BiCy1YV0IKO+xbD7gyZnENU4jdwDygeGQjncJoeIE5Kp4UqWHFsKUSJ3pp7vYURrqVzwJX2xD5gQeGnoXp4xPQ==
+"@tailwindcss/oxide-linux-x64-gnu@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-x64-gnu/-/oxide-linux-x64-gnu-4.2.4.tgz#400b0ccfc53937c7804ed8e0e9652b42bd86f2eb"
+  integrity sha512-7Mx25E4WTfnht0TVRTyC00j3i0M+EeFe7wguMDTlX4mRxafznw0CA8WJkFjWYH5BlgELd1kSjuU2JiPnNZbJDA==
 
-"@tailwindcss/oxide-linux-x64-musl@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.2.3.tgz#f4e7667088e04d557159349c0bd9f89d41b91cc6"
-  integrity sha512-venvyAu0AMKdr0c1Oz23IJJdZ72zSwKyHrLvqQV1cn49vPAJk3AuVtDkJ1ayk1sYI4M4j8Jv6ZGflpaP0QVSXQ==
+"@tailwindcss/oxide-linux-x64-musl@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.2.4.tgz#5c23c476e5de4ed9cd6ab39c2718b9a4be2bbb2b"
+  integrity sha512-2wwJRF7nyhOR0hhHoChc04xngV3iS+akccHTGtz965FwF0up4b2lOdo6kI1EbDaEXKgvcrFBYcYQQ/rrnWFVfA==
 
-"@tailwindcss/oxide-wasm32-wasi@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.2.3.tgz#da22bed4480f2ab07ef3aa82dd989f2bce83eb76"
-  integrity sha512-e3kColrZZCdtbwIOc07cNQ2zNf1sTPXTYLjjPlsgsaf+ttzAg/hOlDyEgHoOlBGxM88nPxeVaOGe9ThqVzPncg==
+"@tailwindcss/oxide-wasm32-wasi@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.2.4.tgz#21b7f53ba7c6c03f26ccb8cef5d09f5c2973ae5e"
+  integrity sha512-FQsqApeor8Fo6gUEklzmaa9994orJZZDBAlQpK2Mq+DslRKFJeD6AjHpBQ0kZFQohVr8o85PPh8eOy86VlSCmw==
   dependencies:
     "@emnapi/core" "^1.8.1"
     "@emnapi/runtime" "^1.8.1"
@@ -1810,42 +1810,42 @@
     "@tybys/wasm-util" "^0.10.1"
     tslib "^2.8.1"
 
-"@tailwindcss/oxide-win32-arm64-msvc@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-win32-arm64-msvc/-/oxide-win32-arm64-msvc-4.2.3.tgz#ce8ce21c070b4d7e63929b6fc99550bc0d6c8b45"
-  integrity sha512-qpwoUPzfu71cppxOtcz4LXMR1brljS13yOcAAnVHKIL++NJvSQKZBKlP39pVowd+G6Mq34YAbf4CUUYdLWL9gQ==
+"@tailwindcss/oxide-win32-arm64-msvc@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-win32-arm64-msvc/-/oxide-win32-arm64-msvc-4.2.4.tgz#13bc1cf3818e3345a965d36b40c237817124d070"
+  integrity sha512-L9BXqxC4ToVgwMFqj3pmZRqyHEztulpUJzCxUtLjobMCzTPsGt1Fa9enKbOpY2iIyVtaHNeNvAK8ERP/64sqGQ==
 
-"@tailwindcss/oxide-win32-x64-msvc@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-win32-x64-msvc/-/oxide-win32-x64-msvc-4.2.3.tgz#d9a2630d77cf806d14ad78a6076962f849f20680"
-  integrity sha512-dTRIlLRC5lCRHqO5DLb+A18HCvS394axmzqfnRNLptKVw7WuckpUwo1Z87Yw74mesbeIhnQTA2SZbRcIfVlwxg==
+"@tailwindcss/oxide-win32-x64-msvc@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-win32-x64-msvc/-/oxide-win32-x64-msvc-4.2.4.tgz#5476dbbbf6b8934d58452340cec737fdaa5ec8c6"
+  integrity sha512-ESlKG0EpVJQwRjXDDa9rLvhEAh0mhP1sF7sap9dNZT0yyl9SAG6T7gdP09EH0vIv0UNTlo6jPWyujD6559fZvw==
 
-"@tailwindcss/oxide@4.2.3":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide/-/oxide-4.2.3.tgz#37bda06b226f0d8eaaa11989ee481bf3349b66cc"
-  integrity sha512-YyhwSBcxHLS3CU2Mk3dXDuVm8/Ia0+XvfpT8s9YQoICppkUeoobB3hgyGMYbyQ4vn6VgWH9bdv5UnzhTz2NPTQ==
+"@tailwindcss/oxide@4.2.4":
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide/-/oxide-4.2.4.tgz#e2ca51d04e8ad94d569222fa727de479b097db39"
+  integrity sha512-9El/iI069DKDSXwTvB9J4BwdO5JhRrOweGaK25taBAvBXyXqJAX+Jqdvs8r8gKpsI/1m0LeJLyQYTf/WLrBT1Q==
   optionalDependencies:
-    "@tailwindcss/oxide-android-arm64" "4.2.3"
-    "@tailwindcss/oxide-darwin-arm64" "4.2.3"
-    "@tailwindcss/oxide-darwin-x64" "4.2.3"
-    "@tailwindcss/oxide-freebsd-x64" "4.2.3"
-    "@tailwindcss/oxide-linux-arm-gnueabihf" "4.2.3"
-    "@tailwindcss/oxide-linux-arm64-gnu" "4.2.3"
-    "@tailwindcss/oxide-linux-arm64-musl" "4.2.3"
-    "@tailwindcss/oxide-linux-x64-gnu" "4.2.3"
-    "@tailwindcss/oxide-linux-x64-musl" "4.2.3"
-    "@tailwindcss/oxide-wasm32-wasi" "4.2.3"
-    "@tailwindcss/oxide-win32-arm64-msvc" "4.2.3"
-    "@tailwindcss/oxide-win32-x64-msvc" "4.2.3"
+    "@tailwindcss/oxide-android-arm64" "4.2.4"
+    "@tailwindcss/oxide-darwin-arm64" "4.2.4"
+    "@tailwindcss/oxide-darwin-x64" "4.2.4"
+    "@tailwindcss/oxide-freebsd-x64" "4.2.4"
+    "@tailwindcss/oxide-linux-arm-gnueabihf" "4.2.4"
+    "@tailwindcss/oxide-linux-arm64-gnu" "4.2.4"
+    "@tailwindcss/oxide-linux-arm64-musl" "4.2.4"
+    "@tailwindcss/oxide-linux-x64-gnu" "4.2.4"
+    "@tailwindcss/oxide-linux-x64-musl" "4.2.4"
+    "@tailwindcss/oxide-wasm32-wasi" "4.2.4"
+    "@tailwindcss/oxide-win32-arm64-msvc" "4.2.4"
+    "@tailwindcss/oxide-win32-x64-msvc" "4.2.4"
 
 "@tailwindcss/vite@^4.0.6":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/vite/-/vite-4.2.3.tgz#547a05c47d51797d50e0592e0779ad6caa574abd"
-  integrity sha512-pEvbC/NoOqxvqjy6IgelSakbzwin865CmOxJxmz3CSEbHJ2aF1B2183ALVasN0o6dOGhYfnVJOKKxVoyag+XeA==
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/vite/-/vite-4.2.4.tgz#2c2586ed964de044778b294538481878ffb9ae5c"
+  integrity sha512-pCvohwOCspk3ZFn6eJzrrX3g4n2JY73H6MmYC87XfGPyTty4YsCjYTMArRZm/zOI8dIt3+EcrLHAFPe5A4bgtw==
   dependencies:
-    "@tailwindcss/node" "4.2.3"
-    "@tailwindcss/oxide" "4.2.3"
-    tailwindcss "4.2.3"
+    "@tailwindcss/node" "4.2.4"
+    "@tailwindcss/oxide" "4.2.4"
+    tailwindcss "4.2.4"
 
 "@tanstack/devtools-client@0.0.3":
   version "0.0.3"
@@ -2794,17 +2794,17 @@ bcp-47@^2.0.0:
     is-decimal "^2.0.0"
 
 better-auth@^1.4.12:
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.5.tgz#a1424ba884f51943091e921c108d5d436276f9cb"
-  integrity sha512-rSt8JtJOJK0MqPShXINCmM6DV30GsDvnCTlIxQIzP9OpUx/umA40nUc4ALZHQyqAPbw1ib/a549kIWw/WyxxKA==
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.6.tgz#b1f71699dc63938edfb852bd5bf7dd7ac6d21a85"
+  integrity sha512-w8Dtwz2oWzOT6xVrhvin62nn6NA8KMTKm7nOb9vokZuEj1kj70R918hH84ThcP/wTBa8KXXvx0WEsn+R6caGyQ==
   dependencies:
-    "@better-auth/core" "1.6.5"
-    "@better-auth/drizzle-adapter" "1.6.5"
-    "@better-auth/kysely-adapter" "1.6.5"
-    "@better-auth/memory-adapter" "1.6.5"
-    "@better-auth/mongo-adapter" "1.6.5"
-    "@better-auth/prisma-adapter" "1.6.5"
-    "@better-auth/telemetry" "1.6.5"
+    "@better-auth/core" "1.6.6"
+    "@better-auth/drizzle-adapter" "1.6.6"
+    "@better-auth/kysely-adapter" "1.6.6"
+    "@better-auth/memory-adapter" "1.6.6"
+    "@better-auth/mongo-adapter" "1.6.6"
+    "@better-auth/prisma-adapter" "1.6.6"
+    "@better-auth/telemetry" "1.6.6"
     "@better-auth/utils" "0.4.0"
     "@better-fetch/fetch" "1.1.21"
     "@noble/ciphers" "^2.1.1"
@@ -4436,15 +4436,15 @@ meshoptimizer@^1.0.1:
   resolved "https://registry.yarnpkg.com/meshoptimizer/-/meshoptimizer-1.1.0.tgz#c714a0a6324fd7e1f2b187eff2f07c6b16041f60"
   integrity sha512-KYYsWvWduDIm86HVtTKW1luZSusEv+tgSqYvgSJcKzaHIUNKL9/qQ+48YKcLxknAE8GQAeVi68mgvmEGrjwqjA==
 
-miniflare@4.20260420.0:
-  version "4.20260420.0"
-  resolved "https://registry.yarnpkg.com/miniflare/-/miniflare-4.20260420.0.tgz#a2a16d81109bfad4b09589e00844d78dea4c8191"
-  integrity sha512-w8s3eh2W7EEsFh2uGdddZLkbTwiPI8MCSMXKtuLSA9btW8xmQsVVSkrFuLXFyTKcX0QkstS5dhcWjQPQRJ2WKg==
+miniflare@4.20260421.0:
+  version "4.20260421.0"
+  resolved "https://registry.yarnpkg.com/miniflare/-/miniflare-4.20260421.0.tgz#adadc9c24f19423bda916c17e477c274830023cb"
+  integrity sha512-7ZkNQ7brgQ2hh5ha9iQCDUjxBkLvuiG2VdDns9esRL8O8lXg+MoP6E0dO1rtp+ZY2I+vV1tPWr6td5IojkewLw==
   dependencies:
     "@cspotcode/source-map-support" "0.8.1"
     sharp "^0.34.5"
     undici "7.24.8"
-    workerd "1.20260420.1"
+    workerd "1.20260421.1"
     ws "8.18.0"
     youch "4.1.0-beta.10"
 
@@ -5186,15 +5186,15 @@ symbol-tree@^3.2.4:
   resolved "https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.4.tgz"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
-tailwindcss@4.2.3, tailwindcss@^4.0.6:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.2.3.tgz#2827c09ec9bec39e7cdf0bae357e21689b99cc09"
-  integrity sha512-fA/NX5gMf0ooCLISgB0wScaWgaj6rjTN2SVAwleURjiya7ITNkV+VMmoHtKkldP6CIZoYCZyxb8zP/e2TWoEtQ==
+tailwindcss@4.2.4, tailwindcss@^4.0.6:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/tailwindcss/-/tailwindcss-4.2.4.tgz#f7e3090edb22d56394db4d68e6464d2628dc2aa9"
+  integrity sha512-HhKppgO81FQof5m6TEnuBWCZGgfRAWbaeOaGT00KOy/Pf/j6oUihdvBpA7ltCeAvZpFhW3j0PTclkxsd4IXYDA==
 
 tapable@^2.3.0:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.3.2.tgz#86755feabad08d82a26b891db044808c6ad00f15"
-  integrity sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.3.3.tgz#5da7c9992c46038221267985ab28421a8879f160"
+  integrity sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==
 
 three-conic-polygon-geometry@2:
   version "2.1.2"
@@ -5699,30 +5699,30 @@ wistia-video-element@^1.3.5:
   dependencies:
     super-media-element "~1.4.2"
 
-workerd@1.20260420.1:
-  version "1.20260420.1"
-  resolved "https://registry.yarnpkg.com/workerd/-/workerd-1.20260420.1.tgz#bec1dd8d43d5130f7234eebd457a9a3c91132fec"
-  integrity sha512-1AOJgng169u4fiFrEd5WjrAGpdwd3A4ZJtP8PMvf+RF9NUKy+mdwrKdz4qPZ6Tt/Bya99vsLn6UX33fjAEVoaA==
+workerd@1.20260421.1:
+  version "1.20260421.1"
+  resolved "https://registry.yarnpkg.com/workerd/-/workerd-1.20260421.1.tgz#922f46fcf3fc1598531df26060a66cac0cb107d8"
+  integrity sha512-zTYD+xFR4d7TUCxsyl7FTPth9a8CDgk8pM7xUWbJxo0SGUx+2e5C7Q5LrramBZwmuAErtzXmOjlQ15PtkPAhZA==
   optionalDependencies:
-    "@cloudflare/workerd-darwin-64" "1.20260420.1"
-    "@cloudflare/workerd-darwin-arm64" "1.20260420.1"
-    "@cloudflare/workerd-linux-64" "1.20260420.1"
-    "@cloudflare/workerd-linux-arm64" "1.20260420.1"
-    "@cloudflare/workerd-windows-64" "1.20260420.1"
+    "@cloudflare/workerd-darwin-64" "1.20260421.1"
+    "@cloudflare/workerd-darwin-arm64" "1.20260421.1"
+    "@cloudflare/workerd-linux-64" "1.20260421.1"
+    "@cloudflare/workerd-linux-arm64" "1.20260421.1"
+    "@cloudflare/workerd-windows-64" "1.20260421.1"
 
-wrangler@4.84.0, wrangler@^4.40.3:
-  version "4.84.0"
-  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.84.0.tgz#3a1f022c463ddbbd15d8ce18553dd1e20041552d"
-  integrity sha512-lYScYXeHZ385rDzbTF7QfP4FWu2vQuD7uDQRUjDZuutyq5fZVCR6ZxLLsySbqFiFjvKsF5RoxVPeJtI78blz4w==
+wrangler@4.84.1, wrangler@^4.40.3:
+  version "4.84.1"
+  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.84.1.tgz#2ea088ec24b027ccfaa0c3b1672bacf9f659c836"
+  integrity sha512-Xe1S/Bik7pNdtdJ+asHsEZC2dX9k3WxYn2BbxFtOrrLVxN/LKi750zsrjX41jSAk00M/O1l7jzyQV4sQqw8ftg==
   dependencies:
     "@cloudflare/kv-asset-handler" "0.4.2"
     "@cloudflare/unenv-preset" "2.16.0"
     blake3-wasm "2.1.5"
     esbuild "0.27.3"
-    miniflare "4.20260420.0"
+    miniflare "4.20260421.0"
     path-to-regexp "6.3.0"
     unenv "2.0.0-rc.24"
-    workerd "1.20260420.1"
+    workerd "1.20260421.1"
   optionalDependencies:
     fsevents "~2.3.2"
 
