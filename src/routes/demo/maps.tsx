@@ -313,6 +313,7 @@ function RouteComponent() {
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
+  const lastFocusedMessageIdRef = useRef<string | null>(null)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
   const [draftVideoUrl, setDraftVideoUrl] = useState('')
@@ -507,6 +508,54 @@ function RouteComponent() {
       (message) => `message-${message.id}` === selectedMessageId,
     )
   }, [messages, selectedMessageId])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+    if (isPinning) return
+
+    if (!selectedMessage || !selectedMessageId) {
+      lastFocusedMessageIdRef.current = null
+      return
+    }
+
+    if (lastFocusedMessageIdRef.current === selectedMessageId) return
+
+    const destination = Cartesian3.fromDegrees(
+      selectedMessage.longitude,
+      selectedMessage.latitude,
+      130_000,
+    )
+
+    const windowPosition = SceneTransforms.worldToWindowCoordinates(
+      viewer.scene,
+      destination,
+    )
+    const cameraHeight = viewer.camera.positionCartographic.height
+
+    if (windowPosition) {
+      const centerX = viewer.scene.canvas.clientWidth / 2
+      const centerY = viewer.scene.canvas.clientHeight / 2
+      const centerDistance = Math.hypot(
+        windowPosition.x - centerX,
+        windowPosition.y - centerY,
+      )
+      if (centerDistance < 72 && cameraHeight <= 220_000) {
+        lastFocusedMessageIdRef.current = selectedMessageId
+        return
+      }
+    }
+
+    lastFocusedMessageIdRef.current = selectedMessageId
+    viewer.camera.flyTo({
+      destination,
+      duration: 1.1,
+      orientation: {
+        heading: viewer.camera.heading,
+        pitch: CesiumMath.toRadians(-45),
+      },
+    })
+  }, [isPinning, selectedMessage, selectedMessageId])
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
