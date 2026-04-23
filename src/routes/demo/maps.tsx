@@ -313,6 +313,7 @@ function RouteComponent() {
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
+  const lastFocusedMessageIdRef = useRef<string | null>(null)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [draftMessage, setDraftMessage] = useState('')
   const [draftVideoUrl, setDraftVideoUrl] = useState('')
@@ -507,6 +508,56 @@ function RouteComponent() {
       (message) => `message-${message.id}` === selectedMessageId,
     )
   }, [messages, selectedMessageId])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+    if (isPinning) return
+
+    if (!selectedMessage || !selectedMessageId) {
+      lastFocusedMessageIdRef.current = null
+      return
+    }
+
+    if (lastFocusedMessageIdRef.current === selectedMessageId) return
+
+    const destination = Cartesian3.fromDegrees(
+      selectedMessage.longitude,
+      selectedMessage.latitude,
+      250_000,
+    )
+
+    const windowPosition = SceneTransforms.worldToWindowCoordinates(
+      viewer.scene,
+      destination,
+    )
+    const cameraHeight = viewer.camera.positionCartographic.height
+
+    if (windowPosition) {
+      const centerX = viewer.scene.canvas.clientWidth / 2
+      const centerY = viewer.scene.canvas.clientHeight / 2
+      const centerDistance = Math.hypot(
+        windowPosition.x - centerX,
+        windowPosition.y - centerY,
+      )
+      if (centerDistance < 72 && cameraHeight <= 280_000) {
+        lastFocusedMessageIdRef.current = selectedMessageId
+        return
+      }
+    }
+
+    lastFocusedMessageIdRef.current = selectedMessageId
+    viewer.camera.flyTo({
+      destination,
+      duration: 1.5,
+      orientation: {
+        heading: viewer.camera.heading,
+      },
+    })
+
+    // TODO: Consider saving and restoring the camera's height to avoid unnecessary zooming when the user clicks between nearby messages. This would involve saving the camera's height when a message is selected, and then when another message is selected, flying to the new location but using the saved height instead of the default height. We would also need to consider when to reset the saved height (e.g. after a certain amount of time, or when the user manually moves the camera).
+    // const cartographic = Cartographic.fromCartesian(viewer.camera.position)
+  }, [isPinning, selectedMessage, selectedMessageId])
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
