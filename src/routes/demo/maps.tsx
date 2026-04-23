@@ -524,7 +524,7 @@ function RouteComponent() {
     const destination = Cartesian3.fromDegrees(
       selectedMessage.longitude,
       selectedMessage.latitude,
-      130_000,
+      250_000,
     )
 
     const windowPosition = SceneTransforms.worldToWindowCoordinates(
@@ -540,7 +540,7 @@ function RouteComponent() {
         windowPosition.x - centerX,
         windowPosition.y - centerY,
       )
-      if (centerDistance < 72 && cameraHeight <= 220_000) {
+      if (centerDistance < 72 && cameraHeight <= 280_000) {
         lastFocusedMessageIdRef.current = selectedMessageId
         return
       }
@@ -549,12 +549,14 @@ function RouteComponent() {
     lastFocusedMessageIdRef.current = selectedMessageId
     viewer.camera.flyTo({
       destination,
-      duration: 1.1,
+      duration: 1.5,
       orientation: {
         heading: viewer.camera.heading,
-        pitch: CesiumMath.toRadians(-45),
       },
     })
+
+    // TODO: Consider saving and restoring the camera's height to avoid unnecessary zooming when the user clicks between nearby messages. This would involve saving the camera's height when a message is selected, and then when another message is selected, flying to the new location but using the saved height instead of the default height. We would also need to consider when to reset the saved height (e.g. after a certain amount of time, or when the user manually moves the camera).
+    // const cartographic = Cartographic.fromCartesian(viewer.camera.position)
   }, [isPinning, selectedMessage, selectedMessageId])
 
   useEffect(() => {
