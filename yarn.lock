@@ -232,44 +232,44 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@better-auth/core@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.8.tgz#82d4f49f9840103d8a0d1c762c64276e8388f306"
-  integrity sha512-YVLkvMvUDeP3W0Wl9PHgwF2etWxKL9rntP0NjZ3YXsiuf05O5Gx0BNvWSeG9fcUaAFjjkiVdFOEvpYtDPpehog==
+"@better-auth/core@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/core/-/core-1.6.9.tgz#87fcdf90a3969777e05352bc2ad01dc23218b74c"
+  integrity sha512-ADFk5pwmLybmc+LvYvXJ6M1x2oY/EyYLkwLuH0x28FUq12DfjL0wnE7g+WRDf3yozDO+qIxTpFGXDGwLKbfz0w==
   dependencies:
     "@opentelemetry/semantic-conventions" "^1.39.0"
     "@standard-schema/spec" "^1.1.0"
     zod "^4.3.6"
 
-"@better-auth/drizzle-adapter@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.8.tgz#51fe09da4aa89737719d2ccb5e91843a509bacac"
-  integrity sha512-iAQ8KWPfGppcakZXStbX7aWGeK0pLlDlzkQN6NhFM7Qm2KwBcc0X1EyRGIiLSIiGw8hTNppGp8igliMm2ti0zw==
+"@better-auth/drizzle-adapter@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/drizzle-adapter/-/drizzle-adapter-1.6.9.tgz#d3bd50405fdb92209096d4e77ae7b5273380effc"
+  integrity sha512-Lcco5hOGrMgc4XKAkvB6x72eQm4wCcya8IevMg4wBHY9W9GVg8pu23rpRX6VsVQSO4Ux13S7lFwUWtF7/r9aKw==
 
-"@better-auth/kysely-adapter@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.8.tgz#ac92ee3be7249342979eca9c2d17fcf643205948"
-  integrity sha512-Imqh8yxb/IlS8bmfsjdhcaE2vQ9ohoFXh2UY0PIsY/oWUiJ1tG8WHheNYRK2C9Chh1+b6GTq7ta3wVCD0cUEDg==
+"@better-auth/kysely-adapter@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/kysely-adapter/-/kysely-adapter-1.6.9.tgz#2770e95d327d66c72e57820143319a7cb023cff2"
+  integrity sha512-gyjuuxJtZ4o9G9z9q4kqn24X2kvMSp7F+KHogYxF03SnXY/2WleAcuj57iC4wP3e9mGDbjPOrnM5K6Kr3Ktdpw==
 
-"@better-auth/memory-adapter@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.8.tgz#03888ba51716b87fe7263ed64cd2de0ae9670c1a"
-  integrity sha512-A/h7Y/AL7dxsff4gNizbpT+O5AppNSvcbRrkrxRrwr8/DvnajnSVxN6bqG/H+SR/L4/nJUDC0p5wMfOJSvTk8Q==
+"@better-auth/memory-adapter@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/memory-adapter/-/memory-adapter-1.6.9.tgz#6c79585562cc0b980b144cb35702fb7db90341cd"
+  integrity sha512-XmIG4tUnOXZ+KEcWjHUjOI9Z5donD09dC2t/AQTXifAUIqx7cySg86w0KTM09ArzAxRx1fCqO36Wkt5nULnrkQ==
 
-"@better-auth/mongo-adapter@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.8.tgz#f51264c902f53f6c1545d4a37702bb45db83b19c"
-  integrity sha512-z2NxSf890g24co33av3SqBKilP8QesNkIp27zIKRE3AqXjii4zQhN7M17DtAsGWJMH2Z336e/mypR2pYYn9DpQ==
+"@better-auth/mongo-adapter@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/mongo-adapter/-/mongo-adapter-1.6.9.tgz#f83523cd7a25e46ba77554c1378bc7b8e8249381"
+  integrity sha512-h+AiRJ/TsBSi+ZDjySASBpbJ/9QCXBre34PSKgCz7QmTHrFM9Cg2EM4AM7LjR5lPXipEE+2rWPBc9wfnUBjhcw==
 
-"@better-auth/prisma-adapter@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.8.tgz#99ddce6787c4901894ab5ff249167c72d52aabd3"
-  integrity sha512-eyPCQwFXFgGo82acjvQpL5iPNi4h3SWhpTG6Ck0mROkqYU9H0v3lpf9vnO/EraOkB6o7VGDPmOirJNYGcFd4lQ==
+"@better-auth/prisma-adapter@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/prisma-adapter/-/prisma-adapter-1.6.9.tgz#17ab5b8f48576328dd7ed71294d750af341f8ba2"
+  integrity sha512-XHks01ntK20orqK/jICq8wmEbJ/zT6dct49Fk8zTQKN9QNGDc+Ix5+7z/Kvui0DXGFf790GfvRozquzaLtXa8Q==
 
-"@better-auth/telemetry@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.8.tgz#fc110e0591db74d25bc165a61f3accf782cbcdb8"
-  integrity sha512-EkYehns4SH04kGOjVJ++THnGtpjvmktF5+bGbDAanMd6IjP4O7sCaDGrT62xraj4lgj3UO1vQXpR6/M1Xlmixg==
+"@better-auth/telemetry@1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@better-auth/telemetry/-/telemetry-1.6.9.tgz#7a0df15b44c507597726efb24d71bb2b4e0c38c7"
+  integrity sha512-0u5zkhSCAQFoN3DHvUkLHOF6MBbVTDAa6mU8mhPwiysdz1x21vMzhzfaAKN/ZGWaQ09v91/F+2qu42G/bhUV4A==
 
 "@better-auth/utils@0.4.0", "@better-auth/utils@^0.4.0":
   version "0.4.0"
@@ -328,46 +328,46 @@
   resolved "https://registry.yarnpkg.com/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.4.2.tgz#b6b8eab81f0f9d8378e219dd321df20280e3bbd2"
   integrity sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==
 
-"@cloudflare/unenv-preset@2.16.0":
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/@cloudflare/unenv-preset/-/unenv-preset-2.16.0.tgz#b100f147ce5244d6713fa37dbf999d51f9c3d1a8"
-  integrity sha512-8ovsRpwzPoEqPUzoErAYVv8l3FMZNeBVQfJTvtzP4AgLSRGZISRfuChFxHWUQd3n6cnrwkuTGxT+2cGo8EsyYg==
+"@cloudflare/unenv-preset@2.16.1":
+  version "2.16.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/unenv-preset/-/unenv-preset-2.16.1.tgz#d4a3df263ddbfde855bca268be79ea6062856a54"
+  integrity sha512-ECxObrMfyTl5bhQf/lZCXwo5G6xX9IAUo+nDMKK4SZ8m4Jvvxp52vilxyySSWh2YTZz8+HQ07qGH/2rEom1vDw==
 
 "@cloudflare/vite-plugin@^1.13.8":
-  version "1.33.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.33.1.tgz#57d40b906c3aa52e1d418fb859ee88d0e60085ba"
-  integrity sha512-bCwbMIPXW0bjvMWNiDEPmV4/Lc5nU/x3/yIGBrgMgxHa2caMvh6QaOplI7DUcHBpzMfz/0iQ0inVmyIuQ8eG4A==
+  version "1.33.2"
+  resolved "https://registry.yarnpkg.com/@cloudflare/vite-plugin/-/vite-plugin-1.33.2.tgz#6bf6ce5f0588ed9a095f7bc44e4a73a5cc1ff144"
+  integrity sha512-XI6+XkDn8W6tlvtYUoS6C89Te7fwhyDLrhUBUbagPO1StJ6ofbR0vpqNNqNskUp9592xTRCDk5ukqcjz6xMo+g==
   dependencies:
-    "@cloudflare/unenv-preset" "2.16.0"
-    miniflare "4.20260421.0"
+    "@cloudflare/unenv-preset" "2.16.1"
+    miniflare "4.20260424.0"
     unenv "2.0.0-rc.24"
-    wrangler "4.84.1"
+    wrangler "4.85.0"
     ws "8.18.0"
 
-"@cloudflare/workerd-darwin-64@1.20260421.1":
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-64/-/workerd-darwin-64-1.20260421.1.tgz#35227b588ca6416cffcbf7cf562b700f38253cc4"
-  integrity sha512-DLU5ZTZ1VHeZZnj0PuVJEMHKGisfLe2XShyImP5P/PPj/m/t7CLEJmPiI7FMxvT7ynArkckJl7m+Z5x7u4Kkdw==
+"@cloudflare/workerd-darwin-64@1.20260424.1":
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-64/-/workerd-darwin-64-1.20260424.1.tgz#b72d67d12f5ec905ad058778c7332ff698ea3907"
+  integrity sha512-yFR1XaJbSDLg/qbwtrYaU2xwFXatIPKR5nrMQCN1q/m6+Qe/j6r+kCnFEvOJjMZOm9iCKsE6Qly5clgl4u32qw==
 
-"@cloudflare/workerd-darwin-arm64@1.20260421.1":
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-arm64/-/workerd-darwin-arm64-1.20260421.1.tgz#8c011faff6bf4ee112b6b69a4b81473c8d10f309"
-  integrity sha512-Trotq3xRAkIcpC505WoxM8+kIH4JIvOJCNuRatyHcz9uF5S+ukgiVUFUlM+GIjw1uCM/Bda2St+vSniX1RZdpw==
+"@cloudflare/workerd-darwin-arm64@1.20260424.1":
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-darwin-arm64/-/workerd-darwin-arm64-1.20260424.1.tgz#eb33612d8b320a62df01e604de3c09c018ef94ff"
+  integrity sha512-LqWKcE7x/9KyC2iQvKPeb20hKST3dYXDZlYTvFymgR1DfLS0OFOCzVGTloVNd7WqvK4SkdzBYfxo7QMIAeBK0w==
 
-"@cloudflare/workerd-linux-64@1.20260421.1":
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-64/-/workerd-linux-64-1.20260421.1.tgz#b6d4fa15df4dfaeb36aa945eab6bec7f258d396c"
-  integrity sha512-938QjUv0z+QqK6BAvgwX/lCIZ2b224ZXoXtGTbhyNVMhB+mt4Dj24cj9qca4ekNXjVM7uTKp1yOHZO97fVSacw==
+"@cloudflare/workerd-linux-64@1.20260424.1":
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-64/-/workerd-linux-64-1.20260424.1.tgz#86c129d8edac024f3f73fed79b18542bbb9307c7"
+  integrity sha512-YlEBFbAYZHe/ylzl8WEYQEU/jr+0XMqXaST2oBk5oVjksdb1NGuJaggluCdZAzuJJ8UqdTmyhY5u/qrasbiFWA==
 
-"@cloudflare/workerd-linux-arm64@1.20260421.1":
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-arm64/-/workerd-linux-arm64-1.20260421.1.tgz#f7368ffe9d6100a51aa93bd13ebd5a3e189c4469"
-  integrity sha512-YI4+mLfwnJcKJ+iPyxzx+tp2Jy4o29BxBPSQGZxl/AZyvZ9eTKsmNZmtjEiT4i3O/M0tdO/B/d9ESDHbRCs2rQ==
+"@cloudflare/workerd-linux-arm64@1.20260424.1":
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-linux-arm64/-/workerd-linux-arm64-1.20260424.1.tgz#880dfb42638478528ada547f3261a74f7cf8567c"
+  integrity sha512-qJ0X0m6cL8fWDUPDg8K4IxYZXNJI6XbeOihqjnqKbAClrjdPDn8VUSd+z2XiCQ5NylMtMrpa/skC9UfaR6mh8g==
 
-"@cloudflare/workerd-windows-64@1.20260421.1":
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-windows-64/-/workerd-windows-64-1.20260421.1.tgz#0f2780fec52af191df47f7eec244cf7e5b0f50eb"
-  integrity sha512-q1SFgwlNH9lFmw74vh7EJbJtduo92Nx51mNOfd3/u6pux6AldcwRviYzKEEv3FEbtv6OBB7J8D5f8vtZj7Z6Sg==
+"@cloudflare/workerd-windows-64@1.20260424.1":
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workerd-windows-64/-/workerd-windows-64-1.20260424.1.tgz#ad02798e433da2f56bc1dc6a3a1f6402a1f0dee1"
+  integrity sha512-tZ7Z9qmYNAP6z1/+8r/zKbk8F8DZmpmwNzMeN+zkde2Wnhfr3FBqOkJXT/5zmli8HPoWrIXxSiyqcNDMy8V2Zg==
 
 "@cspotcode/source-map-support@0.8.1":
   version "0.8.1"
@@ -2779,17 +2779,17 @@ bcp-47@^2.0.0:
     is-decimal "^2.0.0"
 
 better-auth@^1.4.12:
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.8.tgz#470912b9a47d5cd79c81d44fbe635415d1dfdf4e"
-  integrity sha512-5QEDdsLdsBchmMjRWw4tm3CwMFBEGVxnbz8B7UE/4YiDow6ydU/N7HQfhSg6eOy3qvODM3i2jDblSug9YObDug==
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/better-auth/-/better-auth-1.6.9.tgz#fb74209e5ac62bda962edec7d7538b6ae28ab064"
+  integrity sha512-EBFURtglyiEZxbx4NJBoqUD8J65dX24yC+6I9AUbIXNgUkt76mshzGbHkxZ3n/lB7Dwq3kBC+hHt0hUQsnL7HA==
   dependencies:
-    "@better-auth/core" "1.6.8"
-    "@better-auth/drizzle-adapter" "1.6.8"
-    "@better-auth/kysely-adapter" "1.6.8"
-    "@better-auth/memory-adapter" "1.6.8"
-    "@better-auth/mongo-adapter" "1.6.8"
-    "@better-auth/prisma-adapter" "1.6.8"
-    "@better-auth/telemetry" "1.6.8"
+    "@better-auth/core" "1.6.9"
+    "@better-auth/drizzle-adapter" "1.6.9"
+    "@better-auth/kysely-adapter" "1.6.9"
+    "@better-auth/memory-adapter" "1.6.9"
+    "@better-auth/mongo-adapter" "1.6.9"
+    "@better-auth/prisma-adapter" "1.6.9"
+    "@better-auth/telemetry" "1.6.9"
     "@better-auth/utils" "0.4.0"
     "@better-fetch/fetch" "1.1.21"
     "@noble/ciphers" "^2.1.1"
@@ -4421,15 +4421,15 @@ meshoptimizer@^1.0.1:
   resolved "https://registry.yarnpkg.com/meshoptimizer/-/meshoptimizer-1.1.0.tgz#c714a0a6324fd7e1f2b187eff2f07c6b16041f60"
   integrity sha512-KYYsWvWduDIm86HVtTKW1luZSusEv+tgSqYvgSJcKzaHIUNKL9/qQ+48YKcLxknAE8GQAeVi68mgvmEGrjwqjA==
 
-miniflare@4.20260421.0:
-  version "4.20260421.0"
-  resolved "https://registry.yarnpkg.com/miniflare/-/miniflare-4.20260421.0.tgz#adadc9c24f19423bda916c17e477c274830023cb"
-  integrity sha512-7ZkNQ7brgQ2hh5ha9iQCDUjxBkLvuiG2VdDns9esRL8O8lXg+MoP6E0dO1rtp+ZY2I+vV1tPWr6td5IojkewLw==
+miniflare@4.20260424.0:
+  version "4.20260424.0"
+  resolved "https://registry.yarnpkg.com/miniflare/-/miniflare-4.20260424.0.tgz#717a49489943a2f26d1eb2071f1fe0610728ee1e"
+  integrity sha512-B6MKBBd5TJ19daUc3Ae9rWctn1nDA/VCXykXfCsp9fTxyfGxnZY27tJs1caxgE9MWEMMKGbGHouqVtgKbKGxmw==
   dependencies:
     "@cspotcode/source-map-support" "0.8.1"
     sharp "^0.34.5"
     undici "7.24.8"
-    workerd "1.20260421.1"
+    workerd "1.20260424.1"
     ws "8.18.0"
     youch "4.1.0-beta.10"
 
@@ -5684,30 +5684,30 @@ wistia-video-element@^1.3.5:
   dependencies:
     super-media-element "~1.4.2"
 
-workerd@1.20260421.1:
-  version "1.20260421.1"
-  resolved "https://registry.yarnpkg.com/workerd/-/workerd-1.20260421.1.tgz#922f46fcf3fc1598531df26060a66cac0cb107d8"
-  integrity sha512-zTYD+xFR4d7TUCxsyl7FTPth9a8CDgk8pM7xUWbJxo0SGUx+2e5C7Q5LrramBZwmuAErtzXmOjlQ15PtkPAhZA==
+workerd@1.20260424.1:
+  version "1.20260424.1"
+  resolved "https://registry.yarnpkg.com/workerd/-/workerd-1.20260424.1.tgz#b35b90c6a3ded66e90d782e43140629b5b71fa91"
+  integrity sha512-oKsB0Xo/mfkYMdSACoS06XZg09VUK4rXwHfF/1t3P++sMbwzf4UHQvMO57+zxpEB2nVrY/ZkW0bYFGq4GdAFSQ==
   optionalDependencies:
-    "@cloudflare/workerd-darwin-64" "1.20260421.1"
-    "@cloudflare/workerd-darwin-arm64" "1.20260421.1"
-    "@cloudflare/workerd-linux-64" "1.20260421.1"
-    "@cloudflare/workerd-linux-arm64" "1.20260421.1"
-    "@cloudflare/workerd-windows-64" "1.20260421.1"
+    "@cloudflare/workerd-darwin-64" "1.20260424.1"
+    "@cloudflare/workerd-darwin-arm64" "1.20260424.1"
+    "@cloudflare/workerd-linux-64" "1.20260424.1"
+    "@cloudflare/workerd-linux-arm64" "1.20260424.1"
+    "@cloudflare/workerd-windows-64" "1.20260424.1"
 
-wrangler@4.84.1, wrangler@^4.40.3:
-  version "4.84.1"
-  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.84.1.tgz#2ea088ec24b027ccfaa0c3b1672bacf9f659c836"
-  integrity sha512-Xe1S/Bik7pNdtdJ+asHsEZC2dX9k3WxYn2BbxFtOrrLVxN/LKi750zsrjX41jSAk00M/O1l7jzyQV4sQqw8ftg==
+wrangler@4.85.0, wrangler@^4.40.3:
+  version "4.85.0"
+  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-4.85.0.tgz#73c185a7e1c26b67020fbe4b7cdfca865936704c"
+  integrity sha512-93cwt2RPb1qdcmEgPzH7ybiLN4BIKoWpscIX6SywjHrQOeIZrQk2haoc3XMLKtQTmzapxza9OuDD+kMHpsuuhg==
   dependencies:
     "@cloudflare/kv-asset-handler" "0.4.2"
-    "@cloudflare/unenv-preset" "2.16.0"
+    "@cloudflare/unenv-preset" "2.16.1"
     blake3-wasm "2.1.5"
     esbuild "0.27.3"
-    miniflare "4.20260421.0"
+    miniflare "4.20260424.0"
     path-to-regexp "6.3.0"
     unenv "2.0.0-rc.24"
-    workerd "1.20260421.1"
+    workerd "1.20260424.1"
   optionalDependencies:
     fsevents "~2.3.2"
 
