@@ -39,6 +39,7 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 // utils
 import { dmsCoordinates } from '@/utils/dms'
+import { useSession } from '@/lib/auth-client'
 
 // types
 const searchSchema = z
@@ -307,6 +308,7 @@ export const Route = createFileRoute('/demo/maps')({
 
 function RouteComponent() {
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
   const selectedCardRef = useRef<HTMLDivElement | null>(null)
@@ -390,6 +392,43 @@ function RouteComponent() {
     },
     placeholderData: keepPreviousData,
     staleTime: 45_000,
+  })
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async ({
+      body,
+    }: {
+      body: {
+        data: {
+          id: string
+          pageSize: number
+          orderBy: 'asc' | 'desc'
+          updatedAt?: string
+          bbox?: string
+          west?: number
+          south?: number
+          east?: number
+          north?: number
+          limit?: number
+          zoomBucket?: 'broad' | 'medium' | 'close'
+        }[]
+      }
+    }) => {
+      return await fetch('http://localhost:3006/api/v1/map-messages', {
+        method: 'DELETE',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        credentials: 'include',
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+      ])
+    },
   })
 
   const hotspotQueries = useQueries({
@@ -484,6 +523,45 @@ function RouteComponent() {
       ])
     },
   })
+
+  const handleDeleteMessage = async (data: {
+    id: string
+    pageSize: number
+    orderBy: 'asc' | 'desc'
+    updatedAt?: string
+    bbox?: string
+    west?: number
+    south?: number
+    east?: number
+    north?: number
+    limit?: number
+    zoomBucket?: 'broad' | 'medium' | 'close'
+  }) => {
+    try {
+      await deleteMessageMutation.mutateAsync(
+        { body: { data: [data] } },
+        {
+          onSuccess: async (response) => {
+            if (response.ok) {
+              const result = (await response.json()) as {
+                message: string
+                deletedItems: {
+                  id: string
+                  title: string
+                }[]
+              }
+              console.log('🚀 ~ handleDeleteMessage ~ result:', result.message)
+            }
+          },
+          onError: (error) => {
+            console.log('🚀 ~ handleDeleteMessage ~ error:', error.message)
+          },
+        },
+      )
+    } catch (error) {
+      console.log('🚀 ~ handleDeleteMessage ~ error:', error)
+    }
+  }
 
   const canSubmit =
     draftMessage.trim().length > 0 && !!selectedPosition && !isSubmitting
@@ -1315,140 +1393,120 @@ function RouteComponent() {
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-50 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
-        {!isPinning && (
-          <button
-            type="button"
-            onClick={() => setIsPinning(true)}
-            className="sm:hidden pointer-events-auto flex justify-center items-center border border-zinc-700/70 bg-zinc-900/80 text-zinc-100 w-8.5 h-8 cursor-pointer"
+      {!selectedMessage && (
+        <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-50 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
+          {!isPinning && (
+            <button
+              type="button"
+              onClick={() => setIsPinning(true)}
+              className="sm:hidden pointer-events-auto flex justify-center items-center border border-zinc-700/70 bg-zinc-900/80 text-zinc-100 w-8.5 h-8 cursor-pointer"
+            >
+              <MapPinPlus className="text-cyan-500 w-8 h-7.5" />
+            </button>
+          )}
+          <div
+            className={`${isPinning ? '' : 'hidden sm:block'} pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}
           >
-            <MapPinPlus className="text-cyan-500 w-8 h-7.5" />
-          </button>
-        )}
-        <div
-          className={`${isPinning ? '' : 'hidden sm:block'} pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}
-        >
-          <p className="text-sm font-medium text-zinc-200">Community pins</p>
-          <p className="mt-1 text-xs text-zinc-400">
-            {isPinning
-              ? 'Click on the globe to choose a location, then write your message.'
-              : 'Drop floating messages directly onto the map.'}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setIsPinning(true)
-              setSelectedPosition(null)
-              setSelectedMessageId(null)
-            }}
-            className="mt-3 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
-          >
-            {isPinning ? 'Choose location on globe…' : 'Add map message'}
-          </button>
-          {errorMessage ? (
-            <p className="mt-2 text-xs text-rose-300">{errorMessage}</p>
-          ) : null}
-        </div>
+            <p className="text-sm font-medium text-zinc-200">Community pins</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              {isPinning
+                ? 'Click on the globe to choose a location, then write your message.'
+                : 'Drop floating messages directly onto the map.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsPinning(true)
+                setSelectedPosition(null)
+                setSelectedMessageId(null)
+              }}
+              className="mt-3 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
+            >
+              {isPinning ? 'Choose location on globe…' : 'Add map message'}
+            </button>
+            {errorMessage ? (
+              <p className="mt-2 text-xs text-rose-300">{errorMessage}</p>
+            ) : null}
+          </div>
 
-        {isPinning && (
-          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
-            <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
-              <p className="text-sm font-semibold text-cyan-100">
-                Compose message
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full border border-cyan-300/45 bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-100 shadow-sm shadow-cyan-700/20">
-                  Drop mode
-                </span>
-                <span className="rounded-full border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
-                  {selectedLabel
-                    ? `${latitude.deg}°${latitude.mins}'${latitude.secs}"${latitude.bearing}, ${longitude.deg}°${longitude.mins}'${longitude.secs}"${longitude.bearing}`
-                    : 'Waiting for location'}
-                </span>
-              </div>
-              <input
-                type="text"
-                value={draftMessage}
-                onChange={(event) => setDraftMessage(event.target.value)}
-                placeholder="Share a quick note for this location..."
-                className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
-                maxLength={140}
-              />
-              <input
-                type="url"
-                value={draftVideoUrl}
-                onChange={(event) => setDraftVideoUrl(event.target.value)}
-                placeholder="Optional video URL (e.g. YouTube)..."
-                className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
-              />
-              {draftVideoUrl.trim() ? (
-                <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
-                  <ReactPlayer
-                    src={draftVideoUrl.trim()}
-                    width="100%"
-                    height="100%"
-                    controls
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                  />
-                  <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
-                    Preview
-                  </div>
+          {isPinning && (
+            <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+              <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+                <p className="text-sm font-semibold text-cyan-100">
+                  Compose message
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full border border-cyan-300/45 bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-100 shadow-sm shadow-cyan-700/20">
+                    Drop mode
+                  </span>
+                  <span className="rounded-full border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
+                    {selectedLabel
+                      ? `${latitude.deg}°${latitude.mins}'${latitude.secs}"${latitude.bearing}, ${longitude.deg}°${longitude.mins}'${longitude.secs}"${longitude.bearing}`
+                      : 'Waiting for location'}
+                  </span>
                 </div>
-              ) : null}
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-xs text-zinc-400">
-                  {draftMessage.trim().length}/140
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={!canSubmit}
-                    className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
-                  >
-                    {isSubmitting ? 'Publishing…' : 'Publish'}
-                  </button>
+                <input
+                  type="text"
+                  value={draftMessage}
+                  onChange={(event) => setDraftMessage(event.target.value)}
+                  placeholder="Share a quick note for this location..."
+                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  maxLength={140}
+                />
+                <input
+                  type="url"
+                  value={draftVideoUrl}
+                  onChange={(event) => setDraftVideoUrl(event.target.value)}
+                  placeholder="Optional video URL (e.g. YouTube)..."
+                  className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                />
+                {draftVideoUrl.trim() ? (
+                  <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                    <ReactPlayer
+                      src={draftVideoUrl.trim()}
+                      width="100%"
+                      height="100%"
+                      controls
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                    />
+                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                      Preview
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-xs text-zinc-400">
+                    {draftMessage.trim().length}/140
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={!canSubmit}
+                      className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                    >
+                      {isSubmitting ? 'Publishing…' : 'Publish'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {selectedMessage ? (
         <div
           ref={selectedCardRef}
           className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
         >
-          <button
-            type="button"
-            onClick={() => setSelectedMessageId(null)}
-            className="absolute right-3 top-3 z-30 rounded-full bg-black/60 p-1.5 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
-            aria-label="Close card"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-
           {selectedMessage.videoUrl ? (
             <div className="relative aspect-video w-full bg-black/80">
               <ReactPlayer
@@ -1466,9 +1524,56 @@ function RouteComponent() {
             </div>
           ) : null}
           <div className="p-5">
-            <h3 className="text-sm font-semibold text-zinc-100">
-              Location Record
-            </h3>
+            <div className="flex justify-evenly items-center">
+              <h3 className="text-sm font-semibold text-zinc-100">
+                Location Record
+              </h3>
+              <div className="flex flex-1 justify-end items-center gap-2">
+                {session && session.user.role === 'Admin' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDeleteMessage({
+                        id: selectedMessage.id,
+                        orderBy: viewportQueryState?.input.orderBy ?? 'desc',
+                        pageSize: viewportQueryState?.input.pageSize ?? 500,
+                        bbox: viewportQueryState?.input.bbox,
+                        east: viewport?.east,
+                        north: viewport?.north,
+                        south: viewport?.south,
+                        west: viewport?.west,
+                        zoomBucket: viewportQueryState?.zoomBucket,
+                      })
+                    }
+                    className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
+                    aria-label="Remove message"
+                  >
+                    Delete
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedMessageId(null)}
+                  className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
+                  aria-label="Close card"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
             <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
               {selectedMessage.mapMessage}
             </p>
