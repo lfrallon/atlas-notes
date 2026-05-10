@@ -102,6 +102,7 @@ type MapMessagesPage = {
 
 interface MapMessagesNodes {
   id: string
+  title: string
   mapMessage: string
   latitude: number
   longitude: number
@@ -293,6 +294,7 @@ function toMessageNodes(data?: MapMessagesPage) {
 
   return data.nodes.map((node) => ({
     id: String(node.id),
+    title: node.title,
     mapMessage: node.mapMessage,
     latitude: node.latitude,
     longitude: node.longitude,
@@ -318,6 +320,7 @@ function RouteComponent() {
   const lastFocusedMessageIdRef = useRef<string | null>(null)
   const lastKnownCameraHeightRef = useRef<number>(250_000)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
   const [draftMessage, setDraftMessage] = useState('')
   const [draftVideoUrl, setDraftVideoUrl] = useState('')
   const [isPinning, setIsPinning] = useState(false)
@@ -564,7 +567,10 @@ function RouteComponent() {
   }
 
   const canSubmit =
-    draftMessage.trim().length > 0 && !!selectedPosition && !isSubmitting
+    draftTitle.trim().length > 0 &&
+    draftMessage.trim().length > 0 &&
+    !!selectedPosition &&
+    !isSubmitting
 
   useEffect(() => {
     isPinningRef.current = isPinning
@@ -1002,9 +1008,9 @@ function RouteComponent() {
 
       const position = Cartesian3.fromDegrees(item.longitude, item.latitude, 6)
       const shortMessage =
-        item.mapMessage.length > 48
-          ? `${item.mapMessage.slice(0, 45).trimEnd()}`
-          : item.mapMessage
+        item.title.length > 48
+          ? `${item.title.slice(0, 45).trimEnd()}`
+          : item.title
 
       viewer.entities.add({
         id: `message-${item.id}`,
@@ -1322,7 +1328,7 @@ function RouteComponent() {
       addMapMessagesMutation.mutateAsync(
         {
           data: {
-            title: 'Map Message',
+            title: draftTitle.trim(),
             mapMessage: draftMessage.trim(),
             latitude: selectedPosition.lat,
             longitude: selectedPosition.lng,
@@ -1340,6 +1346,7 @@ function RouteComponent() {
               )
             }
 
+            setDraftTitle('')
             setDraftMessage('')
             setDraftVideoUrl('')
             setIsPinning(false)
@@ -1349,6 +1356,7 @@ function RouteComponent() {
         },
       )
 
+      setDraftTitle('')
       setDraftMessage('')
       setDraftVideoUrl('')
       setIsPinning(false)
@@ -1366,6 +1374,7 @@ function RouteComponent() {
   }
 
   function handleCancel() {
+    setDraftTitle('')
     setDraftMessage('')
     setDraftVideoUrl('')
     setSelectedPosition(null)
@@ -1447,6 +1456,14 @@ function RouteComponent() {
                 </div>
                 <input
                   type="text"
+                  value={draftTitle}
+                  onChange={(event) => setDraftTitle(event.target.value)}
+                  placeholder="Title"
+                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  maxLength={32}
+                />
+                <input
+                  type="text"
                   value={draftMessage}
                   onChange={(event) => setDraftMessage(event.target.value)}
                   placeholder="Share a quick note for this location..."
@@ -1526,7 +1543,7 @@ function RouteComponent() {
           <div className="p-5">
             <div className="flex justify-evenly items-center">
               <h3 className="text-sm font-semibold text-zinc-100">
-                Location Record
+                {selectedMessage.title}
               </h3>
               <div className="flex flex-1 justify-end items-center gap-2">
                 {session && session.user.role === 'Admin' && (
