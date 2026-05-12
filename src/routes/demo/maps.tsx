@@ -32,7 +32,7 @@ import {
   MaterialProperty,
   Property,
 } from 'cesium'
-import { MapPinPlus } from 'lucide-react'
+import { MapPinPlus, SquarePen, XIcon } from 'lucide-react'
 
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -323,7 +323,13 @@ function RouteComponent() {
   const [draftTitle, setDraftTitle] = useState('')
   const [draftMessage, setDraftMessage] = useState('')
   const [draftVideoUrl, setDraftVideoUrl] = useState('')
+  const [updateId, setUpdateId] = useState('')
+  const [updateTitle, setUpdateTitle] = useState('')
+  const [updateMessage, setUpdateMessage] = useState('')
+  const [updateVideoUrl, setUpdateVideoUrl] = useState('')
   const [isPinning, setIsPinning] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isSubmitUpdating, setIsSubmitUpdating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
@@ -341,6 +347,9 @@ function RouteComponent() {
     x: number
     y: number
   } | null>(null)
+  const [position, setPosition] = useState({ x: 197, y: 140 })
+  const isDragging = useRef(false)
+  const offsetDrag = useRef({ x: 0, y: 0 })
 
   const viewportQueryState = useMemo(() => {
     if (!viewport) return null
@@ -527,6 +536,59 @@ function RouteComponent() {
     },
   })
 
+  const updateMapMessagesMutation = useMutation({
+    mutationFn: async ({
+      body,
+    }: {
+      body: {
+        data: {
+          id: string
+          title: string
+          mapMessage: string
+          videoUrl?: string
+          pageSize: number
+          orderBy: 'asc' | 'desc'
+          updatedAt?: string
+          bbox?: string
+          west?: number
+          south?: number
+          east?: number
+          north?: number
+          limit?: number
+          zoomBucket?: 'broad' | 'medium' | 'close'
+        }[]
+      }
+    }) =>
+      fetch(`${MAP_MESSAGES_API_URL}/update`, {
+        method: 'PUT',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+      ])
+    },
+  })
+
+  const handleUpdateMessage = async (data: {
+    id: string
+    title: string
+    mapMessage: string
+    videoUrl?: string | null
+  }) => {
+    setSelectedMessageId(null)
+    setUpdateId(data.id)
+    setUpdateTitle(data.title)
+    setUpdateMessage(data.mapMessage)
+    setUpdateVideoUrl(data.videoUrl ?? '')
+    setIsUpdating(true)
+  }
+
   const handleDeleteMessage = async (data: {
     id: string
     pageSize: number
@@ -566,11 +628,39 @@ function RouteComponent() {
     }
   }
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = true
+    offsetDrag.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    }
+    // e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return
+
+    setPosition({
+      x: e.clientX - offsetDrag.current.x,
+      y: e.clientY - offsetDrag.current.y,
+    })
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDragging.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
   const canSubmit =
     draftTitle.trim().length > 0 &&
     draftMessage.trim().length > 0 &&
     !!selectedPosition &&
     !isSubmitting
+
+  const canUpdate =
+    updateTitle.trim().length > 0 &&
+    updateMessage.trim().length > 0 &&
+    !isSubmitUpdating
 
   useEffect(() => {
     isPinningRef.current = isPinning
@@ -1318,6 +1408,70 @@ function RouteComponent() {
     }
   }, [isPinning, selectedPosition])
 
+  async function handleUpdate() {
+    if (!canUpdate) return
+
+    setIsSubmitUpdating(true)
+    setErrorMessage(null)
+
+    try {
+      updateMapMessagesMutation.mutateAsync(
+        {
+          body: {
+            data: [
+              {
+                id: updateId,
+                title: updateTitle.trim(),
+                mapMessage: updateMessage.trim(),
+                ...(updateVideoUrl.trim()
+                  ? { videoUrl: updateVideoUrl.trim() }
+                  : {}),
+                orderBy: viewportQueryState?.input.orderBy ?? 'desc',
+                pageSize: viewportQueryState?.input.pageSize ?? 500,
+                bbox: viewportQueryState?.input.bbox,
+                east: viewport?.east,
+                north: viewport?.north,
+                south: viewport?.south,
+                west: viewport?.west,
+                zoomBucket: viewportQueryState?.zoomBucket,
+              },
+            ],
+          },
+        },
+        {
+          onSuccess: async (response) => {
+            if (!response.ok) {
+              const payload = (await response.json().catch(() => null)) as {
+                error?: string
+              } | null
+              throw new Error(payload?.error ?? 'Unable to update map message.')
+            }
+
+            setUpdateId('')
+            setUpdateTitle('')
+            setUpdateMessage('')
+            setUpdateVideoUrl('')
+            setIsUpdating(false)
+          },
+        },
+      )
+
+      setUpdateId('')
+      setUpdateTitle('')
+      setUpdateMessage('')
+      setUpdateVideoUrl('')
+      setIsUpdating(false)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to update map message.',
+      )
+    } finally {
+      setIsSubmitUpdating(false)
+    }
+  }
+
   async function handleSubmit() {
     if (!canSubmit || !selectedPosition) return
 
@@ -1380,6 +1534,14 @@ function RouteComponent() {
     setSelectedPosition(null)
     setIsPinning(false)
     setCursorPosition(null)
+  }
+
+  function handleUpdateCancel() {
+    setUpdateId('')
+    setUpdateTitle('')
+    setUpdateMessage('')
+    setUpdateVideoUrl('')
+    setIsUpdating(false)
   }
 
   if (!CESIUM_TOKEN) {
@@ -1519,6 +1681,90 @@ function RouteComponent() {
         </div>
       )}
 
+      {isUpdating && (
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            cursor: 'grab',
+            userSelect: 'none',
+            touchAction: 'none',
+          }}
+          className="pointer-events-none absolute left-1/2 top-1.5 z-50 flex flex-col gap-3 transform -translate-x-1/2 w-full max-w-sm sm:left-1.5 sm:w-104 sm:transform-none"
+        >
+          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+            <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+              <p className="text-sm font-semibold text-cyan-100">
+                Update message
+              </p>
+              <input
+                type="text"
+                value={updateTitle}
+                onChange={(event) => setUpdateTitle(event.target.value)}
+                placeholder="Title"
+                className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                maxLength={32}
+              />
+              <input
+                type="text"
+                value={updateMessage}
+                onChange={(event) => setUpdateMessage(event.target.value)}
+                placeholder="Share a quick note for this location..."
+                className="mt-3 h-auto w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                maxLength={140}
+                height="auto"
+              />
+              <input
+                type="url"
+                value={updateVideoUrl}
+                onChange={(event) => setUpdateVideoUrl(event.target.value)}
+                placeholder="Optional video URL (e.g. YouTube)..."
+                className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+              />
+              {updateVideoUrl.trim() ? (
+                <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                  <ReactPlayer
+                    src={updateVideoUrl.trim()}
+                    width="100%"
+                    height="100%"
+                    controls
+                    style={{ position: 'absolute', top: 0, left: 0 }}
+                  />
+                  <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                    Preview
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-xs text-zinc-400">
+                  {updateMessage.trim().length}/140
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUpdateCancel}
+                    className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUpdate}
+                    disabled={!canUpdate}
+                    className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                  >
+                    {isSubmitUpdating ? 'Updating...' : 'Update'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedMessage ? (
         <div
           ref={selectedCardRef}
@@ -1568,26 +1814,30 @@ function RouteComponent() {
                     Delete
                   </button>
                 )}
+                {session && session.user.permissions.includes('Update') && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleUpdateMessage({
+                        id: selectedMessage.id,
+                        title: selectedMessage.title,
+                        mapMessage: selectedMessage.mapMessage,
+                        videoUrl: selectedMessage.videoUrl,
+                      })
+                    }
+                    className="right-12 z-30 rounded-full border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
+                    aria-label="Modify Icon"
+                  >
+                    <SquarePen className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setSelectedMessageId(null)}
                   className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
-                  aria-label="Close card"
+                  aria-label="Close Icon"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M18 6 6 18" />
-                    <path d="m6 6 12 12" />
-                  </svg>
+                  <XIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
