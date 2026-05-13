@@ -1,4 +1,7 @@
-Welcome to your new TanStack app! 
+# Atlas Notes
+
+A full-stack geospatial notes app for pinning authenticated messages and videos
+to an interactive globe, built with TanStack Start, Drizzle ORM, and Better Auth.
 
 # Getting Started
 
