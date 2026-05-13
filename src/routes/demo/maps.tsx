@@ -107,7 +107,8 @@ interface MapMessagesNodes {
   latitude: number
   longitude: number
   createdAt: string | null
-  userId?: string
+  updatedAt: string
+  userId: string | null
   videoUrl?: string | null
 }
 
@@ -299,6 +300,8 @@ function toMessageNodes(data?: MapMessagesPage) {
     latitude: node.latitude,
     longitude: node.longitude,
     createdAt: node.createdAt,
+    updatedAt: node.updatedAt,
+    userId: node.userId,
     videoUrl: node.videoUrl,
   }))
 }
@@ -1814,7 +1817,10 @@ function RouteComponent() {
                     Delete
                   </button>
                 )}
-                {session && session.user.permissions.includes('Update') && (
+                {(session &&
+                  session.user.permissions.includes('Update') &&
+                  selectedMessage.userId === session.session.userId) ||
+                (session && session.user.role === 'Admin') ? (
                   <button
                     type="button"
                     onClick={() =>
@@ -1830,7 +1836,7 @@ function RouteComponent() {
                   >
                     <SquarePen className="w-4 h-4" />
                   </button>
-                )}
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setSelectedMessageId(null)}
