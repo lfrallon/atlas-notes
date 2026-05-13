@@ -1,5 +1,6 @@
 {
-  "name": "tanstack-drizzle-app",
+  "name": "atlas-notes",
+  "description": "A full-stack geospatial notes app for pinning authenticated messages and videos to an interactive globe, built with TanStack Start, Drizzle ORM, and Better Auth.",
   "private": true,
   "type": "module",
   "scripts": {

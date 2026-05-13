@@ -35,7 +35,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack',
+        title: 'Atlas Notes',
+      },
+      {
+        name: 'description',
+        content:
+          'Pin authenticated notes and videos to places on an interactive globe.',
       },
     ],
     links: [
