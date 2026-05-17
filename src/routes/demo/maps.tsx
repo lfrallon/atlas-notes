@@ -33,6 +33,7 @@ import {
   Property,
 } from 'cesium'
 import { MapPinPlus, SquarePen, XIcon } from 'lucide-react'
+import { useDebounce } from 'use-debounce'
 
 // css
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -350,9 +351,18 @@ function RouteComponent() {
     x: number
     y: number
   } | null>(null)
-  const [position, setPosition] = useState({ x: 197, y: 140 })
-  const isDragging = useRef(false)
-  const offsetDrag = useRef({ x: 0, y: 0 })
+  const [updateCardPosition, setUpdateCardPosition] = useState({
+    x: 197,
+    y: 140,
+  })
+  const [selectedCardPosition, setSelectedCardPosition] = useState({
+    x: 0,
+    y: 0,
+  })
+  const isDraggingUpdateCard = useRef(false)
+  const isDraggingSelectedCard = useRef(false)
+  const offsetDragUpdateCard = useRef({ x: 0, y: 0 })
+  const offsetDragSelectedCard = useRef({ x: 0, y: 0 })
 
   const viewportQueryState = useMemo(() => {
     if (!viewport) return null
@@ -368,17 +378,19 @@ function RouteComponent() {
     }
   }, [viewport])
 
+  const [debouncedViewportQueryState] = useDebounce(viewportQueryState, 350)
+
   const { data } = useInfiniteQuery<MapMessagesPage, Error>({
     queryKey: [
       'map-messages',
       {
         baseUrl: MAP_MESSAGES_API_URL,
-        input: viewportQueryState?.input ?? {},
-        bboxKey: viewportQueryState?.bboxKey ?? 'unknown',
-        zoomBucket: viewportQueryState?.zoomBucket ?? 'broad',
+        input: debouncedViewportQueryState?.input ?? {},
+        bboxKey: debouncedViewportQueryState?.bboxKey ?? 'unknown',
+        zoomBucket: debouncedViewportQueryState?.zoomBucket ?? 'broad',
       },
     ],
-    enabled: !!viewportQueryState,
+    enabled: !!debouncedViewportQueryState,
     queryFn: async ({ pageParam, queryKey }) =>
       await getMapMessages({
         pageParam: pageParam as SearchQuery,
@@ -584,6 +596,7 @@ function RouteComponent() {
     mapMessage: string
     videoUrl?: string | null
   }) => {
+    setSelectedCardPosition({ x: 0, y: 40 })
     setSelectedMessageId(null)
     setUpdateId(data.id)
     setUpdateTitle(data.title)
@@ -631,26 +644,59 @@ function RouteComponent() {
     }
   }
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDragging.current = true
-    offsetDrag.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+  const handleUpdateCardPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    isDraggingUpdateCard.current = true
+    offsetDragUpdateCard.current = {
+      x: e.clientX - updateCardPosition.x,
+      y: e.clientY - updateCardPosition.y,
     }
     // e.currentTarget.setPointerCapture(e.pointerId)
   }
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return
+  const handleUpdateCardPointerMove = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (!isDraggingUpdateCard.current) return
 
-    setPosition({
-      x: e.clientX - offsetDrag.current.x,
-      y: e.clientY - offsetDrag.current.y,
+    setUpdateCardPosition({
+      x: e.clientX - offsetDragUpdateCard.current.x,
+      y: e.clientY - offsetDragUpdateCard.current.y,
     })
   }
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDragging.current = false
+  const handleUpdateCardPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingUpdateCard.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
+  const handleSelectedCardPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    isDraggingSelectedCard.current = true
+    offsetDragSelectedCard.current = {
+      x: e.clientX - selectedCardPosition.x,
+      y: e.clientY - selectedCardPosition.y,
+    }
+    // e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handleSelectedCardPointerMove = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (!isDraggingSelectedCard.current) return
+
+    setSelectedCardPosition({
+      x: e.clientX - offsetDragSelectedCard.current.x,
+      y: e.clientY - offsetDragSelectedCard.current.y,
+    })
+  }
+
+  const handleSelectedCardPointerUp = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    isDraggingSelectedCard.current = false
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
@@ -805,6 +851,7 @@ function RouteComponent() {
           if (pickedMessageId) {
             setSelectedMessageId(pickedMessageId)
           } else {
+            setSelectedCardPosition({ x: 0, y: 40 })
             setSelectedMessageId(null)
           }
           return
@@ -1429,14 +1476,14 @@ function RouteComponent() {
                 ...(updateVideoUrl.trim()
                   ? { videoUrl: updateVideoUrl.trim() }
                   : {}),
-                orderBy: viewportQueryState?.input.orderBy ?? 'desc',
-                pageSize: viewportQueryState?.input.pageSize ?? 500,
-                bbox: viewportQueryState?.input.bbox,
+                orderBy: debouncedViewportQueryState?.input.orderBy ?? 'desc',
+                pageSize: debouncedViewportQueryState?.input.pageSize ?? 500,
+                bbox: debouncedViewportQueryState?.input.bbox,
                 east: viewport?.east,
                 north: viewport?.north,
                 south: viewport?.south,
                 west: viewport?.west,
-                zoomBucket: viewportQueryState?.zoomBucket,
+                zoomBucket: debouncedViewportQueryState?.zoomBucket,
               },
             ],
           },
@@ -1454,6 +1501,7 @@ function RouteComponent() {
             setUpdateTitle('')
             setUpdateMessage('')
             setUpdateVideoUrl('')
+            setUpdateCardPosition({ x: 197, y: 140 })
             setIsUpdating(false)
           },
         },
@@ -1463,6 +1511,7 @@ function RouteComponent() {
       setUpdateTitle('')
       setUpdateMessage('')
       setUpdateVideoUrl('')
+      setUpdateCardPosition({ x: 197, y: 140 })
       setIsUpdating(false)
     } catch (error) {
       setErrorMessage(
@@ -1544,6 +1593,7 @@ function RouteComponent() {
     setUpdateTitle('')
     setUpdateMessage('')
     setUpdateVideoUrl('')
+    setUpdateCardPosition({ x: 197, y: 140 })
     setIsUpdating(false)
   }
 
@@ -1591,6 +1641,7 @@ function RouteComponent() {
               type="button"
               onClick={() => {
                 setIsPinning(true)
+                setSelectedCardPosition({ x: 0, y: 40 })
                 setSelectedPosition(null)
                 setSelectedMessageId(null)
               }}
@@ -1686,12 +1737,12 @@ function RouteComponent() {
 
       {isUpdating && (
         <div
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
+          onPointerDown={handleUpdateCardPointerDown}
+          onPointerMove={handleUpdateCardPointerMove}
+          onPointerUp={handleUpdateCardPointerUp}
           style={{
-            left: `${position.x}px`,
-            top: `${position.y}px`,
+            left: `${updateCardPosition.x}px`,
+            top: `${updateCardPosition.y}px`,
             cursor: 'grab',
             userSelect: 'none',
             touchAction: 'none',
@@ -1771,6 +1822,16 @@ function RouteComponent() {
       {selectedMessage ? (
         <div
           ref={selectedCardRef}
+          onPointerDown={handleSelectedCardPointerDown}
+          onPointerMove={handleSelectedCardPointerMove}
+          onPointerUp={handleSelectedCardPointerUp}
+          style={{
+            left: `${selectedCardPosition.x}px`,
+            top: `${selectedCardPosition.y}px`,
+            cursor: 'grab',
+            userSelect: 'none',
+            touchAction: 'none',
+          }}
           className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
         >
           {selectedMessage.videoUrl ? (
@@ -1801,14 +1862,16 @@ function RouteComponent() {
                     onClick={() =>
                       handleDeleteMessage({
                         id: selectedMessage.id,
-                        orderBy: viewportQueryState?.input.orderBy ?? 'desc',
-                        pageSize: viewportQueryState?.input.pageSize ?? 500,
-                        bbox: viewportQueryState?.input.bbox,
+                        orderBy:
+                          debouncedViewportQueryState?.input.orderBy ?? 'desc',
+                        pageSize:
+                          debouncedViewportQueryState?.input.pageSize ?? 500,
+                        bbox: debouncedViewportQueryState?.input.bbox,
                         east: viewport?.east,
                         north: viewport?.north,
                         south: viewport?.south,
                         west: viewport?.west,
-                        zoomBucket: viewportQueryState?.zoomBucket,
+                        zoomBucket: debouncedViewportQueryState?.zoomBucket,
                       })
                     }
                     className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
@@ -1839,7 +1902,10 @@ function RouteComponent() {
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => setSelectedMessageId(null)}
+                  onClick={() => {
+                    setSelectedCardPosition({ x: 0, y: 40 })
+                    setSelectedMessageId(null)
+                  }}
                   className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
                   aria-label="Close Icon"
                 >
