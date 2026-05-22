@@ -1,3 +1,9 @@
+export type Resource = 'user' | 'todos' | 'map-messages'
+
+export type Action = 'create' | 'read' | 'update' | 'delete'
+
+export type Permission = `${Resource}:${Action}`
+
 export const roles = {
   USER: 'User',
   ADMIN: 'Admin',
