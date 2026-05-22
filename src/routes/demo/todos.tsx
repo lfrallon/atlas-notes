@@ -16,8 +16,8 @@ import {
   X,
 } from 'lucide-react'
 
-// utils
-import { isAuthorised, type Role, roles } from '@/utils/auth'
+// hooks
+import { useUserAccess } from '@/hooks/use-user-access'
 
 // server functions
 import { getSession } from '@/server'
@@ -100,11 +100,11 @@ export const Route = createFileRoute('/demo/todos')({
 
     const data = await getSession(context.queryClient)
 
-    if (
-      !isAuthorised(data?.session?.user.role as Role, [roles.ADMIN, roles.USER])
-    ) {
-      throw redirect({ to: '/demo/better-auth' })
-    }
+    // if (
+    //   !isAuthorised(data?.session?.user.role as Role, [roles.ADMIN, roles.USER])
+    // ) {
+    //   throw redirect({ to: '/demo/better-auth' })
+    // }
 
     return {
       session: data?.session,
@@ -115,14 +115,14 @@ export const Route = createFileRoute('/demo/todos')({
 
 function DemoDrizzle() {
   const queryClient = useQueryClient()
-  const { session } = Route.useRouteContext()
-  const currentUser = session?.user
 
   const [todo, setTodo] = useState<{ id: string; title: string }>({
     id: '',
     title: '',
   })
   const [todos, setTodos] = useState<TodosStatus[]>([])
+
+  const { data: userAccess } = useUserAccess()
 
   const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteQuery<TodosPage, Error>({
@@ -504,17 +504,18 @@ function DemoDrizzle() {
                   <div className="hidden lg:inline">Mark incomplete</div>
                 </div>
               </button>
-              {currentUser && currentUser.permissions.includes('Delete') && (
-                <button
-                  className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
-                  onClick={handleDeleteTodos}
-                >
-                  <div className="flex items-center justify-center">
-                    <Trash2 size={16} className="inline-block mr-2" />
-                    <div className="hidden lg:inline">Delete</div>
-                  </div>
-                </button>
-              )}
+              {userAccess &&
+                userAccess.permissions.includes('todos:delete') && (
+                  <button
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    onClick={handleDeleteTodos}
+                  >
+                    <div className="flex items-center justify-center">
+                      <Trash2 size={16} className="inline-block mr-2" />
+                      <div className="hidden lg:inline">Delete</div>
+                    </div>
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -570,8 +571,8 @@ function DemoDrizzle() {
                   <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                     Edit
                   </th>
-                  {currentUser &&
-                    currentUser.permissions.includes('Delete') && (
+                  {userAccess &&
+                    userAccess.permissions.includes('todos:delete') && (
                       <th className="px-2 sm:px-4 py-3 sm:py-4 text-center text-xs sm:text-sm font-semibold text-indigo-200 uppercase tracking-wide">
                         Remove
                       </th>
@@ -683,8 +684,8 @@ function DemoDrizzle() {
                           </button>
                         </span>
                       </td>
-                      {currentUser &&
-                        currentUser.permissions.includes('Delete') && (
+                      {userAccess &&
+                        userAccess.permissions.includes('todos:delete') && (
                           <td className="px-2 sm:px-4 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
                             <span className="flex justify-center items-center gap-1 px-2 py-1 text-xs">
                               <button

@@ -42,6 +42,9 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 import { dmsCoordinates } from '@/utils/dms'
 import { useSession } from '@/lib/auth-client'
 
+// hooks
+import { useUserAccess } from '@/hooks/use-user-access'
+
 // types
 const searchSchema = z
   .object({
@@ -379,6 +382,8 @@ function RouteComponent() {
   }, [viewport])
 
   const [debouncedViewportQueryState] = useDebounce(viewportQueryState, 350)
+
+  const { data: userAccess } = useUserAccess()
 
   const { data } = useInfiniteQuery<MapMessagesPage, Error>({
     queryKey: [
@@ -1856,7 +1861,10 @@ function RouteComponent() {
                 {selectedMessage.title}
               </h3>
               <div className="flex flex-1 justify-end items-center gap-2">
-                {session && session.user.role === 'Admin' && (
+                {(userAccess &&
+                  userAccess.permissions.includes('map-messages:delete') &&
+                  selectedMessage.userId === session?.session.userId) ||
+                (userAccess && userAccess.role === 'Admin') ? (
                   <button
                     type="button"
                     onClick={() =>
@@ -1879,11 +1887,11 @@ function RouteComponent() {
                   >
                     Delete
                   </button>
-                )}
-                {(session &&
-                  session.user.permissions.includes('Update') &&
-                  selectedMessage.userId === session.session.userId) ||
-                (session && session.user.role === 'Admin') ? (
+                ) : null}
+                {(userAccess &&
+                  userAccess.permissions.includes('map-messages:update') &&
+                  selectedMessage.userId === session?.session.userId) ||
+                (userAccess && userAccess.role === 'Admin') ? (
                   <button
                     type="button"
                     onClick={() =>
