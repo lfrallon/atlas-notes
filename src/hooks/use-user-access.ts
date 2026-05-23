@@ -14,7 +14,7 @@ type TFetchUserAccess = {
 
 type UserAccessPage = {
   id: string | null
-  role: string
+  role: string | null
   permissions: Permission[]
 }
 
