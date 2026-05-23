@@ -100,11 +100,9 @@ export const Route = createFileRoute('/demo/todos')({
 
     const data = await getSession(context.queryClient)
 
-    // if (
-    //   !isAuthorised(data?.session?.user.role as Role, [roles.ADMIN, roles.USER])
-    // ) {
-    //   throw redirect({ to: '/demo/better-auth' })
-    // }
+    if (!data) {
+      throw redirect({ to: '/demo/better-auth' })
+    }
 
     return {
       session: data?.session,

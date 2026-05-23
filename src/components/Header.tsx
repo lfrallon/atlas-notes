@@ -14,12 +14,14 @@ import {
   X,
 } from 'lucide-react'
 import BetterAuthHeader from '../integrations/better-auth/header-user.tsx'
+import { useSession } from '@/lib/auth-client.ts'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [groupedExpanded, setGroupedExpanded] = useState<
     Record<string, boolean>
   >({})
+  const { data } = useSession()
 
   const handleOpenDrawer = () => {
     setIsOpen(true)
@@ -170,18 +172,20 @@ export default function Header() {
             </div>
           )}
 
-          <Link
-            to="/demo/todos"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
-            activeProps={{
-              className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
-            }}
-          >
-            <ListTodo size={20} />
-            <span className="font-medium">Todos</span>
-          </Link>
+          {data && (
+            <Link
+              to="/demo/todos"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+              }}
+            >
+              <ListTodo size={20} />
+              <span className="font-medium">Todos</span>
+            </Link>
+          )}
 
           <Link
             to="/demo/better-auth"
