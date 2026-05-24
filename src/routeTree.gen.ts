@@ -10,180 +10,103 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoTodosRouteImport } from './routes/demo/todos'
-import { Route as DemoMapsRouteImport } from './routes/demo/maps'
-import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
-import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
-import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
-import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
-import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
-import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
-import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
+import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
+import { Route as DashboardTodosRouteImport } from './routes/dashboard/todos'
+import { Route as DashboardMapsRouteImport } from './routes/dashboard/maps'
+import { Route as DashboardBetterAuthRouteImport } from './routes/dashboard/better-auth'
+import { Route as DashboardUserPermissionsRouteImport } from './routes/dashboard/user.permissions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTodosRoute = DemoTodosRouteImport.update({
-  id: '/demo/todos',
-  path: '/demo/todos',
+const DashboardUsersRoute = DashboardUsersRouteImport.update({
+  id: '/dashboard/users',
+  path: '/dashboard/users',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoMapsRoute = DemoMapsRouteImport.update({
-  id: '/demo/maps',
-  path: '/demo/maps',
+const DashboardTodosRoute = DashboardTodosRouteImport.update({
+  id: '/dashboard/todos',
+  path: '/dashboard/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
-  id: '/demo/better-auth',
-  path: '/demo/better-auth',
+const DashboardMapsRoute = DashboardMapsRouteImport.update({
+  id: '/dashboard/maps',
+  path: '/dashboard/maps',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: '/demo/start/server-funcs',
-  path: '/demo/start/server-funcs',
+const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
+  id: '/dashboard/better-auth',
+  path: '/dashboard/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: '/demo/start/api-request',
-  path: '/demo/start/api-request',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiTqTodosRoute = DemoApiTqTodosRouteImport.update({
-  id: '/demo/api/tq-todos',
-  path: '/demo/api/tq-todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
-  id: '/demo/api/names',
-  path: '/demo/api/names',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
-  id: '/demo/start/ssr/',
-  path: '/demo/start/ssr/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
-  id: '/demo/start/ssr/spa-mode',
-  path: '/demo/start/ssr/spa-mode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrFullSsrRoute = DemoStartSsrFullSsrRouteImport.update({
-  id: '/demo/start/ssr/full-ssr',
-  path: '/demo/start/ssr/full-ssr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
-  id: '/demo/start/ssr/data-only',
-  path: '/demo/start/ssr/data-only',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const DashboardUserPermissionsRoute =
+  DashboardUserPermissionsRouteImport.update({
+    id: '/dashboard/user/permissions',
+    path: '/dashboard/user/permissions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/maps': typeof DemoMapsRoute
-  '/demo/todos': typeof DemoTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
+  '/dashboard/better-auth': typeof DashboardBetterAuthRoute
+  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/todos': typeof DashboardTodosRoute
+  '/dashboard/users': typeof DashboardUsersRoute
+  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/maps': typeof DemoMapsRoute
-  '/demo/todos': typeof DemoTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/dashboard/better-auth': typeof DashboardBetterAuthRoute
+  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/todos': typeof DashboardTodosRoute
+  '/dashboard/users': typeof DashboardUsersRoute
+  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
-  '/demo/maps': typeof DemoMapsRoute
-  '/demo/todos': typeof DemoTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
+  '/dashboard/better-auth': typeof DashboardBetterAuthRoute
+  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/todos': typeof DashboardTodosRoute
+  '/dashboard/users': typeof DashboardUsersRoute
+  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/demo/better-auth'
-    | '/demo/maps'
-    | '/demo/todos'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr/'
+    | '/dashboard/better-auth'
+    | '/dashboard/maps'
+    | '/dashboard/todos'
+    | '/dashboard/users'
+    | '/dashboard/user/permissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/demo/better-auth'
-    | '/demo/maps'
-    | '/demo/todos'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr'
+    | '/dashboard/better-auth'
+    | '/dashboard/maps'
+    | '/dashboard/todos'
+    | '/dashboard/users'
+    | '/dashboard/user/permissions'
   id:
     | '__root__'
     | '/'
-    | '/demo/better-auth'
-    | '/demo/maps'
-    | '/demo/todos'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr/'
+    | '/dashboard/better-auth'
+    | '/dashboard/maps'
+    | '/dashboard/todos'
+    | '/dashboard/users'
+    | '/dashboard/user/permissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DemoBetterAuthRoute: typeof DemoBetterAuthRoute
-  DemoMapsRoute: typeof DemoMapsRoute
-  DemoTodosRoute: typeof DemoTodosRoute
-  DemoApiNamesRoute: typeof DemoApiNamesRoute
-  DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-  DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
-  DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
-  DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
-  DemoStartSsrIndexRoute: typeof DemoStartSsrIndexRoute
+  DashboardBetterAuthRoute: typeof DashboardBetterAuthRoute
+  DashboardMapsRoute: typeof DashboardMapsRoute
+  DashboardTodosRoute: typeof DashboardTodosRoute
+  DashboardUsersRoute: typeof DashboardUsersRoute
+  DashboardUserPermissionsRoute: typeof DashboardUserPermissionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -195,81 +118,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/todos': {
-      id: '/demo/todos'
-      path: '/demo/todos'
-      fullPath: '/demo/todos'
-      preLoaderRoute: typeof DemoTodosRouteImport
+    '/dashboard/users': {
+      id: '/dashboard/users'
+      path: '/dashboard/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof DashboardUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/maps': {
-      id: '/demo/maps'
-      path: '/demo/maps'
-      fullPath: '/demo/maps'
-      preLoaderRoute: typeof DemoMapsRouteImport
+    '/dashboard/todos': {
+      id: '/dashboard/todos'
+      path: '/dashboard/todos'
+      fullPath: '/dashboard/todos'
+      preLoaderRoute: typeof DashboardTodosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/better-auth': {
-      id: '/demo/better-auth'
-      path: '/demo/better-auth'
-      fullPath: '/demo/better-auth'
-      preLoaderRoute: typeof DemoBetterAuthRouteImport
+    '/dashboard/maps': {
+      id: '/dashboard/maps'
+      path: '/dashboard/maps'
+      fullPath: '/dashboard/maps'
+      preLoaderRoute: typeof DashboardMapsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/start/server-funcs': {
-      id: '/demo/start/server-funcs'
-      path: '/demo/start/server-funcs'
-      fullPath: '/demo/start/server-funcs'
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport
+    '/dashboard/better-auth': {
+      id: '/dashboard/better-auth'
+      path: '/dashboard/better-auth'
+      fullPath: '/dashboard/better-auth'
+      preLoaderRoute: typeof DashboardBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/start/api-request': {
-      id: '/demo/start/api-request'
-      path: '/demo/start/api-request'
-      fullPath: '/demo/start/api-request'
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/tq-todos': {
-      id: '/demo/api/tq-todos'
-      path: '/demo/api/tq-todos'
-      fullPath: '/demo/api/tq-todos'
-      preLoaderRoute: typeof DemoApiTqTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/names': {
-      id: '/demo/api/names'
-      path: '/demo/api/names'
-      fullPath: '/demo/api/names'
-      preLoaderRoute: typeof DemoApiNamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/': {
-      id: '/demo/start/ssr/'
-      path: '/demo/start/ssr'
-      fullPath: '/demo/start/ssr/'
-      preLoaderRoute: typeof DemoStartSsrIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/spa-mode': {
-      id: '/demo/start/ssr/spa-mode'
-      path: '/demo/start/ssr/spa-mode'
-      fullPath: '/demo/start/ssr/spa-mode'
-      preLoaderRoute: typeof DemoStartSsrSpaModeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/full-ssr': {
-      id: '/demo/start/ssr/full-ssr'
-      path: '/demo/start/ssr/full-ssr'
-      fullPath: '/demo/start/ssr/full-ssr'
-      preLoaderRoute: typeof DemoStartSsrFullSsrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/data-only': {
-      id: '/demo/start/ssr/data-only'
-      path: '/demo/start/ssr/data-only'
-      fullPath: '/demo/start/ssr/data-only'
-      preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
+    '/dashboard/user/permissions': {
+      id: '/dashboard/user/permissions'
+      path: '/dashboard/user/permissions'
+      fullPath: '/dashboard/user/permissions'
+      preLoaderRoute: typeof DashboardUserPermissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -277,17 +158,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoBetterAuthRoute: DemoBetterAuthRoute,
-  DemoMapsRoute: DemoMapsRoute,
-  DemoTodosRoute: DemoTodosRoute,
-  DemoApiNamesRoute: DemoApiNamesRoute,
-  DemoApiTqTodosRoute: DemoApiTqTodosRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
-  DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
-  DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
-  DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
-  DemoStartSsrIndexRoute: DemoStartSsrIndexRoute,
+  DashboardBetterAuthRoute: DashboardBetterAuthRoute,
+  DashboardMapsRoute: DashboardMapsRoute,
+  DashboardTodosRoute: DashboardTodosRoute,
+  DashboardUsersRoute: DashboardUsersRoute,
+  DashboardUserPermissionsRoute: DashboardUserPermissionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

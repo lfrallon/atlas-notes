@@ -310,7 +310,7 @@ function toMessageNodes(data?: MapMessagesPage) {
   }))
 }
 
-export const Route = createFileRoute('/demo/maps')({
+export const Route = createFileRoute('/dashboard/maps')({
   ssr: false,
   component: RouteComponent,
 })

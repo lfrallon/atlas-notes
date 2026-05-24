@@ -92,7 +92,7 @@ async function getTodos({ pageParam, queryKey }: TFetchTodos) {
   return data
 }
 
-export const Route = createFileRoute('/demo/todos')({
+export const Route = createFileRoute('/dashboard/todos')({
   beforeLoad: async ({ preload, context }) => {
     if (preload) {
       return
@@ -101,7 +101,7 @@ export const Route = createFileRoute('/demo/todos')({
     const data = await getSession(context.queryClient)
 
     if (!data) {
-      throw redirect({ to: '/demo/better-auth' })
+      throw redirect({ to: '/dashboard/better-auth' })
     }
 
     return {

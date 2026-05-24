@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { useQueryClient } from '@tanstack/react-query'
 
-export const Route = createFileRoute('/demo/better-auth')({
+export const Route = createFileRoute('/dashboard/better-auth')({
   component: BetterAuthDemo,
 })
 
@@ -29,7 +29,10 @@ function BetterAuthDemo() {
   const handleLogout = async () => {
     await authClient.signOut()
     await Promise.all([queryClient.invalidateQueries({ queryKey: ['todos'] })])
-    await router.navigate({ to: '/demo/better-auth', reloadDocument: true })
+    await router.navigate({
+      to: '/dashboard/better-auth',
+      reloadDocument: true,
+    })
   }
 
   const handleEditClick = () => {
