@@ -1,0 +1,435 @@
+import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
+import { authClient } from '@/lib/auth-client'
+import { useQueryClient } from '@tanstack/react-query'
+
+export const Route = createFileRoute('/dashboard/better-auth')({
+  component: BetterAuthDemo,
+})
+
+function BetterAuthDemo() {
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const { data: session, isPending } = authClient.useSession()
+
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editCurrentPassword, setEditCurrentPassword] = useState('')
+  const [editNewPassword, setEditNewPassword] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+
+  const handleLogout = async () => {
+    await authClient.signOut()
+    await Promise.all([queryClient.invalidateQueries({ queryKey: ['todos'] })])
+    await router.navigate({
+      to: '/dashboard/better-auth',
+      reloadDocument: true,
+    })
+  }
+
+  const handleEditClick = () => {
+    if (session?.user) {
+      setEditName(session.user.name)
+      setEditEmail(session.user.email)
+      setEditCurrentPassword('')
+      setEditNewPassword('')
+      setEditError('')
+      setIsEditing(true)
+    }
+  }
+
+  const handleUpdateAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEditError('')
+    setEditLoading(true)
+
+    try {
+      // Validate password change requirements
+      if (editNewPassword && !editCurrentPassword) {
+        setEditError('Current password is required to change password')
+        setEditLoading(false)
+        return
+      }
+
+      let updateError: string | null = null
+
+      // Update name if changed
+      if (editName !== session?.user?.name) {
+        const result = await authClient.updateUser({ name: editName })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to update name'
+        }
+      }
+
+      // Update email if changed
+      if (editEmail !== session?.user?.email && !updateError) {
+        const result = await authClient.changeEmail({ newEmail: editEmail })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to update email'
+        }
+      }
+
+      // Change password if provided
+      if (editNewPassword && !updateError) {
+        const result = await authClient.changePassword({
+          currentPassword: editCurrentPassword,
+          newPassword: editNewPassword,
+        })
+        if (result.error) {
+          updateError = result.error.message || 'Failed to change password'
+        }
+      }
+
+      if (updateError) {
+        setEditError(updateError)
+      } else {
+        setIsEditing(false)
+        await queryClient.invalidateQueries({ queryKey: ['user'] })
+      }
+    } catch (err) {
+      setEditError('An unexpected error occurred')
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900 dark:border-neutral-800 dark:border-t-neutral-100" />
+      </div>
+    )
+  }
+
+  if (session?.user) {
+    if (isEditing) {
+      return (
+        <div className="flex justify-center py-10 px-4">
+          <div className="w-full max-w-md p-6">
+            <h1 className="text-lg font-semibold leading-none tracking-tight">
+              Update Account Details
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-6">
+              Update your account information
+            </p>
+
+            <form onSubmit={handleUpdateAccount} className="grid gap-4">
+              <div className="grid gap-2">
+                <label
+                  htmlFor="edit-name"
+                  className="text-sm font-medium leading-none"
+                >
+                  Name
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <label
+                  htmlFor="edit-email"
+                  className="text-sm font-medium leading-none"
+                >
+                  Email
+                </label>
+                <input
+                  id="edit-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                />
+              </div>
+
+              <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4 mt-2">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4 font-medium">
+                  Leave blank to keep current password
+                </p>
+
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="edit-current-password"
+                    className="text-sm font-medium leading-none"
+                  >
+                    Current Password
+                  </label>
+                  <input
+                    id="edit-current-password"
+                    type="password"
+                    value={editCurrentPassword}
+                    onChange={(e) => setEditCurrentPassword(e.target.value)}
+                    className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="grid gap-2 mt-4">
+                  <label
+                    htmlFor="edit-new-password"
+                    className="text-sm font-medium leading-none"
+                  >
+                    New Password
+                  </label>
+                  <input
+                    id="edit-new-password"
+                    type="password"
+                    value={editNewPassword}
+                    onChange={(e) => setEditNewPassword(e.target.value)}
+                    className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    minLength={8}
+                  />
+                </div>
+              </div>
+
+              {editError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {editError}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 h-9 px-4 text-sm font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  disabled={editLoading}
+                  className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex justify-center py-10 px-4">
+        <div className="w-full max-w-md p-6 space-y-6">
+          <div className="space-y-1.5">
+            <h1 className="text-lg font-semibold leading-none tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              You're signed in as {session.user.email}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {session.user.image ? (
+              <img src={session.user.image} alt="" className="h-10 w-10" />
+            ) : (
+              <div className="h-10 w-10 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+                  {session.user.name.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {session.user.name}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                {session.user.email}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleEditClick}
+              className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Edit Account
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 h-9 px-4 text-sm font-medium border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      if (isSignUp) {
+        const result = await authClient.signUp.email({
+          email,
+          password,
+          name,
+          fetchOptions: {
+            credentials: 'include',
+          },
+        })
+        if (result.error) {
+          setError(result.error.message || 'Sign up failed')
+        }
+      } else {
+        const result = await authClient.signIn.email({
+          email,
+          password,
+          fetchOptions: {
+            credentials: 'include',
+          },
+        })
+        if (result.error) {
+          setError(result.error.message || 'Sign in failed')
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex justify-center py-10 px-4">
+      <div className="w-full max-w-md p-6">
+        <h1 className="text-lg font-semibold leading-none tracking-tight">
+          {isSignUp ? 'Create an account' : 'Sign in'}
+        </h1>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 mb-6">
+          {isSignUp
+            ? 'Enter your information to create an account'
+            : 'Enter your email below to login to your account'}
+        </p>
+
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          {isSignUp && (
+            <div className="grid gap-2">
+              <label
+                htmlFor="name"
+                className="text-sm font-medium leading-none"
+              >
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                required
+              />
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            <label htmlFor="email" className="text-sm font-medium leading-none">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+              required
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium leading-none"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+              required
+              minLength={8}
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-9 px-4 text-sm font-medium text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-white dark:border-neutral-600 dark:border-t-neutral-900" />
+                <span>Please wait</span>
+              </span>
+            ) : isSignUp ? (
+              'Create account'
+            ) : (
+              'Sign in'
+            )}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setError('')
+            }}
+            className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+          >
+            {isSignUp
+              ? 'Already have an account? Sign in'
+              : "Don't have an account? Sign up"}
+          </button>
+        </div>
+
+        <p className="mt-6 text-xs text-center text-neutral-400 dark:text-neutral-500">
+          Built with{' '}
+          <a
+            href="https://better-auth.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium hover:text-neutral-600 dark:hover:text-neutral-300"
+          >
+            BETTER-AUTH
+          </a>
+          .
+        </p>
+      </div>
+    </div>
+  )
+}
