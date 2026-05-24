@@ -8,6 +8,7 @@ import {
   ListTodo,
   Map,
   Menu,
+  Users,
   Network,
   SquareFunction,
   StickyNote,
@@ -199,6 +200,21 @@ export default function Header() {
             <Globe size={20} />
             <span className="font-medium">Better Auth</span>
           </Link>
+
+          {data?.user.roleId === 'Admin' && (
+            <Link
+              to="/admin/users"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              activeProps={{
+                className:
+                  'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+              }}
+            >
+              <Users size={20} />
+              <span className="font-medium">Admin Users</span>
+            </Link>
+          )}
 
           <Link
             to="/demo/maps"
