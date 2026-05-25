@@ -9,8 +9,9 @@ import {
   Map,
   Menu,
   Users,
-  StickyNote,
+  KeyRoundIcon,
   X,
+  UserLockIcon,
 } from 'lucide-react'
 import BetterAuthHeader from '../integrations/better-auth/header-user.tsx'
 
@@ -139,7 +140,7 @@ export default function Header() {
               {groupedExpanded.userAccess && (
                 <div className="flex flex-col ml-4">
                   <Link
-                    to="/dashboard/user/permissions"
+                    to="/dashboard/permissions"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
                     activeProps={{
@@ -147,8 +148,20 @@ export default function Header() {
                         'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
                     }}
                   >
-                    <StickyNote size={20} />
-                    <span className="font-medium">User Permissions</span>
+                    <KeyRoundIcon size={20} />
+                    <span className="font-medium">Permissions</span>
+                  </Link>
+                  <Link
+                    to="/dashboard/roles"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+                    activeProps={{
+                      className:
+                        'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                    }}
+                  >
+                    <UserLockIcon size={20} />
+                    <span className="font-medium">Roles</span>
                   </Link>
                 </div>
               )}

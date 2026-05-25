@@ -12,9 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as DashboardTodosRouteImport } from './routes/dashboard/todos'
+import { Route as DashboardRolesRouteImport } from './routes/dashboard/roles'
+import { Route as DashboardPermissionsRouteImport } from './routes/dashboard/permissions'
 import { Route as DashboardMapsRouteImport } from './routes/dashboard/maps'
 import { Route as DashboardBetterAuthRouteImport } from './routes/dashboard/better-auth'
-import { Route as DashboardUserPermissionsRouteImport } from './routes/dashboard/user.permissions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,6 +32,16 @@ const DashboardTodosRoute = DashboardTodosRouteImport.update({
   path: '/dashboard/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRolesRoute = DashboardRolesRouteImport.update({
+  id: '/dashboard/roles',
+  path: '/dashboard/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardPermissionsRoute = DashboardPermissionsRouteImport.update({
+  id: '/dashboard/permissions',
+  path: '/dashboard/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardMapsRoute = DashboardMapsRouteImport.update({
   id: '/dashboard/maps',
   path: '/dashboard/maps',
@@ -41,37 +52,34 @@ const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
   path: '/dashboard/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardUserPermissionsRoute =
-  DashboardUserPermissionsRouteImport.update({
-    id: '/dashboard/user/permissions',
-    path: '/dashboard/user/permissions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
   '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/permissions': typeof DashboardPermissionsRoute
+  '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
   '/dashboard/users': typeof DashboardUsersRoute
-  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
   '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/permissions': typeof DashboardPermissionsRoute
+  '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
   '/dashboard/users': typeof DashboardUsersRoute
-  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
   '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/permissions': typeof DashboardPermissionsRoute
+  '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
   '/dashboard/users': typeof DashboardUsersRoute
-  '/dashboard/user/permissions': typeof DashboardUserPermissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,34 +87,38 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard/better-auth'
     | '/dashboard/maps'
+    | '/dashboard/permissions'
+    | '/dashboard/roles'
     | '/dashboard/todos'
     | '/dashboard/users'
-    | '/dashboard/user/permissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard/better-auth'
     | '/dashboard/maps'
+    | '/dashboard/permissions'
+    | '/dashboard/roles'
     | '/dashboard/todos'
     | '/dashboard/users'
-    | '/dashboard/user/permissions'
   id:
     | '__root__'
     | '/'
     | '/dashboard/better-auth'
     | '/dashboard/maps'
+    | '/dashboard/permissions'
+    | '/dashboard/roles'
     | '/dashboard/todos'
     | '/dashboard/users'
-    | '/dashboard/user/permissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardBetterAuthRoute: typeof DashboardBetterAuthRoute
   DashboardMapsRoute: typeof DashboardMapsRoute
+  DashboardPermissionsRoute: typeof DashboardPermissionsRoute
+  DashboardRolesRoute: typeof DashboardRolesRoute
   DashboardTodosRoute: typeof DashboardTodosRoute
   DashboardUsersRoute: typeof DashboardUsersRoute
-  DashboardUserPermissionsRoute: typeof DashboardUserPermissionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -132,6 +144,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardTodosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/roles': {
+      id: '/dashboard/roles'
+      path: '/dashboard/roles'
+      fullPath: '/dashboard/roles'
+      preLoaderRoute: typeof DashboardRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/permissions': {
+      id: '/dashboard/permissions'
+      path: '/dashboard/permissions'
+      fullPath: '/dashboard/permissions'
+      preLoaderRoute: typeof DashboardPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/maps': {
       id: '/dashboard/maps'
       path: '/dashboard/maps'
@@ -146,13 +172,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/user/permissions': {
-      id: '/dashboard/user/permissions'
-      path: '/dashboard/user/permissions'
-      fullPath: '/dashboard/user/permissions'
-      preLoaderRoute: typeof DashboardUserPermissionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -160,9 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardBetterAuthRoute: DashboardBetterAuthRoute,
   DashboardMapsRoute: DashboardMapsRoute,
+  DashboardPermissionsRoute: DashboardPermissionsRoute,
+  DashboardRolesRoute: DashboardRolesRoute,
   DashboardTodosRoute: DashboardTodosRoute,
   DashboardUsersRoute: DashboardUsersRoute,
-  DashboardUserPermissionsRoute: DashboardUserPermissionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
