@@ -5,36 +5,22 @@ import {
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { z } from 'zod'
 
+import {
+  buildCursorPaginationQuery,
+  type CursorQuery,
+  type PaginationInput,
+} from './admin-query'
 // types
 import type { Permission } from '@/utils/auth'
 
-const searchSchema = z
-  .object({
-    nextCursor: z
-      .object({
-        id: z.string(),
-        updatedAt: z.string(),
-      })
-      .optional(),
-  })
-  .optional()
-
-type SearchQuery = z.infer<typeof searchSchema>
-
-type UserRolesInput = {
-  pageSize?: number
-  orderBy?: 'asc' | 'desc'
-}
-
 type TFetchUserRoles = {
-  pageParam: SearchQuery
+  pageParam: CursorQuery
   queryKey: [
     string,
     {
       baseUrl: string
-      input?: UserRolesInput
+      input?: PaginationInput
     },
   ]
 }
@@ -98,7 +84,7 @@ async function getUserRoles({ pageParam, queryKey }: TFetchUserRoles) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
-    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
+    `${baseUrl}?${buildCursorPaginationQuery(input, pageParam)}`,
     {
       credentials: 'include',
     },
@@ -152,12 +138,12 @@ function RouteComponent() {
     ],
     queryFn: async ({ pageParam, queryKey }) =>
       await getUserRoles({
-        pageParam: pageParam as SearchQuery,
+        pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
           {
             baseUrl: string
-            input?: UserRolesInput
+            input?: PaginationInput
           },
         ],
       }),
@@ -196,7 +182,18 @@ function RouteComponent() {
     },
     onSuccess: async () => {
       setCreateForm({ name: '', description: '', permissions: [] })
-      await queryClient.invalidateQueries({ queryKey: ['userRoles'] })
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'userRoles',
+          {
+            baseUrl: `${ROLE_API_BASE_URL}/user/roles`,
+            input: {
+              pageSize: 10,
+              orderBy: 'desc',
+            },
+          },
+        ],
+      })
     },
   })
 
@@ -220,7 +217,18 @@ function RouteComponent() {
     },
     onSuccess: async () => {
       setEditingRoleId(null)
-      await queryClient.invalidateQueries({ queryKey: ['userRoles'] })
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'userRoles',
+          {
+            baseUrl: `${ROLE_API_BASE_URL}/user/roles`,
+            input: {
+              pageSize: 10,
+              orderBy: 'desc',
+            },
+          },
+        ],
+      })
     },
   })
 
