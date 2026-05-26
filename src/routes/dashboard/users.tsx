@@ -6,34 +6,20 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { z } from 'zod'
 
-// types
-const searchSchema = z
-  .object({
-    nextCursor: z
-      .object({
-        id: z.string(),
-        updatedAt: z.string(),
-      })
-      .optional(),
-  })
-  .optional()
-
-type SearchQuery = z.infer<typeof searchSchema>
-
-type UserAccountsInput = {
-  pageSize?: number
-  orderBy?: 'asc' | 'desc'
-}
+import {
+  buildCursorPaginationQuery,
+  type CursorQuery,
+  type PaginationInput,
+} from './admin-query'
 
 type TFetchUserAccounts = {
-  pageParam: SearchQuery
+  pageParam: CursorQuery
   queryKey: [
     string,
     {
       baseUrl: string
-      input?: UserAccountsInput
+      input?: PaginationInput
     },
   ]
 }
@@ -74,7 +60,7 @@ async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
-    `${baseUrl}?pageSize=${input?.pageSize ?? 10}&orderBy=${input?.orderBy ?? 'asc'}${pageParam?.nextCursor ? `&id=${pageParam.nextCursor.id}` : ''}${pageParam?.nextCursor ? `&updatedAt=${JSON.stringify(pageParam.nextCursor.updatedAt)}` : ''}`,
+    `${baseUrl}?${buildCursorPaginationQuery(input, pageParam)}`,
     {
       credentials: 'include',
     },
@@ -107,7 +93,7 @@ function UsersPage() {
     queryKey: [
       'userAccounts',
       {
-        baseUrl: 'http://localhost:3006/api/v1/user/accounts',
+        baseUrl: `${USER_API_BASE_URL}/user/accounts`,
         input: {
           pageSize: 10,
           orderBy: 'desc',
@@ -116,12 +102,12 @@ function UsersPage() {
     ],
     queryFn: async ({ pageParam, queryKey }) =>
       await getUserAccounts({
-        pageParam: pageParam as SearchQuery,
+        pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
           {
             baseUrl: string
-            input?: UserAccountsInput
+            input?: PaginationInput
           },
         ],
       }),
@@ -165,7 +151,18 @@ function UsersPage() {
       }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['adminUsers'] })
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'userAccounts',
+          {
+            baseUrl: `${USER_API_BASE_URL}/user/accounts`,
+            input: {
+              pageSize: 10,
+              orderBy: 'desc',
+            },
+          },
+        ],
+      })
     },
   })
 
