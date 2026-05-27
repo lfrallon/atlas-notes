@@ -16,6 +16,7 @@ export type CursorQuery = z.infer<typeof cursorSchema>
 export type PaginationInput = {
   pageSize?: number
   orderBy?: 'asc' | 'desc'
+  limit?: number
 }
 
 export function buildCursorPaginationQuery(
@@ -25,11 +26,15 @@ export function buildCursorPaginationQuery(
   const searchParams = new URLSearchParams({
     pageSize: String(input?.pageSize ?? 10),
     orderBy: input?.orderBy ?? 'asc',
+    limit: String(input?.limit ?? 200),
   })
 
   if (pageParam?.nextCursor) {
     searchParams.set('id', pageParam.nextCursor.id)
-    searchParams.set('updatedAt', JSON.stringify(pageParam.nextCursor.updatedAt))
+    searchParams.set(
+      'updatedAt',
+      JSON.stringify(pageParam.nextCursor.updatedAt),
+    )
   }
 
   return searchParams.toString()

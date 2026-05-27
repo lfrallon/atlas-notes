@@ -133,6 +133,7 @@ function RouteComponent() {
         input: {
           pageSize: 10,
           orderBy: 'desc',
+          limit: 25,
         },
       },
     ],
@@ -162,7 +163,11 @@ function RouteComponent() {
     },
   })
 
-  const createRoleMutation = useMutation<RoleMutationResponse, Error, CreateRoleRequest>({
+  const createRoleMutation = useMutation<
+    RoleMutationResponse,
+    Error,
+    CreateRoleRequest
+  >({
     mutationFn: async (payload) => {
       const response = await fetch(`${ROLE_API_BASE_URL}/user/roles`, {
         method: 'POST',
@@ -190,6 +195,7 @@ function RouteComponent() {
             input: {
               pageSize: 10,
               orderBy: 'desc',
+              limit: 25,
             },
           },
         ],
@@ -197,16 +203,23 @@ function RouteComponent() {
     },
   })
 
-  const updateRoleMutation = useMutation<RoleMutationResponse, Error, UpdateRoleRequest>({
+  const updateRoleMutation = useMutation<
+    RoleMutationResponse,
+    Error,
+    UpdateRoleRequest
+  >({
     mutationFn: async ({ roleId, ...payload }) => {
-      const response = await fetch(`${ROLE_API_BASE_URL}/user/roles/${roleId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${ROLE_API_BASE_URL}/user/roles/${roleId}`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      })
+      )
 
       if (!response.ok) {
         throw new Error('Unable to update role.')
@@ -225,6 +238,7 @@ function RouteComponent() {
             input: {
               pageSize: 10,
               orderBy: 'desc',
+              limit: 25,
             },
           },
         ],
@@ -335,7 +349,10 @@ function RouteComponent() {
               <p className="mb-2 text-sm font-medium">Permissions</p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {permissionOptions.map((permission) => (
-                  <label key={permission} className="flex items-center gap-2 text-sm">
+                  <label
+                    key={permission}
+                    className="flex items-center gap-2 text-sm"
+                  >
                     <input
                       type="checkbox"
                       checked={createForm.permissions.includes(permission)}
@@ -414,7 +431,10 @@ function RouteComponent() {
                     const editingBlocked = role.isSystem
 
                     return (
-                      <tr key={role.id} className="border-t border-gray-700 align-top">
+                      <tr
+                        key={role.id}
+                        className="border-t border-gray-700 align-top"
+                      >
                         <td className="px-4 py-3 font-medium">{role.name}</td>
                         <td className="px-4 py-3 text-gray-300">
                           {role.description ?? '—'}
@@ -489,7 +509,10 @@ function RouteComponent() {
                   />
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {permissionOptions.map((permission) => (
-                      <label key={permission} className="flex items-center gap-2 text-sm">
+                      <label
+                        key={permission}
+                        className="flex items-center gap-2 text-sm"
+                      >
                         <input
                           type="checkbox"
                           checked={editForm.permissions.includes(permission)}
@@ -517,7 +540,9 @@ function RouteComponent() {
                       }
                       className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {updateRoleMutation.isPending ? 'Saving…' : 'Save changes'}
+                      {updateRoleMutation.isPending
+                        ? 'Saving…'
+                        : 'Save changes'}
                     </button>
                     <button
                       type="button"
@@ -539,7 +564,9 @@ function RouteComponent() {
                   className="rounded-lg border border-gray-700 bg-gray-900/60 p-4"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-lg font-semibold leading-tight">{role.name}</h2>
+                    <h2 className="text-lg font-semibold leading-tight">
+                      {role.name}
+                    </h2>
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         role.isSystem
@@ -551,15 +578,21 @@ function RouteComponent() {
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm text-gray-300">{role.description ?? '—'}</p>
+                  <p className="mt-2 text-sm text-gray-300">
+                    {role.description ?? '—'}
+                  </p>
 
                   <div className="mt-3 text-sm text-gray-300">
                     <p>
-                      <span className="font-medium text-gray-100">Assigned users:</span>{' '}
+                      <span className="font-medium text-gray-100">
+                        Assigned users:
+                      </span>{' '}
                       {role.users.length}
                     </p>
                     <p className="mt-1">
-                      <span className="font-medium text-gray-100">Permissions:</span>{' '}
+                      <span className="font-medium text-gray-100">
+                        Permissions:
+                      </span>{' '}
                       {role.permissions.length > 0
                         ? role.permissions.join(', ')
                         : 'No permissions'}
