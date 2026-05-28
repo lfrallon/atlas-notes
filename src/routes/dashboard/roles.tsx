@@ -6,93 +6,17 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
+// libs
 import {
-  buildCursorPaginationQuery,
-  type CursorQuery,
-  type PaginationInput,
-} from './admin-query'
+  getUserRoles,
+  RoleMutationResponse,
+  UpdateRoleRequest,
+} from '@/lib/queries/roles'
+
 // types
+import type { CreateRoleRequest, UserRolesPage } from '@/lib/queries/roles'
+import type { CursorQuery, PaginationInput } from './admin-query'
 import type { Permission } from '@/utils/auth'
-
-type TFetchUserRoles = {
-  pageParam: CursorQuery
-  queryKey: [
-    string,
-    {
-      baseUrl: string
-      input?: PaginationInput
-    },
-  ]
-}
-
-type UserSelect = {
-  id: string
-  name: string
-  email: string
-  image: string | null
-  emailVerified: boolean
-  createdAt: string
-  updatedAt: string
-  roleId: string | null
-}
-
-interface UserRolesNodes {
-  id: string
-  name: string
-  description: string | null
-  isSystem: boolean
-  createdAt: string
-  updatedAt: string
-  users: UserSelect[]
-  permissions: Permission[]
-}
-
-type UserRolesPage = {
-  nodes: Array<UserRolesNodes>
-  pageInfo: {
-    hasNextPage: boolean
-    nextCursor: {
-      id: string
-      updatedAt: string
-    }
-    totalPages: number
-  }
-  totalCount: number
-}
-
-interface CreateRoleRequest {
-  name: string
-  description: string
-  permissions: Permission[]
-}
-
-interface UpdateRoleRequest extends CreateRoleRequest {
-  roleId: string
-}
-
-interface RoleMutationResponse {
-  id: string
-  name: string
-  description: string | null
-  isSystem: boolean
-  permissions: Permission[]
-  createdAt: string
-  updatedAt: string
-}
-
-async function getUserRoles({ pageParam, queryKey }: TFetchUserRoles) {
-  const [, { baseUrl, input }] = queryKey
-
-  const response = await fetch(
-    `${baseUrl}?${buildCursorPaginationQuery(input, pageParam)}`,
-    {
-      credentials: 'include',
-    },
-  )
-
-  const data: UserRolesPage = await response.json()
-  return data
-}
 
 const ROLE_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
