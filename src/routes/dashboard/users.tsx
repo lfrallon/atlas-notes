@@ -5,13 +5,15 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import type { Permission } from '@/utils/auth'
 
-import {
-  buildCursorPaginationQuery,
-  type CursorQuery,
-  type PaginationInput,
-} from './admin-query'
+// libs
+import { getUserRoles } from '@/lib/queries/roles'
+import { buildCursorPaginationQuery } from './admin-query'
+
+// types
+import type { UserRolesPage } from '@/lib/queries/roles'
+import type { Permission } from '@/utils/auth'
+import type { CursorQuery, PaginationInput } from './admin-query'
 
 type TFetchUserAccounts = {
   pageParam: CursorQuery
@@ -52,18 +54,11 @@ type UserAccountsPage = {
   totalCount: number
 }
 
-
 interface CreateUserRequest {
   name: string
   email: string
   password: string
   roleId: string
-  permissions: Permission[]
-}
-
-interface UserRole {
-  id: string
-  name: string
   permissions: Permission[]
 }
 
@@ -131,6 +126,8 @@ function UsersPage() {
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
+      console.log('🚀 ~ UsersPage ~ lastPage 1:', lastPage)
+
       if ('error' in lastPage) {
         return undefined
       }
@@ -144,30 +141,20 @@ function UsersPage() {
     },
   })
 
-
-  const rolesQuery = useInfiniteQuery<{
-    nodes: UserRole[]
-    pageInfo: {
-      hasNextPage: boolean
-      nextCursor: {
-        id: string
-        updatedAt: string
-      }
-    }
-  }, Error>({
+  const rolesQuery = useInfiniteQuery<UserRolesPage, Error>({
     queryKey: [
-      'userRolesForUserCreate',
+      'userRoles',
       {
         baseUrl: `${USER_API_BASE_URL}/user/roles`,
         input: {
-          pageSize: 25,
+          pageSize: 10,
           orderBy: 'desc',
-          limit: 50,
+          limit: 25,
         },
       },
     ],
     queryFn: async ({ pageParam, queryKey }) =>
-      (await getUserAccounts({
+      await getUserRoles({
         pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
@@ -176,24 +163,18 @@ function UsersPage() {
             input?: PaginationInput
           },
         ],
-      })) as {
-        nodes: UserRole[]
-        pageInfo: {
-          hasNextPage: boolean
-          nextCursor: {
-            id: string
-            updatedAt: string
-          }
-        }
-      },
+      }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
+      if ('error' in lastPage) {
+        return undefined
+      }
+
       if (lastPage.pageInfo.hasNextPage) {
         return {
           nextCursor: lastPage.pageInfo.nextCursor,
         }
       }
-
       return undefined
     },
   })
@@ -214,7 +195,13 @@ function UsersPage() {
       }
     },
     onSuccess: async () => {
-      setCreateForm({ name: '', email: '', password: '', roleId: '', permissions: [] })
+      setCreateForm({
+        name: '',
+        email: '',
+        password: '',
+        roleId: '',
+        permissions: [],
+      })
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
     },
   })
@@ -289,7 +276,6 @@ function UsersPage() {
     })
   }, [search, data])
 
-
   const roleOptions = useMemo(
     () => rolesQuery.data?.pages.flatMap((page) => page.nodes) ?? [],
     [rolesQuery.data],
@@ -321,7 +307,8 @@ function UsersPage() {
       <div className="w-full p-3 sm:p-6">
         <h1 className="text-3xl font-bold">Admin • User Management</h1>
         <p className="mt-2 text-sm text-gray-300">
-          View all users, create new accounts, and assign role-based permissions.
+          View all users, create new accounts, and assign role-based
+          permissions.
         </p>
 
         <form
@@ -333,10 +320,56 @@ function UsersPage() {
         >
           <h2 className="text-lg font-semibold">Create user</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input value={createForm.name} onChange={(event) => setCreateForm((previous) => ({ ...previous, name: event.target.value }))} placeholder="Full name" className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm" required />
-            <input type="email" value={createForm.email} onChange={(event) => setCreateForm((previous) => ({ ...previous, email: event.target.value }))} placeholder="Email" className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm" required />
-            <input type="password" minLength={8} value={createForm.password} onChange={(event) => setCreateForm((previous) => ({ ...previous, password: event.target.value }))} placeholder="Temporary password" className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm" required />
-            <select value={createForm.roleId} onChange={(event) => setCreateForm((previous) => ({ ...previous, roleId: event.target.value }))} className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm" required>
+            <input
+              value={createForm.name}
+              onChange={(event) =>
+                setCreateForm((previous) => ({
+                  ...previous,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Full name"
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            />
+            <input
+              type="email"
+              value={createForm.email}
+              onChange={(event) =>
+                setCreateForm((previous) => ({
+                  ...previous,
+                  email: event.target.value,
+                }))
+              }
+              placeholder="Email"
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            />
+            <input
+              type="password"
+              minLength={8}
+              value={createForm.password}
+              onChange={(event) =>
+                setCreateForm((previous) => ({
+                  ...previous,
+                  password: event.target.value,
+                }))
+              }
+              placeholder="Temporary password"
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            />
+            <select
+              value={createForm.roleId}
+              onChange={(event) =>
+                setCreateForm((previous) => ({
+                  ...previous,
+                  roleId: event.target.value,
+                }))
+              }
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            >
               <option value="">Select role</option>
               {roleOptions.map((role) => (
                 <option key={role.id} value={role.id}>
@@ -349,15 +382,29 @@ function UsersPage() {
             <p className="mb-2 text-sm font-medium">Permissions</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {permissionOptions.map((permission) => (
-                <label key={permission} className="flex items-center gap-2 text-xs">
-                  <input type="checkbox" checked={createForm.permissions.includes(permission)} onChange={() => togglePermission(permission)} />
+                <label
+                  key={permission}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <input
+                    type="checkbox"
+                    checked={createForm.permissions.includes(permission)}
+                    onChange={() => togglePermission(permission)}
+                  />
                   <span>{permission}</span>
                 </label>
               ))}
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button type="submit" disabled={createUserMutation.isPending || createForm.permissions.length === 0} className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={
+                createUserMutation.isPending ||
+                createForm.permissions.length === 0
+              }
+              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
+            >
               {createUserMutation.isPending ? 'Creating…' : 'Create user'}
             </button>
           </div>
