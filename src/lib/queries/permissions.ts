@@ -21,14 +21,17 @@ export type TFetchUserPermissions = {
 
 export interface PermissionRecord {
   id: string
-  key?: Permission | string
-  name?: Permission | string
-  resource: Resource | string
-  action: Action | string
-  description: string | null
-  isSystem: boolean
-  createdAt?: string | null
-  updatedAt?: string | null
+  roleId: string
+  permission: Permission
+  createdAt: string
+  role: {
+    id: string
+    name: string
+    description: string | null
+    isSystem: boolean
+    createdAt: string
+    updatedAt: string
+  } | null
 }
 
 export type UserPermissionsPage = {
@@ -57,12 +60,8 @@ export interface UpdatePermissionRequest extends CreatePermissionRequest {
 
 export interface PermissionMutationResponse extends PermissionRecord {}
 
-export function getPermissionLabel(permission: PermissionRecord): string {
-  return (
-    permission.key ??
-    permission.name ??
-    `${permission.resource}:${permission.action}`
-  )
+export function getPermissionLabel(record: PermissionRecord): string {
+  return record.permission
 }
 
 export async function getUserPermissions({

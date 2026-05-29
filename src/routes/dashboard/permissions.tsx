@@ -61,7 +61,7 @@ function formatDate(value?: string | null): string {
 }
 
 function getPermissionStatus(permission: PermissionRecord): string {
-  return permission.isSystem ? 'System' : 'Custom'
+  return permission.role?.isSystem ? 'System' : 'Custom'
 }
 
 function RouteComponent() {
@@ -197,12 +197,12 @@ function RouteComponent() {
 
       return [
         permissionLabel,
-        permission.resource,
-        permission.action,
-        permission.description,
+        permission.permission.split(':')[0] ?? '',
+        permission.permission.split(':')[1] ?? '',
+        permission.role?.description,
         getPermissionStatus(permission),
         permission.createdAt,
-        permission.updatedAt,
+        permission.createdAt,
       ]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(term))
@@ -210,14 +210,14 @@ function RouteComponent() {
   }, [search, permissions])
 
   const startEditing = (permission: PermissionRecord) => {
-    if (permission.isSystem) return
+    if (permission.role?.isSystem) return
 
     setEditingPermissionId(permission.id)
     setEditForm({
-      resource: permission.resource,
-      action: permission.action,
+      resource: permission.permission.split(':')[0] ?? '',
+      action: permission.permission.split(':')[1] ?? '',
       key: getPermissionLabel(permission),
-      description: permission.description ?? '',
+      description: permission.role?.description ?? '',
     })
   }
 
@@ -350,7 +350,7 @@ function RouteComponent() {
                   <tr>
                     <th className="px-4 py-3">Permission</th>
                     <th className="px-4 py-3">Resource</th>
-                    <th className="px-4 py-3">Action</th>
+                    <th className="px-4 py-3">User</th>
                     <th className="px-4 py-3">Description</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Created</th>
@@ -364,7 +364,7 @@ function RouteComponent() {
                       updatePermissionMutation.isPending &&
                       updatePermissionMutation.variables?.permissionId ===
                         permission.id
-                    const editingBlocked = permission.isSystem
+                    const editingBlocked = permission.role?.isSystem
 
                     return (
                       <tr
@@ -375,18 +375,18 @@ function RouteComponent() {
                           {getPermissionLabel(permission)}
                         </td>
                         <td className="px-4 py-3 text-gray-300">
-                          {permission.resource}
+                          {permission.permission.split(':')[0] ?? '—'}
                         </td>
                         <td className="px-4 py-3 text-gray-300">
-                          {permission.action}
+                          {permission.role?.name ?? '—'}
                         </td>
                         <td className="px-4 py-3 text-gray-300">
-                          {permission.description ?? '—'}
+                          {permission.role?.description ?? '—'}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                              permission.isSystem
+                              permission.role?.isSystem
                                 ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
                                 : 'bg-gray-700/60 text-gray-200 border border-gray-600'
                             }`}
@@ -398,7 +398,7 @@ function RouteComponent() {
                           {formatDate(permission.createdAt)}
                         </td>
                         <td className="px-4 py-3 text-gray-300">
-                          {formatDate(permission.updatedAt)}
+                          {formatDate(permission.createdAt)}
                         </td>
                         <td className="px-4 py-3">
                           <button
@@ -520,7 +520,7 @@ function RouteComponent() {
                       </h2>
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          permission.isSystem
+                          permission.role?.isSystem
                             ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
                             : 'bg-gray-700/60 text-gray-200 border border-gray-600'
                         }`}
@@ -530,7 +530,7 @@ function RouteComponent() {
                     </div>
 
                     <p className="mt-2 text-sm text-gray-300">
-                      {permission.description ?? '—'}
+                      {permission.role?.description ?? '—'}
                     </p>
 
                     <div className="mt-3 text-sm text-gray-300">
@@ -538,13 +538,11 @@ function RouteComponent() {
                         <span className="font-medium text-gray-100">
                           Resource:
                         </span>{' '}
-                        {permission.resource}
+                        {permission.permission.split(':')[0] ?? '—'}
                       </p>
                       <p className="mt-1">
-                        <span className="font-medium text-gray-100">
-                          Action:
-                        </span>{' '}
-                        {permission.action}
+                        <span className="font-medium text-gray-100">User:</span>{' '}
+                        {permission.role?.name ?? '—'}
                       </p>
                       <p className="mt-1">
                         <span className="font-medium text-gray-100">
@@ -556,17 +554,19 @@ function RouteComponent() {
                         <span className="font-medium text-gray-100">
                           Updated:
                         </span>{' '}
-                        {formatDate(permission.updatedAt)}
+                        {formatDate(permission.createdAt)}
                       </p>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => startEditing(permission)}
-                      disabled={permission.isSystem || isUpdatingThisPermission}
+                      disabled={
+                        permission.role?.isSystem || isUpdatingThisPermission
+                      }
                       className="mt-3 rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {permission.isSystem ? 'System permission' : 'Edit'}
+                      {permission.role?.isSystem ? 'System permission' : 'Edit'}
                     </button>
                   </article>
                 )
