@@ -28,7 +28,7 @@ const PERMISSION_API_BASE_URL =
 const permissionsQueryKey = [
   'userPermissions',
   {
-    baseUrl: `${PERMISSION_API_BASE_URL}/user/permissions`,
+    baseUrl: `${PERMISSION_API_BASE_URL}/permissions`,
     input: {
       pageSize: 10,
       orderBy: 'desc' as const,
@@ -117,17 +117,14 @@ function RouteComponent() {
     CreatePermissionRequest
   >({
     mutationFn: async (payload) => {
-      const response = await fetch(
-        `${PERMISSION_API_BASE_URL}/user/permissions`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(`${PERMISSION_API_BASE_URL}/permissions`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify(payload),
+      })
 
       if (!response.ok) {
         throw new Error('Unable to create permission.')
@@ -149,7 +146,7 @@ function RouteComponent() {
   >({
     mutationFn: async ({ permissionId, ...payload }) => {
       const response = await fetch(
-        `${PERMISSION_API_BASE_URL}/user/permissions/${permissionId}`,
+        `${PERMISSION_API_BASE_URL}/permissions/${permissionId}`,
         {
           method: 'PATCH',
           credentials: 'include',

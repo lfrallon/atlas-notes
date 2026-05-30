@@ -47,7 +47,7 @@ npm run check
 
 ## Maps page env requirements
 
-The `/dashboard/maps` route requires the following client-exposed environment variables in your local env file (for example, `.env.local`) and Cloudflare Worker vars:
+The `/dashboard/map` route requires the following client-exposed environment variables in your local env file (for example, `.env.local`) and Cloudflare Worker vars:
 
 - `VITE_CESIUM_ION_TOKEN`: used by `Ion.defaultAccessToken` to initialize the Cesium globe.
 - `VITE_GOOGLE_MAPS_API_KEY`: used by `createGooglePhotorealistic3DTileset({ key })` to load Google Photorealistic 3D Tiles.
@@ -55,11 +55,11 @@ The `/dashboard/maps` route requires the following client-exposed environment va
 > Google Photorealistic 3D Tiles also requires a valid Google Cloud project/billing/API setup in addition to providing the API key.
 
 
-### Prod verification (maps)
+### Prod verification (map)
 
 - [ ] Run `npm run build`
 - [ ] Run `npm run preview`
-- [ ] Open `/dashboard/maps`
+- [ ] Open `/dashboard/map`
 - [ ] Confirm the following network requests return HTTP 200:
   - `/cesium/Workers/*.js`
   - `/cesium/Assets/*`

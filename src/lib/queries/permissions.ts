@@ -6,7 +6,7 @@ import {
 } from '@/routes/dashboard/admin-query'
 
 // types
-import type { Action, Permission, Resource } from '@/utils/auth'
+import type { Action } from '@/utils/auth'
 
 export type TFetchUserPermissions = {
   pageParam: CursorQuery
@@ -22,7 +22,7 @@ export type TFetchUserPermissions = {
 export interface PermissionRecord {
   id: string
   roleId: string
-  permission: Permission
+  permission: string
   createdAt: string
   role: {
     id: string
@@ -48,9 +48,9 @@ export type UserPermissionsPage = {
 }
 
 export interface CreatePermissionRequest {
-  resource: Resource | string
+  resource: string
   action: Action | string
-  key: Permission | string
+  key: string
   description: string
 }
 

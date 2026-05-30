@@ -12,7 +12,6 @@ import { buildCursorPaginationQuery } from './admin-query'
 
 // types
 import type { UserRolesPage } from '@/lib/queries/roles'
-import type { Permission } from '@/utils/auth'
 import type { CursorQuery, PaginationInput } from './admin-query'
 
 type TFetchUserAccounts = {
@@ -38,7 +37,7 @@ interface UserAccountsNodes {
     roleId: string | null
   }
   role: string | null
-  permissions: Permission[]
+  permissions: string[]
 }
 
 type UserAccountsPage = {
@@ -59,7 +58,7 @@ interface CreateUserRequest {
   email: string
   password: string
   roleId: string
-  permissions: Permission[]
+  permissions: string[]
 }
 
 async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
@@ -106,7 +105,7 @@ function UsersPage() {
     queryKey: [
       'userAccounts',
       {
-        baseUrl: `${USER_API_BASE_URL}/user/accounts`,
+        baseUrl: `${USER_API_BASE_URL}/accounts`,
         input: {
           pageSize: 10,
           orderBy: 'desc',
@@ -145,7 +144,7 @@ function UsersPage() {
     queryKey: [
       'userRoles',
       {
-        baseUrl: `${USER_API_BASE_URL}/user/roles`,
+        baseUrl: `${USER_API_BASE_URL}/roles`,
         input: {
           pageSize: 10,
           orderBy: 'desc',
@@ -181,7 +180,7 @@ function UsersPage() {
 
   const createUserMutation = useMutation({
     mutationFn: async (payload: CreateUserRequest) => {
-      const response = await fetch(`${USER_API_BASE_URL}/user/accounts`, {
+      const response = await fetch(`${USER_API_BASE_URL}/accounts`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -235,7 +234,7 @@ function UsersPage() {
         queryKey: [
           'userAccounts',
           {
-            baseUrl: `${USER_API_BASE_URL}/user/accounts`,
+            baseUrl: `${USER_API_BASE_URL}/accounts`,
             input: {
               pageSize: 10,
               orderBy: 'desc',
@@ -287,7 +286,7 @@ function UsersPage() {
     ).sort()
   }, [roleOptions])
 
-  const togglePermission = (permission: Permission) => {
+  const togglePermission = (permission: string) => {
     setCreateForm((previous) => ({
       ...previous,
       permissions: previous.permissions.includes(permission)
@@ -476,7 +475,7 @@ function UsersPage() {
                           <input
                             name="scope"
                             defaultValue={account.permissions.join(',') ?? ''}
-                            placeholder="e.g. todos:read,map-messages:update"
+                            placeholder="e.g. todos:read,geo-notes:update"
                             className="w-full min-w-64 rounded-md border border-gray-600 bg-gray-800 px-3 py-2"
                           />
                           <button
@@ -555,7 +554,7 @@ function UsersPage() {
                     <input
                       name="scope"
                       defaultValue={account.permissions.join(',') ?? ''}
-                      placeholder="e.g. todos:read,map-messages:update"
+                      placeholder="e.g. todos:read,geo-notes:update"
                       className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
                     />
                     <div className="flex justify-end">

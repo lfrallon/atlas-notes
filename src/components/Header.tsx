@@ -169,7 +169,7 @@ export default function Header() {
           ) : null}
 
           <Link
-            to="/dashboard/maps"
+            to="/dashboard/map"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
             activeProps={{

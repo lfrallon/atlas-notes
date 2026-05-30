@@ -59,7 +59,7 @@ const searchSchema = z
 
 type SearchQuery = z.infer<typeof searchSchema>
 
-type MapMessagesInput = {
+type GeoNotesInput = {
   pageSize?: number
   orderBy?: 'asc' | 'desc'
   bbox?: string
@@ -78,21 +78,21 @@ type MapViewport = {
   zoomBucket: 'broad' | 'medium' | 'close'
 }
 
-type TFetchMapMessages = {
+type TFetchGeoNotes = {
   pageParam: SearchQuery
   queryKey: [
     string,
     {
       baseUrl: string
-      input: MapMessagesInput
+      input: GeoNotesInput
       bboxKey: string
       zoomBucket: MapViewport['zoomBucket']
     },
   ]
 }
 
-type MapMessagesPage = {
-  nodes: Array<MapMessagesNodes>
+type GeoNotesPage = {
+  nodes: Array<GeoNotesNodes>
   pageInfo: {
     hasNextPage: boolean
     nextCursor: {
@@ -104,10 +104,10 @@ type MapMessagesPage = {
   totalCount: number
 }
 
-interface MapMessagesNodes {
+interface GeoNotesNodes {
   id: string
   title: string
-  mapMessage: string
+  geoNote: string
   latitude: number
   longitude: number
   createdAt: string | null
@@ -117,9 +117,9 @@ interface MapMessagesNodes {
 }
 
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
-const MAP_MESSAGES_API_BASE_URL =
+const GEO_NOTES_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
-const MAP_MESSAGES_API_URL = `${MAP_MESSAGES_API_BASE_URL}/map-messages`
+const GEO_NOTES_API_URL = `${GEO_NOTES_API_BASE_URL}/geo-notes`
 const FLOAT_SCALE = new NearFarScalar(600, 1.2, 8_000_000, 0.45)
 const FLOAT_ALPHA = new NearFarScalar(500, 1, 6_000_000, 0.25)
 const MARKER_SCALE = new NearFarScalar(600, 1.1, 8_000_000, 0.55)
@@ -280,7 +280,7 @@ function extractMessageIdFromPick(picked: unknown): string | null {
   return null
 }
 
-async function getMapMessages({ pageParam, queryKey }: TFetchMapMessages) {
+async function getGeoNotes({ pageParam, queryKey }: TFetchGeoNotes) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
@@ -290,17 +290,17 @@ async function getMapMessages({ pageParam, queryKey }: TFetchMapMessages) {
     },
   )
 
-  const data: MapMessagesPage = await response.json()
+  const data: GeoNotesPage = await response.json()
   return data
 }
 
-function toMessageNodes(data?: MapMessagesPage) {
+function toMessageNodes(data?: GeoNotesPage) {
   if (!data) return []
 
   return data.nodes.map((node) => ({
     id: String(node.id),
     title: node.title,
-    mapMessage: node.mapMessage,
+    geoNote: node.geoNote,
     latitude: node.latitude,
     longitude: node.longitude,
     createdAt: node.createdAt,
@@ -310,7 +310,7 @@ function toMessageNodes(data?: MapMessagesPage) {
   }))
 }
 
-export const Route = createFileRoute('/dashboard/maps')({
+export const Route = createFileRoute('/dashboard/map')({
   ssr: false,
   component: RouteComponent,
 })
@@ -385,11 +385,11 @@ function RouteComponent() {
 
   const { data: userAccess } = useUserAccess()
 
-  const { data } = useInfiniteQuery<MapMessagesPage, Error>({
+  const { data } = useInfiniteQuery<GeoNotesPage, Error>({
     queryKey: [
-      'map-messages',
+      'geo-notes',
       {
-        baseUrl: MAP_MESSAGES_API_URL,
+        baseUrl: GEO_NOTES_API_URL,
         input: debouncedViewportQueryState?.input ?? {},
         bboxKey: debouncedViewportQueryState?.bboxKey ?? 'unknown',
         zoomBucket: debouncedViewportQueryState?.zoomBucket ?? 'broad',
@@ -397,13 +397,13 @@ function RouteComponent() {
     ],
     enabled: !!debouncedViewportQueryState,
     queryFn: async ({ pageParam, queryKey }) =>
-      await getMapMessages({
+      await getGeoNotes({
         pageParam: pageParam as SearchQuery,
         queryKey: queryKey as [
           string,
           {
             baseUrl: string
-            input: MapMessagesInput
+            input: GeoNotesInput
             bboxKey: string
             zoomBucket: MapViewport['zoomBucket']
           },
@@ -446,7 +446,7 @@ function RouteComponent() {
         }[]
       }
     }) => {
-      return await fetch('http://localhost:3006/api/v1/map-messages', {
+      return await fetch('http://localhost:3006/api/v1/geo-notes', {
         method: 'DELETE',
         headers: {
           accept: '*/*',
@@ -458,21 +458,21 @@ function RouteComponent() {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+        queryClient.invalidateQueries({ queryKey: ['geo-notes'] }),
       ])
     },
   })
 
   const hotspotQueries = useQueries({
     queries: HOTSPOTS.map((hotspot) => ({
-      queryKey: ['map-messages', { hotspot: hotspot.id }],
+      queryKey: ['geo-notes', { hotspot: hotspot.id }],
       queryFn: async () =>
-        await getMapMessages({
+        await getGeoNotes({
           pageParam: undefined,
           queryKey: [
-            'map-messages',
+            'geo-notes',
             {
-              baseUrl: MAP_MESSAGES_API_URL,
+              baseUrl: GEO_NOTES_API_URL,
               input: {
                 pageSize: HOTSPOT_PAGE_SIZE,
                 orderBy: 'desc',
@@ -528,19 +528,19 @@ function RouteComponent() {
       .slice(0, MAX_RENDERED_MESSAGES)
   }, [sourceMessages])
 
-  const addMapMessagesMutation = useMutation({
+  const addGeoNotesMutation = useMutation({
     mutationFn: async ({
       data,
     }: {
       data: {
         title: string
-        mapMessage: string
+        geoNote: string
         latitude: number
         longitude: number
         videoUrl?: string
       }
     }) =>
-      fetch(`${MAP_MESSAGES_API_URL}/add`, {
+      fetch(`${GEO_NOTES_API_URL}/add`, {
         method: 'POST',
         headers: {
           accept: '*/*',
@@ -551,12 +551,12 @@ function RouteComponent() {
       }),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+        queryClient.invalidateQueries({ queryKey: ['geo-notes'] }),
       ])
     },
   })
 
-  const updateMapMessagesMutation = useMutation({
+  const updateGeoNotesMutation = useMutation({
     mutationFn: async ({
       body,
     }: {
@@ -564,7 +564,7 @@ function RouteComponent() {
         data: {
           id: string
           title: string
-          mapMessage: string
+          geoNote: string
           videoUrl?: string
           pageSize: number
           orderBy: 'asc' | 'desc'
@@ -579,7 +579,7 @@ function RouteComponent() {
         }[]
       }
     }) =>
-      fetch(`${MAP_MESSAGES_API_URL}/update`, {
+      fetch(`${GEO_NOTES_API_URL}/update`, {
         method: 'PUT',
         headers: {
           accept: '*/*',
@@ -590,7 +590,7 @@ function RouteComponent() {
       }),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['map-messages'] }),
+        queryClient.invalidateQueries({ queryKey: ['geo-notes'] }),
       ])
     },
   })
@@ -598,14 +598,14 @@ function RouteComponent() {
   const handleUpdateMessage = async (data: {
     id: string
     title: string
-    mapMessage: string
+    geoNote: string
     videoUrl?: string | null
   }) => {
     setSelectedCardPosition({ x: 0, y: 40 })
     setSelectedMessageId(null)
     setUpdateId(data.id)
     setUpdateTitle(data.title)
-    setUpdateMessage(data.mapMessage)
+    setUpdateMessage(data.geoNote)
     setUpdateVideoUrl(data.videoUrl ?? '')
     setIsUpdating(true)
   }
@@ -825,14 +825,14 @@ function RouteComponent() {
 
     for (const hotspot of HOTSPOTS) {
       queryClient.prefetchQuery({
-        queryKey: ['map-messages', { hotspot: hotspot.id }],
+        queryKey: ['geo-notes', { hotspot: hotspot.id }],
         queryFn: async () =>
-          await getMapMessages({
+          await getGeoNotes({
             pageParam: undefined,
             queryKey: [
-              'map-messages',
+              'geo-notes',
               {
-                baseUrl: MAP_MESSAGES_API_URL,
+                baseUrl: GEO_NOTES_API_URL,
                 input: {
                   pageSize: HOTSPOT_PAGE_SIZE,
                   orderBy: 'desc',
@@ -1470,14 +1470,14 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      updateMapMessagesMutation.mutateAsync(
+      updateGeoNotesMutation.mutateAsync(
         {
           body: {
             data: [
               {
                 id: updateId,
                 title: updateTitle.trim(),
-                mapMessage: updateMessage.trim(),
+                geoNote: updateMessage.trim(),
                 ...(updateVideoUrl.trim()
                   ? { videoUrl: updateVideoUrl.trim() }
                   : {}),
@@ -1536,11 +1536,11 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      addMapMessagesMutation.mutateAsync(
+      addGeoNotesMutation.mutateAsync(
         {
           data: {
             title: draftTitle.trim(),
-            mapMessage: draftMessage.trim(),
+            geoNote: draftMessage.trim(),
             latitude: selectedPosition.lat,
             longitude: selectedPosition.lng,
             ...(draftVideoUrl.trim() ? { videoUrl: draftVideoUrl.trim() } : {}),
@@ -1862,7 +1862,7 @@ function RouteComponent() {
               </h3>
               <div className="flex flex-1 justify-end items-center gap-2">
                 {(userAccess &&
-                  userAccess.permissions.includes('map-messages:delete') &&
+                  userAccess.permissions.includes('geo-notes:delete') &&
                   selectedMessage.userId === session?.session.userId) ||
                 (userAccess && userAccess.role === 'Admin') ? (
                   <button
@@ -1883,13 +1883,13 @@ function RouteComponent() {
                       })
                     }
                     className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
-                    aria-label="Remove message"
+                    aria-label="Remove note"
                   >
                     Delete
                   </button>
                 ) : null}
                 {(userAccess &&
-                  userAccess.permissions.includes('map-messages:update') &&
+                  userAccess.permissions.includes('geo-notes:update') &&
                   selectedMessage.userId === session?.session.userId) ||
                 (userAccess && userAccess.role === 'Admin') ? (
                   <button
@@ -1898,7 +1898,7 @@ function RouteComponent() {
                       handleUpdateMessage({
                         id: selectedMessage.id,
                         title: selectedMessage.title,
-                        mapMessage: selectedMessage.mapMessage,
+                        geoNote: selectedMessage.geoNote,
                         videoUrl: selectedMessage.videoUrl,
                       })
                     }
@@ -1922,7 +1922,7 @@ function RouteComponent() {
               </div>
             </div>
             <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
-              {selectedMessage.mapMessage}
+              {selectedMessage.geoNote}
             </p>
             <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
               <div className="flex flex-col">

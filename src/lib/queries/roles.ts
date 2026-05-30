@@ -5,9 +5,6 @@ import {
   PaginationInput,
 } from '@/routes/dashboard/admin-query'
 
-// types
-import type { Permission } from '@/utils/auth'
-
 export type TFetchUserRoles = {
   pageParam: CursorQuery
   queryKey: [
@@ -38,7 +35,7 @@ interface UserRolesNodes {
   createdAt: string
   updatedAt: string
   users: UserSelect[]
-  permissions: Permission[]
+  permissions: string[]
 }
 
 export type UserRolesPage = {
@@ -57,7 +54,7 @@ export type UserRolesPage = {
 export interface CreateRoleRequest {
   name: string
   description: string
-  permissions: Permission[]
+  permissions: string[]
 }
 
 export interface UpdateRoleRequest extends CreateRoleRequest {
@@ -69,7 +66,7 @@ export interface RoleMutationResponse {
   name: string
   description: string | null
   isSystem: boolean
-  permissions: Permission[]
+  permissions: string[]
   createdAt: string
   updatedAt: string
 }

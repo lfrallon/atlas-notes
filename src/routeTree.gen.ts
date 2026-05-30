@@ -14,7 +14,7 @@ import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 import { Route as DashboardTodosRouteImport } from './routes/dashboard/todos'
 import { Route as DashboardRolesRouteImport } from './routes/dashboard/roles'
 import { Route as DashboardPermissionsRouteImport } from './routes/dashboard/permissions'
-import { Route as DashboardMapsRouteImport } from './routes/dashboard/maps'
+import { Route as DashboardMapRouteImport } from './routes/dashboard/map'
 import { Route as DashboardBetterAuthRouteImport } from './routes/dashboard/better-auth'
 
 const IndexRoute = IndexRouteImport.update({
@@ -42,9 +42,9 @@ const DashboardPermissionsRoute = DashboardPermissionsRouteImport.update({
   path: '/dashboard/permissions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardMapsRoute = DashboardMapsRouteImport.update({
-  id: '/dashboard/maps',
-  path: '/dashboard/maps',
+const DashboardMapRoute = DashboardMapRouteImport.update({
+  id: '/dashboard/map',
+  path: '/dashboard/map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
@@ -56,7 +56,7 @@ const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
-  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/map': typeof DashboardMapRoute
   '/dashboard/permissions': typeof DashboardPermissionsRoute
   '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
@@ -65,7 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
-  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/map': typeof DashboardMapRoute
   '/dashboard/permissions': typeof DashboardPermissionsRoute
   '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
@@ -75,7 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard/better-auth': typeof DashboardBetterAuthRoute
-  '/dashboard/maps': typeof DashboardMapsRoute
+  '/dashboard/map': typeof DashboardMapRoute
   '/dashboard/permissions': typeof DashboardPermissionsRoute
   '/dashboard/roles': typeof DashboardRolesRoute
   '/dashboard/todos': typeof DashboardTodosRoute
@@ -86,7 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard/better-auth'
-    | '/dashboard/maps'
+    | '/dashboard/map'
     | '/dashboard/permissions'
     | '/dashboard/roles'
     | '/dashboard/todos'
@@ -95,7 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard/better-auth'
-    | '/dashboard/maps'
+    | '/dashboard/map'
     | '/dashboard/permissions'
     | '/dashboard/roles'
     | '/dashboard/todos'
@@ -104,7 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard/better-auth'
-    | '/dashboard/maps'
+    | '/dashboard/map'
     | '/dashboard/permissions'
     | '/dashboard/roles'
     | '/dashboard/todos'
@@ -114,7 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardBetterAuthRoute: typeof DashboardBetterAuthRoute
-  DashboardMapsRoute: typeof DashboardMapsRoute
+  DashboardMapRoute: typeof DashboardMapRoute
   DashboardPermissionsRoute: typeof DashboardPermissionsRoute
   DashboardRolesRoute: typeof DashboardRolesRoute
   DashboardTodosRoute: typeof DashboardTodosRoute
@@ -158,11 +158,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPermissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/maps': {
-      id: '/dashboard/maps'
-      path: '/dashboard/maps'
-      fullPath: '/dashboard/maps'
-      preLoaderRoute: typeof DashboardMapsRouteImport
+    '/dashboard/map': {
+      id: '/dashboard/map'
+      path: '/dashboard/map'
+      fullPath: '/dashboard/map'
+      preLoaderRoute: typeof DashboardMapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/better-auth': {
@@ -178,7 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardBetterAuthRoute: DashboardBetterAuthRoute,
-  DashboardMapsRoute: DashboardMapsRoute,
+  DashboardMapRoute: DashboardMapRoute,
   DashboardPermissionsRoute: DashboardPermissionsRoute,
   DashboardRolesRoute: DashboardRolesRoute,
   DashboardTodosRoute: DashboardTodosRoute,

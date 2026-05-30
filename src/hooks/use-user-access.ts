@@ -1,8 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-// types
-import type { Permission } from '@/utils/auth'
-
 type TFetchUserAccess = {
   queryKey: [
     string,
@@ -15,7 +12,7 @@ type TFetchUserAccess = {
 type UserAccessPage = {
   id: string | null
   role: string | null
-  permissions: Permission[]
+  permissions: string[]
 }
 
 const USER_ACCESS_API_BASE_URL =

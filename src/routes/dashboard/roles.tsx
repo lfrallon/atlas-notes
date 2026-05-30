@@ -16,7 +16,6 @@ import {
 // types
 import type { CreateRoleRequest, UserRolesPage } from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
-import type { Permission } from '@/utils/auth'
 
 const ROLE_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
@@ -53,7 +52,7 @@ function RouteComponent() {
     queryKey: [
       'userRoles',
       {
-        baseUrl: `${ROLE_API_BASE_URL}/user/roles`,
+        baseUrl: `${ROLE_API_BASE_URL}/roles`,
         input: {
           pageSize: 10,
           orderBy: 'desc',
@@ -93,7 +92,7 @@ function RouteComponent() {
     CreateRoleRequest
   >({
     mutationFn: async (payload) => {
-      const response = await fetch(`${ROLE_API_BASE_URL}/user/roles`, {
+      const response = await fetch(`${ROLE_API_BASE_URL}/roles`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -115,7 +114,7 @@ function RouteComponent() {
         queryKey: [
           'userRoles',
           {
-            baseUrl: `${ROLE_API_BASE_URL}/user/roles`,
+            baseUrl: `${ROLE_API_BASE_URL}/roles`,
             input: {
               pageSize: 10,
               orderBy: 'desc',
@@ -133,17 +132,14 @@ function RouteComponent() {
     UpdateRoleRequest
   >({
     mutationFn: async ({ roleId, ...payload }) => {
-      const response = await fetch(
-        `${ROLE_API_BASE_URL}/user/roles/${roleId}`,
-        {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(`${ROLE_API_BASE_URL}/roles/${roleId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify(payload),
+      })
 
       if (!response.ok) {
         throw new Error('Unable to update role.')
@@ -158,7 +154,7 @@ function RouteComponent() {
         queryKey: [
           'userRoles',
           {
-            baseUrl: `${ROLE_API_BASE_URL}/user/roles`,
+            baseUrl: `${ROLE_API_BASE_URL}/roles`,
             input: {
               pageSize: 10,
               orderBy: 'desc',
@@ -205,7 +201,7 @@ function RouteComponent() {
     return Array.from(new Set(allPermissions ?? []))
   }, [data])
 
-  const toggleCreatePermission = (permission: Permission) => {
+  const toggleCreatePermission = (permission: string) => {
     setCreateForm((previous) => ({
       ...previous,
       permissions: previous.permissions.includes(permission)
@@ -214,7 +210,7 @@ function RouteComponent() {
     }))
   }
 
-  const toggleEditPermission = (permission: Permission) => {
+  const toggleEditPermission = (permission: string) => {
     setEditForm((previous) => ({
       ...previous,
       permissions: previous.permissions.includes(permission)
@@ -348,7 +344,7 @@ function RouteComponent() {
                 </thead>
                 <tbody>
                   {filteredRoles.map((role) => {
-                    const isEditing = editingRoleId === role.id
+                    // const isEditing = editingRoleId === role.id
                     const isUpdatingThisRole =
                       updateRoleMutation.isPending &&
                       updateRoleMutation.variables?.roleId === role.id
