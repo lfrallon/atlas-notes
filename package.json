@@ -24,6 +24,7 @@
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.13.8",
     "@google/earthengine": "^1.7.10",
+    "@hookform/resolvers": "^5.4.0",
     "@opentelemetry/api": "^1.9.1",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-devtools": "^0.7.0",
@@ -35,6 +36,7 @@
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/router-plugin": "^1.132.0",
     "@tanstack/store": "^0.8.0",
+    "@tanstack/zod-adapter": "^1.167.0",
     "@vis.gl/react-google-maps": "^1.7.1",
     "better-auth": "^1.4.12",
     "cesium": "^1.139.1",
@@ -45,10 +47,12 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-globe.gl": "^2.37.0",
+    "react-hook-form": "^7.76.1",
     "react-player": "^3.4.0",
     "tailwindcss": "^4.0.6",
     "use-debounce": "^10.1.1",
-    "vite-tsconfig-paths": "^6.0.2"
+    "vite-tsconfig-paths": "^6.0.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tanstack/devtools-event-client": "^0.4.0",
