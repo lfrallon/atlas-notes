@@ -4,7 +4,10 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import z from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 // libs
 import { getUserRoles } from '@/lib/queries/roles'
@@ -53,12 +56,22 @@ type UserAccountsPage = {
   totalCount: number
 }
 
-interface CreateUserRequest {
-  name: string
+interface CreateUserInputs {
+  firstName: string
+  lastName: string
   email: string
   password: string
   roleId: string
-  permissions: string[]
+  image?: File | null
+}
+
+interface CreateUserForm {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  roleId: string
+  image: string | null
 }
 
 async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
@@ -78,19 +91,73 @@ async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
 const USER_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
 
+const createUserSchema = z.object({
+  firstName: z
+    .string()
+    .min(2, 'First name must contain at least 2 characters.')
+    .max(30)
+    .trim(),
+  lastName: z
+    .string()
+    .min(2, 'Last name must contain at least 2 characters.')
+    .max(30)
+    .trim(),
+  email: z.email('Must be a valid email address.').max(50).trim(),
+  password: z
+    .string()
+    .min(8, `Password must contain at least 8 character.`)
+    .regex(/[a-zA-Z]/, `Password must contain at least one letter.`)
+    .regex(/[0-9]/, `Password must contain at least one number.`)
+    .regex(
+      /[^a-zA-Z0-9]/,
+      `Password must contain at least one special character.`,
+    )
+    .trim(),
+  roleId: z.uuidv4('Role is required.'),
+  image: z.instanceof(File).or(z.null()).or(z.undefined()).optional(),
+})
+
+const cloneFormData = (formData: FormData) => {
+  const cloned = new FormData()
+
+  formData.forEach((value, key) => {
+    if (value instanceof File) {
+      cloned.append(key, value, value.name)
+    } else {
+      cloned.append(key, String(value))
+    }
+  })
+
+  return cloned
+}
+
 export const Route = createFileRoute('/dashboard/users')({
   component: UsersPage,
 })
 
 function UsersPage() {
-  const [search, setSearch] = useState('')
   const queryClient = useQueryClient()
-  const [createForm, setCreateForm] = useState<CreateUserRequest>({
-    name: '',
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const [search, setSearch] = useState('')
+  const [isOnSubmit, setIsOnSubmit] = useState(false)
+  const [createForm, setCreateForm] = useState<CreateUserForm>({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     roleId: '',
-    permissions: [],
+    image: null,
+  })
+
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateUserInputs>({
+    resolver: zodResolver(createUserSchema),
   })
 
   const {
@@ -125,8 +192,6 @@ function UsersPage() {
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
-      console.log('🚀 ~ UsersPage ~ lastPage 1:', lastPage)
-
       if ('error' in lastPage) {
         return undefined
       }
@@ -179,14 +244,12 @@ function UsersPage() {
   })
 
   const createUserMutation = useMutation({
-    mutationFn: async (payload: CreateUserRequest) => {
-      const response = await fetch(`${USER_API_BASE_URL}/accounts`, {
+    mutationFn: async ({ data }: { data: FormData }) => {
+      const formData = cloneFormData(data)
+      const response = await fetch(`${USER_API_BASE_URL}/user/create`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: formData,
       })
 
       if (!response.ok) {
@@ -194,12 +257,16 @@ function UsersPage() {
       }
     },
     onSuccess: async () => {
+      if (inputRef.current) {
+        inputRef.current.value = ''
+      }
       setCreateForm({
-        name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: '',
         roleId: '',
-        permissions: [],
+        image: null,
       })
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
     },
@@ -245,6 +312,48 @@ function UsersPage() {
     },
   })
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCreateForm((previous) => ({
+      ...previous,
+      image: null,
+    }))
+
+    const file = event.target.files?.[0]
+    if (file) {
+      // Show preview before uploading
+      setCreateForm((previous) => ({
+        ...previous,
+        image: URL.createObjectURL(file),
+      }))
+    }
+
+    setValue('image', file, {
+      shouldValidate: true,
+    })
+  }
+
+  const onCreateUser: SubmitHandler<CreateUserInputs> = async (data) => {
+    console.log('🚀 ~ onCreateUser ~ data:', data)
+
+    const createUserData = new FormData()
+    createUserData.append('firstName', data.firstName)
+    createUserData.append('lastName', data.lastName)
+    createUserData.append('email', data.email.toLowerCase())
+    createUserData.append('password', data.password)
+    createUserData.append('roleId', data.roleId)
+    createUserData.append('image', data.image || '')
+    setIsOnSubmit(true)
+
+    try {
+      await createUserMutation.mutateAsync({ data: createUserData })
+    } catch (error) {
+      setIsOnSubmit(false)
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      console.log('🚀 ~ fetchMoreUsers ~ errorMessage:', errorMessage)
+    }
+  }
+
   const fetchMoreUsers = async () => {
     if (hasNextPage && !isFetchingNextPage) {
       try {
@@ -252,7 +361,7 @@ function UsersPage() {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : JSON.stringify(error)
-        console.log('🚀 ~ fetchMoreUsers ~ errorMessage:', errorMessage)
+        console.log('🚀 ~ onCreateUser ~ errorMessage:', errorMessage)
       }
     }
   }
@@ -280,20 +389,22 @@ function UsersPage() {
     [rolesQuery.data],
   )
 
-  const permissionOptions = useMemo(() => {
-    return Array.from(
-      new Set(roleOptions.flatMap((role) => role.permissions)),
-    ).sort()
-  }, [roleOptions])
+  console.log('errors: ', errors)
 
-  const togglePermission = (permission: string) => {
-    setCreateForm((previous) => ({
-      ...previous,
-      permissions: previous.permissions.includes(permission)
-        ? previous.permissions.filter((value) => value !== permission)
-        : [...previous.permissions, permission],
-    }))
-  }
+  // const permissionOptions = useMemo(() => {
+  //   return Array.from(
+  //     new Set(roleOptions.flatMap((role) => role.permissions)),
+  //   ).sort()
+  // }, [roleOptions])
+
+  // const togglePermission = (permission: string) => {
+  //   setCreateForm((previous) => ({
+  //     ...previous,
+  //     permissions: previous.permissions.includes(permission)
+  //       ? previous.permissions.filter((value) => value !== permission)
+  //       : [...previous.permissions, permission],
+  //   }))
+  // }
 
   return (
     <div
@@ -310,36 +421,24 @@ function UsersPage() {
           permissions.
         </p>
 
-        <form
-          className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void createUserMutation.mutateAsync(createForm)
-          }}
-        >
+        <form className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
           <h2 className="text-lg font-semibold">Create user</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <input
-              value={createForm.name}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  name: event.target.value,
-                }))
-              }
-              placeholder="Full name"
+              {...register('firstName')}
+              placeholder="First name"
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            />
+            <input
+              {...register('lastName')}
+              placeholder="Last name"
               className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
               required
             />
             <input
               type="email"
-              value={createForm.email}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  email: event.target.value,
-                }))
-              }
+              {...register('email')}
               placeholder="Email"
               className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
               required
@@ -347,25 +446,26 @@ function UsersPage() {
             <input
               type="password"
               minLength={8}
-              value={createForm.password}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  password: event.target.value,
-                }))
-              }
+              {...register('password')}
               placeholder="Temporary password"
               className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
               required
             />
+            <input
+              type="file"
+              id="image"
+              accept="image/*"
+              {...register('image', {
+                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                  handleFileChange(e)
+                },
+              })}
+              ref={inputRef}
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              autoComplete="off"
+            />
             <select
-              value={createForm.roleId}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  roleId: event.target.value,
-                }))
-              }
+              {...register('roleId')}
               className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
               required
             >
@@ -377,7 +477,7 @@ function UsersPage() {
               ))}
             </select>
           </div>
-          <div className="mt-3">
+          {/* <div className="mt-3">
             <p className="mb-2 text-sm font-medium">Permissions</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {permissionOptions.map((permission) => (
@@ -394,14 +494,15 @@ function UsersPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </div> */}
           <div className="mt-4 flex justify-end">
             <button
               type="submit"
-              disabled={
-                createUserMutation.isPending ||
-                createForm.permissions.length === 0
-              }
+              onClick={handleSubmit(onCreateUser)}
+              disabled={createUserMutation.isPending || isOnSubmit}
+              style={{
+                cursor: isOnSubmit ? 'not-allowed' : 'pointer',
+              }}
               className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
             >
               {createUserMutation.isPending ? 'Creating…' : 'Create user'}
