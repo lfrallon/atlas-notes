@@ -7,6 +7,9 @@ export const Route = createFileRoute('/dashboard/better-auth')({
   component: BetterAuthDemo,
 })
 
+const USER_PROFILE_URL =
+  import.meta.env.VITE_USER_PROFILE_URL ?? 'http://localhost:3006'
+
 function BetterAuthDemo() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -240,7 +243,14 @@ function BetterAuthDemo() {
 
           <div className="flex items-center gap-3">
             {session.user.image ? (
-              <img src={session.user.image} alt="" className="h-10 w-10" />
+              <img
+                src={`${USER_PROFILE_URL}${session.user.image}`}
+                alt=""
+                className="h-10 w-10"
+                style={{
+                  objectFit: 'cover',
+                }}
+              />
             ) : (
               <div className="h-10 w-10 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
                 <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
@@ -306,6 +316,12 @@ function BetterAuthDemo() {
         if (result.error) {
           setError(result.error.message || 'Sign in failed')
         }
+
+        await router.navigate({
+          to: '/dashboard/map',
+          replace: true,
+          reloadDocument: true,
+        })
       }
     } catch (err) {
       setError('An unexpected error occurred')
