@@ -91,6 +91,8 @@ async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
 const USER_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
 
+const USER_PROFILE_URL =
+  import.meta.env.VITE_USER_PROFILE_URL ?? 'http://localhost:3006'
 const createUserSchema = z.object({
   firstName: z
     .string()
@@ -117,6 +119,38 @@ const createUserSchema = z.object({
   image: z.instanceof(File).or(z.null()).or(z.undefined()).optional(),
 })
 
+const updateUserSchema = z.object({
+  firstName: z
+    .string()
+    .min(2, 'First name must contain at least 2 characters.')
+    .max(30)
+    .trim(),
+  lastName: z
+    .string()
+    .min(2, 'Last name must contain at least 2 characters.')
+    .max(30)
+    .trim(),
+  email: z.email('Must be a valid email address.').max(50).trim(),
+  roleId: z.uuidv4('Role is required.'),
+  image: z.instanceof(File).or(z.null()).or(z.undefined()).optional(),
+})
+
+interface UpdateUserInputs {
+  firstName: string
+  lastName: string
+  email: string
+  roleId: string
+  image?: File | null
+}
+
+interface EditFormState {
+  firstName: string
+  lastName: string
+  email: string
+  roleId: string
+  image: string | null
+}
+
 const cloneFormData = (formData: FormData) => {
   const cloned = new FormData()
 
@@ -139,9 +173,20 @@ function UsersPage() {
   const queryClient = useQueryClient()
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const editImageInputRef = useRef<HTMLInputElement>(null)
 
   const [search, setSearch] = useState('')
   const [isOnSubmit, setIsOnSubmit] = useState(false)
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
+  const [editFormData, setEditFormData] = useState<EditFormState>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    roleId: '',
+    image: null,
+  })
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     firstName: '',
     lastName: '',
@@ -155,6 +200,7 @@ function UsersPage() {
     register,
     setValue,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<CreateUserInputs>({
     resolver: zodResolver(createUserSchema),
@@ -260,6 +306,7 @@ function UsersPage() {
       if (inputRef.current) {
         inputRef.current.value = ''
       }
+      reset()
       setCreateForm({
         firstName: '',
         lastName: '',
@@ -312,6 +359,40 @@ function UsersPage() {
     },
   })
 
+  const updateUserMutation = useMutation({
+    mutationFn: async ({
+      userId,
+      data,
+    }: {
+      userId: string
+      data: FormData
+    }) => {
+      const formData = cloneFormData(data)
+      const response = await fetch(`${USER_API_BASE_URL}/user/${userId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user')
+      }
+    },
+    onSuccess: async () => {
+      setIsEditMode(false)
+      setEditingUserId(null)
+      setEditFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        roleId: '',
+        image: null,
+      })
+      setEditImagePreview(null)
+      await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
+    },
+  })
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm((previous) => ({
       ...previous,
@@ -332,9 +413,87 @@ function UsersPage() {
     })
   }
 
-  const onCreateUser: SubmitHandler<CreateUserInputs> = async (data) => {
-    console.log('🚀 ~ onCreateUser ~ data:', data)
+  const handleEditFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setEditImagePreview(URL.createObjectURL(file))
+      setEditFormData((previous) => ({
+        ...previous,
+        image: file.name,
+      }))
+    } else {
+      setEditImagePreview(null)
+    }
+  }
 
+  const onEditClick = (account: UserAccountsNodes) => {
+    const [firstName, lastName] = account.user.name?.split(' ') ?? ['', '']
+    setEditFormData({
+      firstName: firstName ?? '',
+      lastName: lastName ?? '',
+      email: account.user.email,
+      roleId: account.user.roleId ?? '',
+      image: account.user.image,
+    })
+    setEditImagePreview(
+      account.user.image ? `${USER_PROFILE_URL}${account.user.image}` : null,
+    )
+    setEditingUserId(account.user.id)
+    setIsEditMode(true)
+  }
+
+  const onCancelClick = () => {
+    setIsEditMode(false)
+    setEditFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      roleId: '',
+      image: null,
+    })
+    setEditImagePreview(null)
+    if (editImageInputRef.current) {
+      editImageInputRef.current.value = ''
+    }
+  }
+
+  const onSaveClick = async () => {
+    if (!editingUserId) return
+
+    // Basic validation
+    if (
+      !editFormData.firstName.trim() ||
+      !editFormData.lastName.trim() ||
+      !editFormData.email.trim() ||
+      !editFormData.roleId
+    ) {
+      console.error('All fields are required')
+      return
+    }
+
+    try {
+      const updateData = new FormData()
+      updateData.append('firstName', editFormData.firstName)
+      updateData.append('lastName', editFormData.lastName)
+      updateData.append('email', editFormData.email)
+      updateData.append('roleId', editFormData.roleId)
+
+      if (editImageInputRef.current?.files?.[0]) {
+        updateData.append('image', editImageInputRef.current.files[0])
+      }
+
+      await updateUserMutation.mutateAsync({
+        userId: editingUserId,
+        data: updateData,
+      })
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update user'
+      console.error('Update user error:', errorMessage)
+    }
+  }
+
+  const onCreateUser: SubmitHandler<CreateUserInputs> = async (data) => {
     const createUserData = new FormData()
     createUserData.append('firstName', data.firstName)
     createUserData.append('lastName', data.lastName)
@@ -388,23 +547,6 @@ function UsersPage() {
     () => rolesQuery.data?.pages.flatMap((page) => page.nodes) ?? [],
     [rolesQuery.data],
   )
-
-  console.log('errors: ', errors)
-
-  // const permissionOptions = useMemo(() => {
-  //   return Array.from(
-  //     new Set(roleOptions.flatMap((role) => role.permissions)),
-  //   ).sort()
-  // }, [roleOptions])
-
-  // const togglePermission = (permission: string) => {
-  //   setCreateForm((previous) => ({
-  //     ...previous,
-  //     permissions: previous.permissions.includes(permission)
-  //       ? previous.permissions.filter((value) => value !== permission)
-  //       : [...previous.permissions, permission],
-  //   }))
-  // }
 
   return (
     <div
@@ -535,141 +677,536 @@ function UsersPage() {
 
         {isSuccess && (
           <div className="mt-6">
-            {/* Desktop / wide screens: table */}
+            {/* Desktop / wide screens: table with expandable rows */}
             <div className="hidden md:block overflow-hidden rounded-lg border border-gray-700">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
+                    <th className="px-4 py-3 w-10"></th>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Email</th>
                     <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Operational Scope</th>
                     <th className="px-4 py-3">Created</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((account) => (
-                    <tr
-                      key={account.user.id}
-                      className="border-t border-gray-700 align-top"
-                    >
-                      <td className="px-4 py-3">{account.user.name ?? '—'}</td>
-                      <td className="px-4 py-3">{account.user.email ?? '—'}</td>
-                      <td className="px-4 py-3">{account.role ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <form
-                          className="flex items-center gap-2"
-                          onSubmit={(event) => {
-                            event.preventDefault()
+                  {filteredUsers.map((account) => {
+                    const isExpanded = editingUserId === account.user.id
 
-                            const formData = new FormData(event.currentTarget)
-                            const scope = String(
-                              formData.get('scope') ?? '',
-                            ).trim()
-
-                            void updateScopeMutation.mutateAsync({
-                              userId: account.user.id,
-                              scope,
-                            })
+                    return (
+                      <>
+                        <tr
+                          key={account.user.id}
+                          className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
+                          onClick={() => {
+                            if (!isEditMode) {
+                              if (isExpanded) {
+                                setEditingUserId(null)
+                              } else {
+                                setEditingUserId(account.user.id)
+                              }
+                            }
                           }}
                         >
-                          <input
-                            name="scope"
-                            defaultValue={account.permissions.join(',') ?? ''}
-                            placeholder="e.g. todos:read,geo-notes:update"
-                            className="w-full min-w-64 rounded-md border border-gray-600 bg-gray-800 px-3 py-2"
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-md bg-cyan-600 px-3 py-2 font-medium text-white hover:bg-cyan-500 disabled:opacity-60"
-                            disabled={updateScopeMutation.isPending}
-                          >
-                            Save
-                          </button>
-                        </form>
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">
-                        {account.user.createdAt
-                          ? new Date(account.user.createdAt).toLocaleString()
-                          : '—'}
-                      </td>
-                    </tr>
-                  ))}
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex transform transition-transform ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            >
+                              ▼
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-medium">
+                            {account.user.name ?? '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {account.user.email ?? '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {account.role ?? '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {account.user.createdAt
+                              ? new Date(
+                                  account.user.createdAt,
+                                ).toLocaleString()
+                              : '—'}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-t border-gray-700 bg-gray-900/40">
+                            <td colSpan={5} className="px-4 py-4">
+                              <div>
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="text-md font-semibold">
+                                    User details
+                                  </h3>
+                                  {!isEditMode && (
+                                    <button
+                                      type="button"
+                                      onClick={() => onEditClick(account)}
+                                      className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                  )}
+                                </div>
+
+                                {!isEditMode ? (
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                      <p className="text-xs text-gray-400 mb-1">
+                                        First Name
+                                      </p>
+                                      <p className="text-sm text-gray-100">
+                                        {account.user.name?.split(' ')[0] ??
+                                          '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-400 mb-1">
+                                        Last Name
+                                      </p>
+                                      <p className="text-sm text-gray-100">
+                                        {account.user.name?.split(' ')[1] ??
+                                          '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-400 mb-1">
+                                        Email
+                                      </p>
+                                      <p className="text-sm text-gray-100">
+                                        {account.user.email ?? '—'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-400 mb-1">
+                                        Role
+                                      </p>
+                                      <p className="text-sm text-gray-100">
+                                        {account.role ?? '—'}
+                                      </p>
+                                    </div>
+                                    <div className="sm:col-span-2">
+                                      <p className="text-xs text-gray-400 mb-1">
+                                        Permissions
+                                      </p>
+                                      <p className="text-sm text-gray-100">
+                                        {account.permissions.length > 0
+                                          ? account.permissions.join(', ')
+                                          : '—'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                          First Name
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={editFormData.firstName}
+                                          onChange={(e) =>
+                                            setEditFormData((prev) => ({
+                                              ...prev,
+                                              firstName: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                          Last Name
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={editFormData.lastName}
+                                          onChange={(e) =>
+                                            setEditFormData((prev) => ({
+                                              ...prev,
+                                              lastName: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                          Email
+                                        </label>
+                                        <input
+                                          type="email"
+                                          value={editFormData.email}
+                                          onChange={(e) =>
+                                            setEditFormData((prev) => ({
+                                              ...prev,
+                                              email: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                          Role
+                                        </label>
+                                        <select
+                                          value={editFormData.roleId}
+                                          onChange={(e) =>
+                                            setEditFormData((prev) => ({
+                                              ...prev,
+                                              roleId: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                        >
+                                          <option value="">Select role</option>
+                                          {roleOptions.map((role) => (
+                                            <option
+                                              key={role.id}
+                                              value={role.id}
+                                            >
+                                              {role.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div className="sm:col-span-2">
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                          Profile Picture
+                                        </label>
+                                        {editImagePreview && (
+                                          <div className="mb-2">
+                                            <img
+                                              src={editImagePreview}
+                                              alt="Profile preview"
+                                              className="w-16 h-16 rounded object-cover"
+                                            />
+                                          </div>
+                                        )}
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={handleEditFileChange}
+                                          ref={editImageInputRef}
+                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                      <button
+                                        type="button"
+                                        onClick={onCancelClick}
+                                        className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={onSaveClick}
+                                        disabled={updateUserMutation.isPending}
+                                        className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
+                                      >
+                                        {updateUserMutation.isPending
+                                          ? 'Saving…'
+                                          : 'Save'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })}
                 </tbody>
               </table>
-              {data?.pages &&
-                data.pages[data.pages.length - 1]?.pageInfo?.hasNextPage && (
-                  <div className="flex justify-center mt-6 sm:mt-8">
-                    <span className="inline-flex justify-center items-center gap-1 px-3 py-2 rounded-full text-orange-400 bg-orange-600/20 text-xs">
-                      <button
-                        onClick={fetchMoreUsers}
-                        className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
-                      >
-                        Load More
-                      </button>
-                    </span>
-                  </div>
-                )}
             </div>
 
-            {/* Mobile: stacked cards */}
+            {/* Mobile: stacked accordion cards */}
             <div className="md:hidden mt-2 space-y-3">
-              {filteredUsers.map((account) => (
-                <div
-                  key={account.user.id}
-                  className="rounded-lg border border-gray-700 bg-gray-900/50 p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-sm font-medium">
-                        {account.user.name ?? '—'}
-                      </div>
-                      <div className="mt-1 text-xs text-gray-300">
-                        {account.user.email ?? '—'}
-                      </div>
-                      <div className="mt-1 text-xs text-gray-400">
-                        Role: {account.role ?? '—'}
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-300">
-                      {account.user.createdAt
-                        ? new Date(account.user.createdAt).toLocaleDateString()
-                        : '—'}
-                    </div>
-                  </div>
+              {filteredUsers.map((account) => {
+                const isExpanded = editingUserId === account.user.id
 
-                  <form
-                    className="mt-3 flex flex-col gap-2"
-                    onSubmit={(event) => {
-                      event.preventDefault()
-
-                      const formData = new FormData(event.currentTarget)
-                      const scope = String(formData.get('scope') ?? '').trim()
-
-                      void updateScopeMutation.mutateAsync({
-                        userId: account.user.id,
-                        scope,
-                      })
-                    }}
+                return (
+                  <article
+                    key={account.user.id}
+                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
                   >
-                    <input
-                      name="scope"
-                      defaultValue={account.permissions.join(',') ?? ''}
-                      placeholder="e.g. todos:read,geo-notes:update"
-                      className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="rounded-md bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-500 disabled:opacity-60"
-                        disabled={updateScopeMutation.isPending}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditMode) {
+                          if (isExpanded) {
+                            setEditingUserId(null)
+                          } else {
+                            setEditingUserId(account.user.id)
+                          }
+                        }
+                      }}
+                      className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <h2 className="text-lg font-semibold leading-tight">
+                            {account.user.name ?? '—'}
+                          </h2>
+                          <p className="mt-2 text-sm text-gray-300">
+                            {account.user.email ?? '—'}
+                          </p>
+                        </div>
+                        <span
+                          className={`inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                        >
+                          ▼
+                        </span>
+                      </div>
+
+                      {!isExpanded && (
+                        <div className="mt-3 text-sm text-gray-300">
+                          <p>
+                            <span className="font-medium text-gray-100">
+                              Role:
+                            </span>{' '}
+                            {account.role ?? '—'}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-medium text-gray-100">
+                              Created:
+                            </span>{' '}
+                            {account.user.createdAt
+                              ? new Date(
+                                  account.user.createdAt,
+                                ).toLocaleDateString()
+                              : '—'}
+                          </p>
+                        </div>
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-700 bg-gray-900/40 p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-md font-semibold">
+                            User details
+                          </h3>
+                          {!isEditMode && (
+                            <button
+                              type="button"
+                              onClick={() => onEditClick(account)}
+                              className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+
+                        {!isEditMode ? (
+                          <div className="grid gap-4">
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                First Name
+                              </p>
+                              <p className="text-sm text-gray-100">
+                                {account.user.name?.split(' ')[0] ?? '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                Last Name
+                              </p>
+                              <p className="text-sm text-gray-100">
+                                {account.user.name?.split(' ')[1] ?? '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                Email
+                              </p>
+                              <p className="text-sm text-gray-100">
+                                {account.user.email ?? '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">Role</p>
+                              <p className="text-sm text-gray-100">
+                                {account.role ?? '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                Permissions
+                              </p>
+                              <p className="text-sm text-gray-100">
+                                {account.permissions.length > 0
+                                  ? account.permissions.join(', ')
+                                  : '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 mb-1">
+                                Created
+                              </p>
+                              <p className="text-sm text-gray-100">
+                                {account.user.createdAt
+                                  ? new Date(
+                                      account.user.createdAt,
+                                    ).toLocaleString()
+                                  : '—'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="grid gap-3">
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  First Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editFormData.firstName}
+                                  onChange={(e) =>
+                                    setEditFormData((prev) => ({
+                                      ...prev,
+                                      firstName: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Last Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editFormData.lastName}
+                                  onChange={(e) =>
+                                    setEditFormData((prev) => ({
+                                      ...prev,
+                                      lastName: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Email
+                                </label>
+                                <input
+                                  type="email"
+                                  value={editFormData.email}
+                                  onChange={(e) =>
+                                    setEditFormData((prev) => ({
+                                      ...prev,
+                                      email: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Role
+                                </label>
+                                <select
+                                  value={editFormData.roleId}
+                                  onChange={(e) =>
+                                    setEditFormData((prev) => ({
+                                      ...prev,
+                                      roleId: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
+                                >
+                                  <option value="">Select role</option>
+                                  {roleOptions.map((role) => (
+                                    <option key={role.id} value={role.id}>
+                                      {role.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">
+                                  Profile Picture
+                                </label>
+                                {editImagePreview && (
+                                  <div className="mb-2">
+                                    <img
+                                      src={editImagePreview}
+                                      alt="Profile preview"
+                                      className="w-16 h-16 rounded object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleEditFileChange}
+                                  ref={editImageInputRef}
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={onCancelClick}
+                                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={onSaveClick}
+                                disabled={updateUserMutation.isPending}
+                                className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
+                              >
+                                {updateUserMutation.isPending
+                                  ? 'Saving…'
+                                  : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
+            </div>
+
+            {filteredUsers.length === 0 && (
+              <p className="mt-4 text-sm text-gray-300">
+                No users match your current search.
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={fetchMoreUsers}
+                disabled={!hasNextPage || isFetchingNextPage}
+                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isFetchingNextPage
+                  ? 'Loading more...'
+                  : hasNextPage
+                    ? 'Load more users'
+                    : 'No more users'}
+              </button>
             </div>
           </div>
         )}

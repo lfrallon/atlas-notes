@@ -51,7 +51,7 @@ export interface CreatePermissionRequest {
   resource: string
   action: Action | string
   key: string
-  description: string
+  roleId: string
 }
 
 export interface UpdatePermissionRequest extends CreatePermissionRequest {

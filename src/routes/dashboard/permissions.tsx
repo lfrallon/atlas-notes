@@ -21,6 +21,7 @@ import type {
   UserPermissionsPage,
 } from '@/lib/queries/permissions'
 import type { CursorQuery, PaginationInput } from './admin-query'
+import { getUserRoles, UserRolesPage } from '@/lib/queries/roles'
 
 const PERMISSION_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
@@ -41,7 +42,7 @@ const emptyPermissionForm: CreatePermissionRequest = {
   resource: '',
   action: '',
   key: '',
-  description: '',
+  roleId: '',
 }
 
 export const Route = createFileRoute('/dashboard/permissions')({
@@ -87,6 +88,44 @@ function RouteComponent() {
     queryKey: permissionsQueryKey,
     queryFn: async ({ pageParam, queryKey }) =>
       await getUserPermissions({
+        pageParam: pageParam as CursorQuery,
+        queryKey: queryKey as [
+          string,
+          {
+            baseUrl: string
+            input?: PaginationInput
+          },
+        ],
+      }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      if ('error' in lastPage) {
+        return undefined
+      }
+
+      if (lastPage.pageInfo.hasNextPage) {
+        return {
+          nextCursor: lastPage.pageInfo.nextCursor,
+        }
+      }
+      return undefined
+    },
+  })
+
+  const rolesQuery = useInfiniteQuery<UserRolesPage, Error>({
+    queryKey: [
+      'userRoles',
+      {
+        baseUrl: `${PERMISSION_API_BASE_URL}/roles`,
+        input: {
+          pageSize: 10,
+          orderBy: 'desc',
+          limit: 25,
+        },
+      },
+    ],
+    queryFn: async ({ pageParam, queryKey }) =>
+      await getUserRoles({
         pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
@@ -214,9 +253,14 @@ function RouteComponent() {
       resource: permission.permission.split(':')[0] ?? '',
       action: permission.permission.split(':')[1] ?? '',
       key: getPermissionLabel(permission),
-      description: permission.role?.description ?? '',
+      roleId: permission.role?.id ?? '',
     })
   }
+
+  const roleOptions = useMemo(
+    () => rolesQuery.data?.pages.flatMap((page) => page.nodes) ?? [],
+    [rolesQuery.data],
+  )
 
   return (
     <div
@@ -277,18 +321,25 @@ function RouteComponent() {
               disabled={createPermissionMutation.isPending}
               className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
-            <textarea
-              value={createForm.description}
+            <select
+              value={createForm.roleId}
               onChange={(event) =>
                 setCreateForm((previous) => ({
                   ...previous,
-                  description: event.target.value,
+                  roleId: event.target.value,
                 }))
               }
-              placeholder="Permission description"
               disabled={createPermissionMutation.isPending}
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-            />
+              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+              required
+            >
+              <option value="">Select role</option>
+              {roleOptions.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
             <div className="sm:col-span-2">
               <button
                 type="button"
@@ -345,18 +396,19 @@ function RouteComponent() {
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
+                    <th className="px-4 py-3 w-10"></th>
                     <th className="px-4 py-3">Permission</th>
                     <th className="px-4 py-3">Resource</th>
-                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Role</th>
                     <th className="px-4 py-3">Description</th>
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Created</th>
                     <th className="px-4 py-3">Updated</th>
-                    <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredPermissions.map((permission) => {
+                    const isExpanded = editingPermissionId === permission.id
                     const isUpdatingThisPermission =
                       updatePermissionMutation.isPending &&
                       updatePermissionMutation.variables?.permissionId ===
@@ -364,23 +416,212 @@ function RouteComponent() {
                     const editingBlocked = permission.role?.isSystem
 
                     return (
-                      <tr
-                        key={permission.id}
-                        className="border-t border-gray-700 align-top"
-                      >
-                        <td className="px-4 py-3 font-medium">
-                          {getPermissionLabel(permission)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {permission.permission.split(':')[0] ?? '—'}
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {permission.role?.name ?? '—'}
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {permission.role?.description ?? '—'}
-                        </td>
-                        <td className="px-4 py-3">
+                      <>
+                        <tr
+                          key={permission.id}
+                          className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
+                          onClick={() => {
+                            if (editingBlocked) return
+                            if (isExpanded) {
+                              setEditingPermissionId(null)
+                            } else {
+                              startEditing(permission)
+                            }
+                          }}
+                        >
+                          <td className="px-4 py-3">
+                            {!editingBlocked && (
+                              <span
+                                className={`inline-flex transform transition-transform ${
+                                  isExpanded ? 'rotate-180' : ''
+                                }`}
+                              >
+                                ▼
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 font-medium">
+                            {getPermissionLabel(permission)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {permission.permission.split(':')[0] ?? '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {permission.role?.name ?? '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {permission.role?.description ?? '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                                permission.role?.isSystem
+                                  ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
+                                  : 'bg-gray-700/60 text-gray-200 border border-gray-600'
+                              }`}
+                            >
+                              {getPermissionStatus(permission)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {formatDate(permission.createdAt)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {formatDate(permission.createdAt)}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-t border-gray-700 bg-gray-900/40">
+                            <td colSpan={8} className="px-4 py-4">
+                              <div>
+                                <h3 className="text-md font-semibold mb-3">
+                                  Edit permission
+                                </h3>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  <input
+                                    value={editForm.resource}
+                                    onChange={(event) =>
+                                      setEditForm((previous) => ({
+                                        ...previous,
+                                        resource: event.target.value,
+                                      }))
+                                    }
+                                    disabled={
+                                      updatePermissionMutation.isPending
+                                    }
+                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                  />
+                                  <input
+                                    value={editForm.action}
+                                    onChange={(event) =>
+                                      setEditForm((previous) => ({
+                                        ...previous,
+                                        action: event.target.value,
+                                      }))
+                                    }
+                                    disabled={
+                                      updatePermissionMutation.isPending
+                                    }
+                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                  />
+                                  <select
+                                    value={editForm.roleId}
+                                    onChange={(event) =>
+                                      setEditForm((previous) => ({
+                                        ...previous,
+                                        roleId: event.target.value,
+                                      }))
+                                    }
+                                    disabled={
+                                      updatePermissionMutation.isPending
+                                    }
+                                    className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+                                    required
+                                  >
+                                    <option value="">Select role</option>
+                                    {roleOptions.map((role) => (
+                                      <option key={role.id} value={role.id}>
+                                        {role.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    value={editForm.key}
+                                    onChange={(event) =>
+                                      setEditForm((previous) => ({
+                                        ...previous,
+                                        key: event.target.value,
+                                      }))
+                                    }
+                                    disabled={
+                                      updatePermissionMutation.isPending
+                                    }
+                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                  />
+                                  <div className="flex gap-2 sm:col-span-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (!editingPermissionId) return
+                                        updatePermissionMutation.mutate({
+                                          permissionId: editingPermissionId,
+                                          ...editForm,
+                                        })
+                                      }}
+                                      disabled={
+                                        updatePermissionMutation.isPending ||
+                                        !editForm.resource.trim() ||
+                                        !editForm.action.trim() ||
+                                        !editForm.key.trim()
+                                      }
+                                      className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {updatePermissionMutation.isPending
+                                        ? 'Saving…'
+                                        : 'Save changes'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setEditingPermissionId(null)
+                                      }
+                                      disabled={
+                                        updatePermissionMutation.isPending
+                                      }
+                                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {filteredPermissions.map((permission) => {
+                const isExpanded = editingPermissionId === permission.id
+                const isUpdatingThisPermission =
+                  updatePermissionMutation.isPending &&
+                  updatePermissionMutation.variables?.permissionId ===
+                    permission.id
+                const editingBlocked = permission.role?.isSystem
+
+                return (
+                  <article
+                    key={permission.id}
+                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editingBlocked) return
+                        if (isExpanded) {
+                          setEditingPermissionId(null)
+                        } else {
+                          startEditing(permission)
+                        }
+                      }}
+                      disabled={editingBlocked}
+                      className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <h2 className="text-lg font-semibold leading-tight">
+                            {getPermissionLabel(permission)}
+                          </h2>
+                          <p className="mt-2 text-sm text-gray-300">
+                            {permission.role?.description ?? '—'}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 items-start shrink-0">
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                               permission.role?.isSystem
@@ -390,181 +631,134 @@ function RouteComponent() {
                           >
                             {getPermissionStatus(permission)}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {formatDate(permission.createdAt)}
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {formatDate(permission.createdAt)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => startEditing(permission)}
-                            disabled={
-                              editingBlocked || isUpdatingThisPermission
+                          {!editingBlocked && (
+                            <span
+                              className={`inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            >
+                              ▼
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {!isExpanded && (
+                        <div className="mt-3 text-sm text-gray-300">
+                          <p>
+                            <span className="font-medium text-gray-100">
+                              Resource:
+                            </span>{' '}
+                            {permission.permission.split(':')[0] ?? '—'}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-medium text-gray-100">
+                              User:
+                            </span>{' '}
+                            {permission.role?.name ?? '—'}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-medium text-gray-100">
+                              Created:
+                            </span>{' '}
+                            {formatDate(permission.createdAt)}
+                          </p>
+                        </div>
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-700 bg-gray-900/40 p-4">
+                        <h3 className="text-md font-semibold mb-3">
+                          Edit permission
+                        </h3>
+                        <div className="grid gap-3">
+                          <input
+                            value={editForm.resource}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                resource: event.target.value,
+                              }))
                             }
-                            className="rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={updatePermissionMutation.isPending}
+                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <input
+                            value={editForm.action}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                action: event.target.value,
+                              }))
+                            }
+                            disabled={updatePermissionMutation.isPending}
+                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <input
+                            value={editForm.key}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                key: event.target.value,
+                              }))
+                            }
+                            disabled={updatePermissionMutation.isPending}
+                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <select
+                            value={editForm.roleId}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                roleId: event.target.value,
+                              }))
+                            }
+                            disabled={updatePermissionMutation.isPending}
+                            className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
+                            required
                           >
-                            {editingBlocked ? 'System permission' : 'Edit'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {editingPermissionId && (
-              <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/70 p-4">
-                <h3 className="text-md font-semibold">Edit permission</h3>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <input
-                    value={editForm.resource}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        resource: event.target.value,
-                      }))
-                    }
-                    disabled={updatePermissionMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <input
-                    value={editForm.action}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        action: event.target.value,
-                      }))
-                    }
-                    disabled={updatePermissionMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <input
-                    value={editForm.key}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        key: event.target.value,
-                      }))
-                    }
-                    disabled={updatePermissionMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <textarea
-                    value={editForm.description}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        description: event.target.value,
-                      }))
-                    }
-                    disabled={updatePermissionMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <div className="flex gap-2 sm:col-span-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!editingPermissionId) return
-                        updatePermissionMutation.mutate({
-                          permissionId: editingPermissionId,
-                          ...editForm,
-                        })
-                      }}
-                      disabled={
-                        updatePermissionMutation.isPending ||
-                        !editForm.resource.trim() ||
-                        !editForm.action.trim() ||
-                        !editForm.key.trim()
-                      }
-                      className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {updatePermissionMutation.isPending
-                        ? 'Saving…'
-                        : 'Save changes'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingPermissionId(null)}
-                      disabled={updatePermissionMutation.isPending}
-                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 gap-3 md:hidden">
-              {filteredPermissions.map((permission) => {
-                const isUpdatingThisPermission =
-                  updatePermissionMutation.isPending &&
-                  updatePermissionMutation.variables?.permissionId ===
-                    permission.id
-
-                return (
-                  <article
-                    key={permission.id}
-                    className="rounded-lg border border-gray-700 bg-gray-900/60 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="text-lg font-semibold leading-tight">
-                        {getPermissionLabel(permission)}
-                      </h2>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          permission.role?.isSystem
-                            ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
-                            : 'bg-gray-700/60 text-gray-200 border border-gray-600'
-                        }`}
-                      >
-                        {getPermissionStatus(permission)}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 text-sm text-gray-300">
-                      {permission.role?.description ?? '—'}
-                    </p>
-
-                    <div className="mt-3 text-sm text-gray-300">
-                      <p>
-                        <span className="font-medium text-gray-100">
-                          Resource:
-                        </span>{' '}
-                        {permission.permission.split(':')[0] ?? '—'}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-medium text-gray-100">User:</span>{' '}
-                        {permission.role?.name ?? '—'}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-medium text-gray-100">
-                          Created:
-                        </span>{' '}
-                        {formatDate(permission.createdAt)}
-                      </p>
-                      <p className="mt-1">
-                        <span className="font-medium text-gray-100">
-                          Updated:
-                        </span>{' '}
-                        {formatDate(permission.createdAt)}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => startEditing(permission)}
-                      disabled={
-                        permission.role?.isSystem || isUpdatingThisPermission
-                      }
-                      className="mt-3 rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {permission.role?.isSystem ? 'System permission' : 'Edit'}
-                    </button>
+                            <option value="">Select role</option>
+                            {roleOptions.map((role) => (
+                              <option key={role.id} value={role.id}>
+                                {role.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!editingPermissionId) return
+                                updatePermissionMutation.mutate({
+                                  permissionId: editingPermissionId,
+                                  ...editForm,
+                                })
+                              }}
+                              disabled={
+                                updatePermissionMutation.isPending ||
+                                !editForm.resource.trim() ||
+                                !editForm.action.trim() ||
+                                !editForm.key.trim()
+                              }
+                              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {updatePermissionMutation.isPending
+                                ? 'Saving…'
+                                : 'Save changes'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPermissionId(null)}
+                              disabled={updatePermissionMutation.isPending}
+                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </article>
                 )
               })}
