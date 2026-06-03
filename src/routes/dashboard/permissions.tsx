@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 // libs
 import {
@@ -407,7 +407,7 @@ function RouteComponent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPermissions.map((permission) => {
+                  {filteredPermissions.map((permission, index) => {
                     const isExpanded = editingPermissionId === permission.id
                     const isUpdatingThisPermission =
                       updatePermissionMutation.isPending &&
@@ -416,9 +416,8 @@ function RouteComponent() {
                     const editingBlocked = permission.role?.isSystem
 
                     return (
-                      <>
+                      <Fragment key={permission.id.toString() + `${index}`}>
                         <tr
-                          key={permission.id}
                           className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
                           onClick={() => {
                             if (editingBlocked) return
@@ -578,7 +577,7 @@ function RouteComponent() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     )
                   })}
                 </tbody>
@@ -596,7 +595,7 @@ function RouteComponent() {
 
                 return (
                   <article
-                    key={permission.id}
+                    key={permission.id.toString()}
                     className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
                   >
                     <button

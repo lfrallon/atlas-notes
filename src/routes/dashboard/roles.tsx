@@ -4,7 +4,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
+import { MonitorCog, Pencil, X } from 'lucide-react'
 
 // libs
 import {
@@ -14,7 +15,11 @@ import {
 } from '@/lib/queries/roles'
 
 // types
-import type { CreateRoleRequest, UserRolesPage } from '@/lib/queries/roles'
+import type {
+  CreateRoleRequest,
+  UserRolesNodes,
+  UserRolesPage,
+} from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
 
 const ROLE_API_BASE_URL =
@@ -193,6 +198,17 @@ function RouteComponent() {
     })
   }, [search, data])
 
+  const startEditing = (role: UserRolesNodes) => {
+    if (role.isSystem) return
+
+    setEditingRoleId(role.id)
+    setEditForm({
+      description: role.description,
+      name: role.name,
+      permissions: role.permissions,
+    })
+  }
+
   const permissionOptions = useMemo(() => {
     const allPermissions = data?.pages.flatMap((page) =>
       page.nodes.flatMap((node) => node.permissions),
@@ -343,23 +359,178 @@ function RouteComponent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRoles.map((role) => {
-                    // const isEditing = editingRoleId === role.id
+                  {filteredRoles.map((role, index) => {
+                    const isExpanded = editingRoleId === role.id
                     const isUpdatingThisRole =
                       updateRoleMutation.isPending &&
                       updateRoleMutation.variables?.roleId === role.id
                     const editingBlocked = role.isSystem
 
                     return (
-                      <tr
-                        key={role.id}
-                        className="border-t border-gray-700 align-top"
-                      >
-                        <td className="px-4 py-3 font-medium">{role.name}</td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {role.description ?? '—'}
-                        </td>
-                        <td className="px-4 py-3">
+                      <Fragment key={role.id.toString() + `${index}`}>
+                        <tr className="border-t border-gray-700 align-top">
+                          <td className="px-4 py-3 font-medium">{role.name}</td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {role.description ?? '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                                role.isSystem
+                                  ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
+                                  : 'bg-gray-700/60 text-gray-200 border border-gray-600'
+                              }`}
+                            >
+                              {role.isSystem ? 'System' : 'Custom'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">{role.users.length}</td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {role.permissions.length > 0
+                              ? role.permissions.join(', ')
+                              : 'No permissions'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingBlocked) return
+                                if (isExpanded) {
+                                  setEditingRoleId(null)
+                                } else {
+                                  startEditing(role)
+                                }
+                              }}
+                              disabled={editingBlocked || isUpdatingThisRole}
+                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {editingBlocked ? (
+                                <MonitorCog size={14} />
+                              ) : isExpanded ? (
+                                <X size={14} />
+                              ) : (
+                                <Pencil size={14} />
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-t border-gray-700 bg-gray-900/40">
+                            <td colSpan={6} className="px-4 py-3">
+                              <h3 className="text-md font-semibold">
+                                Edit role
+                              </h3>
+                              <div className="mt-3 grid gap-3">
+                                <input
+                                  value={editForm.name}
+                                  onChange={(event) =>
+                                    setEditForm((previous) => ({
+                                      ...previous,
+                                      name: event.target.value,
+                                    }))
+                                  }
+                                  disabled={updateRoleMutation.isPending}
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                />
+                                <textarea
+                                  value={editForm.description}
+                                  onChange={(event) =>
+                                    setEditForm((previous) => ({
+                                      ...previous,
+                                      description: event.target.value,
+                                    }))
+                                  }
+                                  disabled={updateRoleMutation.isPending}
+                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                />
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                  {permissionOptions.map((permission) => (
+                                    <label
+                                      key={permission}
+                                      className="flex items-center gap-2 text-sm"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={editForm.permissions.includes(
+                                          permission,
+                                        )}
+                                        onChange={() =>
+                                          toggleEditPermission(permission)
+                                        }
+                                        disabled={updateRoleMutation.isPending}
+                                      />
+                                      <span>{permission}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (!editingRoleId) return
+                                      updateRoleMutation.mutate({
+                                        roleId: editingRoleId,
+                                        ...editForm,
+                                      })
+                                    }}
+                                    disabled={
+                                      updateRoleMutation.isPending ||
+                                      !editForm.name.trim() ||
+                                      editForm.permissions.length === 0
+                                    }
+                                    className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {updateRoleMutation.isPending
+                                      ? 'Saving…'
+                                      : 'Save changes'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingRoleId(null)}
+                                    disabled={updateRoleMutation.isPending}
+                                    className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {filteredRoles.map((role) => {
+                const isExpanded = editingRoleId === role.id
+                const isEditingBlocked = role.isSystem
+                return (
+                  <article
+                    key={role.id}
+                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isEditingBlocked) return
+                        if (isExpanded) {
+                          setEditingRoleId(null)
+                        } else {
+                          startEditing(role)
+                        }
+                      }}
+                      disabled={isEditingBlocked}
+                      className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h2 className="text-lg font-semibold leading-tight">
+                          {role.name}
+                        </h2>
+                        <div>
                           <span
                             className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                               role.isSystem
@@ -369,157 +540,131 @@ function RouteComponent() {
                           >
                             {role.isSystem ? 'System' : 'Custom'}
                           </span>
-                        </td>
-                        <td className="px-4 py-3">{role.users.length}</td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {role.permissions.length > 0
-                            ? role.permissions.join(', ')
-                            : 'No permissions'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (editingBlocked) return
-                              setEditingRoleId(role.id)
-                              setEditForm({
-                                name: role.name,
-                                description: role.description ?? '',
-                                permissions: role.permissions,
-                              })
-                            }}
-                            disabled={editingBlocked || isUpdatingThisRole}
-                            className="rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {editingBlocked ? 'System role' : 'Edit'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {!isEditingBlocked && (
+                            <span
+                              className={`ml-2 inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            >
+                              ▼
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-            {editingRoleId && (
-              <div className="mt-4 rounded-lg border border-gray-700 bg-gray-900/70 p-4">
-                <h3 className="text-md font-semibold">Edit role</h3>
-                <div className="mt-3 grid gap-3">
-                  <input
-                    value={editForm.name}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        name: event.target.value,
-                      }))
-                    }
-                    disabled={updateRoleMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <textarea
-                    value={editForm.description}
-                    onChange={(event) =>
-                      setEditForm((previous) => ({
-                        ...previous,
-                        description: event.target.value,
-                      }))
-                    }
-                    disabled={updateRoleMutation.isPending}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                  />
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {permissionOptions.map((permission) => (
-                      <label
-                        key={permission}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={editForm.permissions.includes(permission)}
-                          onChange={() => toggleEditPermission(permission)}
-                          disabled={updateRoleMutation.isPending}
-                        />
-                        <span>{permission}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!editingRoleId) return
-                        updateRoleMutation.mutate({
-                          roleId: editingRoleId,
-                          ...editForm,
-                        })
-                      }}
-                      disabled={
-                        updateRoleMutation.isPending ||
-                        !editForm.name.trim() ||
-                        editForm.permissions.length === 0
-                      }
-                      className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {updateRoleMutation.isPending
-                        ? 'Saving…'
-                        : 'Save changes'}
+                      <p className="mt-2 text-sm text-gray-300">
+                        {role.description ?? '—'}
+                      </p>
+
+                      {!isExpanded && (
+                        <div className="mt-3 text-sm text-gray-300">
+                          <p>
+                            <span className="font-medium text-gray-100">
+                              Assigned users:
+                            </span>{' '}
+                            {role.users.length}
+                          </p>
+                          <p className="mt-1">
+                            <span className="font-medium text-gray-100">
+                              Permissions:
+                            </span>{' '}
+                            {role.permissions.length > 0
+                              ? role.permissions.join(', ')
+                              : 'No permissions'}
+                          </p>
+                        </div>
+                      )}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingRoleId(null)}
-                      disabled={updateRoleMutation.isPending}
-                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 gap-3 md:hidden">
-              {filteredRoles.map((role) => (
-                <article
-                  key={role.id}
-                  className="rounded-lg border border-gray-700 bg-gray-900/60 p-4"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-lg font-semibold leading-tight">
-                      {role.name}
-                    </h2>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        role.isSystem
-                          ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
-                          : 'bg-gray-700/60 text-gray-200 border border-gray-600'
-                      }`}
-                    >
-                      {role.isSystem ? 'System' : 'Custom'}
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-sm text-gray-300">
-                    {role.description ?? '—'}
-                  </p>
-
-                  <div className="mt-3 text-sm text-gray-300">
-                    <p>
-                      <span className="font-medium text-gray-100">
-                        Assigned users:
-                      </span>{' '}
-                      {role.users.length}
-                    </p>
-                    <p className="mt-1">
-                      <span className="font-medium text-gray-100">
-                        Permissions:
-                      </span>{' '}
-                      {role.permissions.length > 0
-                        ? role.permissions.join(', ')
-                        : 'No permissions'}
-                    </p>
-                  </div>
-                </article>
-              ))}
+                    {isExpanded && (
+                      <div className="border-t border-gray-700 bg-gray-900/40 p-4">
+                        <h2 className="text-lg font-semibold">Edit role</h2>
+                        <div className="mt-3 grid gap-3">
+                          <input
+                            value={editForm.name}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                name: event.target.value,
+                              }))
+                            }
+                            placeholder="Role name"
+                            disabled={updateRoleMutation.isPending}
+                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <textarea
+                            value={editForm.description}
+                            onChange={(event) =>
+                              setEditForm((previous) => ({
+                                ...previous,
+                                description: event.target.value,
+                              }))
+                            }
+                            placeholder="Role description"
+                            disabled={updateRoleMutation.isPending}
+                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <div>
+                            <p className="mb-2 text-sm font-medium">
+                              Permissions
+                            </p>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              {permissionOptions.map((permission) => (
+                                <label
+                                  key={permission}
+                                  className="flex items-center gap-2 text-sm"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={editForm.permissions.includes(
+                                      permission,
+                                    )}
+                                    onChange={() =>
+                                      toggleEditPermission(permission)
+                                    }
+                                    disabled={updateRoleMutation.isPending}
+                                  />
+                                  <span>{permission}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!editingRoleId) return
+                                updateRoleMutation.mutate({
+                                  roleId: editingRoleId,
+                                  ...editForm,
+                                })
+                              }}
+                              disabled={
+                                updateRoleMutation.isPending ||
+                                !editForm.description.trim() ||
+                                !editForm.name.trim()
+                              }
+                              className="flex-1 rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {updateRoleMutation.isPending
+                                ? 'Saving…'
+                                : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingRoleId(null)}
+                              disabled={updateRoleMutation.isPending}
+                              className="flex-1 rounded-md border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
             </div>
 
             {filteredRoles.length === 0 && (

@@ -27,10 +27,10 @@ export type UserSelect = {
   roleId: string | null
 }
 
-interface UserRolesNodes {
+export interface UserRolesNodes {
   id: string
   name: string
-  description: string | null
+  description: string
   isSystem: boolean
   createdAt: string
   updatedAt: string

@@ -4,7 +4,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { useMemo, useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -65,15 +65,6 @@ interface CreateUserInputs {
   image?: File | null
 }
 
-interface CreateUserForm {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
-  roleId: string
-  image: string | null
-}
-
 async function getUserAccounts({ pageParam, queryKey }: TFetchUserAccounts) {
   const [, { baseUrl, input }] = queryKey
 
@@ -119,29 +110,35 @@ const createUserSchema = z.object({
   image: z.instanceof(File).or(z.null()).or(z.undefined()).optional(),
 })
 
-const updateUserSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, 'First name must contain at least 2 characters.')
-    .max(30)
-    .trim(),
-  lastName: z
-    .string()
-    .min(2, 'Last name must contain at least 2 characters.')
-    .max(30)
-    .trim(),
-  email: z.email('Must be a valid email address.').max(50).trim(),
-  roleId: z.uuidv4('Role is required.'),
-  image: z.instanceof(File).or(z.null()).or(z.undefined()).optional(),
-})
+const passwordResetSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, `Password must contain at least 8 characters.`)
+      .regex(/[a-zA-Z]/, `Password must contain at least one letter.`)
+      .regex(/[0-9]/, `Password must contain at least one number.`)
+      .regex(
+        /[^a-zA-Z0-9]/,
+        `Password must contain at least one special character.`,
+      )
+      .trim(),
+    confirmPassword: z
+      .string()
+      .min(8, `Confirm password must contain at least 8 characters.`)
+      .regex(/[a-zA-Z]/, `Confirm password must contain at least one letter.`)
+      .regex(/[0-9]/, `Confirm password must contain at least one number.`)
+      .regex(
+        /[^a-zA-Z0-9]/,
+        `Confirm password must contain at least one special character.`,
+      )
+      .trim(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Passwords should be the same.',
+  })
 
-interface UpdateUserInputs {
-  firstName: string
-  lastName: string
-  email: string
-  roleId: string
-  image?: File | null
-}
+type ResetPasswordInputs = z.infer<typeof passwordResetSchema>
 
 interface EditFormState {
   firstName: string
@@ -149,6 +146,11 @@ interface EditFormState {
   email: string
   roleId: string
   image: string | null
+}
+
+interface PasswordResetState {
+  userId: string | null
+  isOpen: boolean
 }
 
 const cloneFormData = (formData: FormData) => {
@@ -187,23 +189,24 @@ function UsersPage() {
     roleId: '',
     image: null,
   })
-  const [createForm, setCreateForm] = useState<CreateUserForm>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    roleId: '',
-    image: null,
+  const [passwordReset, setPasswordReset] = useState<PasswordResetState>({
+    userId: null,
+    isOpen: false,
   })
 
+  const { register, setValue, handleSubmit, reset } = useForm<CreateUserInputs>(
+    {
+      resolver: zodResolver(createUserSchema),
+    },
+  )
+
   const {
-    register,
-    setValue,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreateUserInputs>({
-    resolver: zodResolver(createUserSchema),
+    register: resetPasswordRegister,
+    reset: resetPasswordReset,
+    handleSubmit: resetPasswordHandleSubmit,
+    formState: { errors: resetPasswordErrors },
+  } = useForm<ResetPasswordInputs>({
+    resolver: zodResolver(passwordResetSchema),
   })
 
   const {
@@ -307,68 +310,54 @@ function UsersPage() {
         inputRef.current.value = ''
       }
       reset()
-      setCreateForm({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        roleId: '',
-        image: null,
-      })
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
     },
   })
 
-  const updateScopeMutation = useMutation({
-    mutationFn: async ({
-      userId,
-      scope,
-    }: {
-      userId: string
-      scope: string
-    }) => {
-      const response = await fetch(
-        `${USER_API_BASE_URL}/user/${userId}/scope`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ scope }),
-        },
-      )
+  // const updateScopeMutation = useMutation({
+  //   mutationFn: async ({
+  //     userId,
+  //     scope,
+  //   }: {
+  //     userId: string
+  //     scope: string
+  //   }) => {
+  //     const response = await fetch(
+  //       `${USER_API_BASE_URL}/user/${userId}/scope`,
+  //       {
+  //         method: 'PATCH',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         credentials: 'include',
+  //         body: JSON.stringify({ scope }),
+  //       },
+  //     )
 
-      if (!response.ok) {
-        throw new Error('Failed to update operational scope')
-      }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          'userAccounts',
-          {
-            baseUrl: `${USER_API_BASE_URL}/accounts`,
-            input: {
-              pageSize: 10,
-              orderBy: 'desc',
-            },
-          },
-        ],
-      })
-    },
-  })
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update operational scope')
+  //     }
+  //   },
+  //   onSuccess: async () => {
+  //     await queryClient.invalidateQueries({
+  //       queryKey: [
+  //         'userAccounts',
+  //         {
+  //           baseUrl: `${USER_API_BASE_URL}/accounts`,
+  //           input: {
+  //             pageSize: 10,
+  //             orderBy: 'desc',
+  //           },
+  //         },
+  //       ],
+  //     })
+  //   },
+  // })
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({
-      userId,
-      data,
-    }: {
-      userId: string
-      data: FormData
-    }) => {
+    mutationFn: async ({ data }: { data: FormData }) => {
       const formData = cloneFormData(data)
-      const response = await fetch(`${USER_API_BASE_URL}/user/${userId}`, {
+      const response = await fetch(`${USER_API_BASE_URL}/user/update`, {
         method: 'PATCH',
         credentials: 'include',
         body: formData,
@@ -393,24 +382,36 @@ function UsersPage() {
     },
   })
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setCreateForm((previous) => ({
-      ...previous,
-      image: null,
-    }))
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ data }: { data: FormData }) => {
+      const response = await fetch(`${USER_API_BASE_URL}/user/update`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: data,
+      })
 
+      if (!response.ok) {
+        const errorData = (await response.json()) as { message?: string }
+        throw new Error(errorData.message || 'Failed to reset password')
+      }
+    },
+    onSuccess: async () => {
+      setPasswordReset({
+        userId: null,
+        isOpen: false,
+      })
+      resetPasswordReset()
+      await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
+    },
+  })
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      // Show preview before uploading
-      setCreateForm((previous) => ({
-        ...previous,
-        image: URL.createObjectURL(file),
-      }))
+      setValue('image', file, {
+        shouldValidate: true,
+      })
     }
-
-    setValue('image', file, {
-      shouldValidate: true,
-    })
   }
 
   const handleEditFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -457,6 +458,46 @@ function UsersPage() {
     }
   }
 
+  const onResetPasswordClick = (userId: string) => {
+    setPasswordReset({
+      userId,
+      isOpen: true,
+    })
+  }
+
+  const onPasswordResetCancel = () => {
+    setPasswordReset({
+      userId: null,
+      isOpen: false,
+    })
+  }
+
+  const onPasswordResetSubmit: SubmitHandler<ResetPasswordInputs> = async (
+    data,
+  ) => {
+    if (!passwordReset.userId) return
+
+    try {
+      const { confirmPassword, ...payload } = data
+      const input = {
+        userId: passwordReset.userId,
+        ...payload,
+      }
+
+      const resetPasswordData = new FormData()
+      resetPasswordData.append('userId', input.userId)
+      resetPasswordData.append('password', input.password)
+
+      await resetPasswordMutation.mutateAsync({
+        data: resetPasswordData,
+      })
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to reset password'
+      console.error('Reset password error:', errorMessage)
+    }
+  }
+
   const onSaveClick = async () => {
     if (!editingUserId) return
 
@@ -473,6 +514,7 @@ function UsersPage() {
 
     try {
       const updateData = new FormData()
+      updateData.append('userId', editingUserId)
       updateData.append('firstName', editFormData.firstName)
       updateData.append('lastName', editFormData.lastName)
       updateData.append('email', editFormData.email)
@@ -483,7 +525,6 @@ function UsersPage() {
       }
 
       await updateUserMutation.mutateAsync({
-        userId: editingUserId,
         data: updateData,
       })
     } catch (error) {
@@ -565,6 +606,11 @@ function UsersPage() {
 
         <form className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
           <h2 className="text-lg font-semibold">Create user</h2>
+          {createUserMutation.isError && (
+            <p className="mt-3 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              {createUserMutation.error.message}
+            </p>
+          )}
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <input
               {...register('firstName')}
@@ -619,25 +665,18 @@ function UsersPage() {
               ))}
             </select>
           </div>
-          {/* <div className="mt-3">
-            <p className="mb-2 text-sm font-medium">Permissions</p>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {permissionOptions.map((permission) => (
-                <label
-                  key={permission}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    checked={createForm.permissions.includes(permission)}
-                    onChange={() => togglePermission(permission)}
-                  />
-                  <span>{permission}</span>
-                </label>
-              ))}
-            </div>
-          </div> */}
           <div className="mt-4 flex justify-end">
+            <button
+              type="reset"
+              onClick={() => reset()}
+              disabled={createUserMutation.isPending || isOnSubmit}
+              style={{
+                cursor: isOnSubmit ? 'not-allowed' : 'pointer',
+              }}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               onClick={handleSubmit(onCreateUser)}
@@ -645,7 +684,7 @@ function UsersPage() {
               style={{
                 cursor: isOnSubmit ? 'not-allowed' : 'pointer',
               }}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
+              className="ml-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
             >
               {createUserMutation.isPending ? 'Creating…' : 'Create user'}
             </button>
@@ -690,13 +729,12 @@ function UsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((account) => {
+                  {filteredUsers.map((account, index) => {
                     const isExpanded = editingUserId === account.user.id
 
                     return (
-                      <>
+                      <Fragment key={account.user.id.toString() + `${index}`}>
                         <tr
-                          key={account.user.id}
                           className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
                           onClick={() => {
                             if (!isEditMode) {
@@ -735,7 +773,13 @@ function UsersPage() {
                           </td>
                         </tr>
                         {isExpanded && (
-                          <tr className="border-t border-gray-700 bg-gray-900/40">
+                          <tr
+                            key={
+                              account.user.id.toString() +
+                              account.user.roleId?.toString()
+                            }
+                            className="border-t border-gray-700 bg-gray-900/40"
+                          >
                             <td colSpan={5} className="px-4 py-4">
                               <div>
                                 <div className="flex items-center justify-between mb-3">
@@ -743,13 +787,24 @@ function UsersPage() {
                                     User details
                                   </h3>
                                   {!isEditMode && (
-                                    <button
-                                      type="button"
-                                      onClick={() => onEditClick(account)}
-                                      className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                                    >
-                                      Edit
-                                    </button>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          onResetPasswordClick(account.user.id)
+                                        }
+                                        className="text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
+                                      >
+                                        Reset Password
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => onEditClick(account)}
+                                        className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
 
@@ -923,7 +978,7 @@ function UsersPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     )
                   })}
                 </tbody>
@@ -937,7 +992,7 @@ function UsersPage() {
 
                 return (
                   <article
-                    key={account.user.id}
+                    key={account.user.id.toString()}
                     className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
                   >
                     <button
@@ -1000,13 +1055,24 @@ function UsersPage() {
                             User details
                           </h3>
                           {!isEditMode && (
-                            <button
-                              type="button"
-                              onClick={() => onEditClick(account)}
-                              className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                            >
-                              Edit
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onResetPasswordClick(account.user.id)
+                                }
+                                className="text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
+                              >
+                                Reset Password
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onEditClick(account)}
+                                className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                              >
+                                Edit
+                              </button>
+                            </div>
                           )}
                         </div>
 
@@ -1211,6 +1277,90 @@ function UsersPage() {
           </div>
         )}
       </div>
+
+      {/* Password Reset Modal */}
+      {passwordReset.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-lg border border-gray-700 bg-gray-900 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Reset Password
+              </h2>
+              <button
+                type="button"
+                onClick={onPasswordResetCancel}
+                className="text-gray-400 hover:text-gray-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {resetPasswordMutation.isError && (
+              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {resetPasswordMutation.error?.message ||
+                  'Failed to reset password'}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                New password
+              </label>
+              <input
+                type="password"
+                {...resetPasswordRegister('password')}
+                placeholder="Enter new password"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-500"
+              />
+              {resetPasswordErrors.password && (
+                <p className="text-sm opacity-50 text-red-400">
+                  {resetPasswordErrors.password.message}
+                </p>
+              )}
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm password
+              </label>
+              <input
+                type="password"
+                {...resetPasswordRegister('confirmPassword')}
+                placeholder="Enter confirm password"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-500"
+              />
+              {resetPasswordErrors.confirmPassword && (
+                <p className="text-sm opacity-50 text-red-400">
+                  {resetPasswordErrors.confirmPassword.message}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-gray-400">
+                Password must contain at least 8 characters, including at least
+                one letter, one number, and one special character.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onPasswordResetCancel}
+                disabled={resetPasswordMutation.isPending}
+                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={resetPasswordHandleSubmit(onPasswordResetSubmit)}
+                disabled={resetPasswordMutation.isPending}
+                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors disabled:opacity-60"
+              >
+                {resetPasswordMutation.isPending ? 'Resetting…' : 'Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
