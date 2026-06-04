@@ -409,10 +409,6 @@ function RouteComponent() {
                 <tbody>
                   {filteredPermissions.map((permission, index) => {
                     const isExpanded = editingPermissionId === permission.id
-                    const isUpdatingThisPermission =
-                      updatePermissionMutation.isPending &&
-                      updatePermissionMutation.variables?.permissionId ===
-                        permission.id
                     const editingBlocked = permission.role?.isSystem
 
                     return (
@@ -587,10 +583,6 @@ function RouteComponent() {
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {filteredPermissions.map((permission) => {
                 const isExpanded = editingPermissionId === permission.id
-                const isUpdatingThisPermission =
-                  updatePermissionMutation.isPending &&
-                  updatePermissionMutation.variables?.permissionId ===
-                    permission.id
                 const editingBlocked = permission.role?.isSystem
 
                 return (

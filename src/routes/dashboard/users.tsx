@@ -9,6 +9,9 @@ import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
+// helper
+import { getUpdatedFieldValue } from '@/utils/helper'
+
 // libs
 import { getUserRoles } from '@/lib/queries/roles'
 import { buildCursorPaginationQuery } from './admin-query'
@@ -28,17 +31,21 @@ type TFetchUserAccounts = {
   ]
 }
 
+interface UserInfo {
+  id: string
+  name: string
+  firstName: string
+  lastName: string
+  email: string
+  image: string | null
+  emailVerified: boolean
+  createdAt: string
+  updatedAt: string
+  roleId: string | null
+}
+
 interface UserAccountsNodes {
-  user: {
-    id: string
-    name: string
-    email: string
-    image: string | null
-    emailVerified: boolean
-    createdAt: string
-    updatedAt: string
-    roleId: string | null
-  }
+  user: UserInfo
   role: string | null
   permissions: string[]
 }
@@ -175,11 +182,11 @@ function UsersPage() {
   const queryClient = useQueryClient()
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const editImageInputRef = useRef<HTMLInputElement>(null)
+  const editImageInputRef = useRef<HTMLInputElement | null>(null)
 
   const [search, setSearch] = useState('')
   const [isOnSubmit, setIsOnSubmit] = useState(false)
-  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [editingUserData, setEditingUserData] = useState<UserInfo | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState<EditFormState>({
@@ -369,7 +376,7 @@ function UsersPage() {
     },
     onSuccess: async () => {
       setIsEditMode(false)
-      setEditingUserId(null)
+      setEditingUserData(null)
       setEditFormData({
         firstName: '',
         lastName: '',
@@ -428,10 +435,9 @@ function UsersPage() {
   }
 
   const onEditClick = (account: UserAccountsNodes) => {
-    const [firstName, lastName] = account.user.name?.split(' ') ?? ['', '']
     setEditFormData({
-      firstName: firstName ?? '',
-      lastName: lastName ?? '',
+      firstName: account.user.firstName ?? '',
+      lastName: account.user.lastName ?? '',
       email: account.user.email,
       roleId: account.user.roleId ?? '',
       image: account.user.image,
@@ -439,7 +445,7 @@ function UsersPage() {
     setEditImagePreview(
       account.user.image ? `${USER_PROFILE_URL}${account.user.image}` : null,
     )
-    setEditingUserId(account.user.id)
+    setEditingUserData(account.user)
     setIsEditMode(true)
   }
 
@@ -454,7 +460,7 @@ function UsersPage() {
     })
     setEditImagePreview(null)
     if (editImageInputRef.current) {
-      editImageInputRef.current.value = ''
+      editImageInputRef.current = null
     }
   }
 
@@ -499,29 +505,51 @@ function UsersPage() {
   }
 
   const onSaveClick = async () => {
-    if (!editingUserId) return
+    if (!editingUserData) return
 
-    // Basic validation
-    if (
-      !editFormData.firstName.trim() ||
-      !editFormData.lastName.trim() ||
-      !editFormData.email.trim() ||
-      !editFormData.roleId
-    ) {
-      console.error('All fields are required')
-      return
-    }
+    console.log('🚀 ~ onSaveClick ~ editingUserData:', editingUserData)
 
     try {
+      const inputs = {
+        firstName: getUpdatedFieldValue(
+          editingUserData.firstName,
+          editFormData.firstName,
+        ),
+        lastName: getUpdatedFieldValue(
+          editingUserData.lastName,
+          editFormData.lastName,
+        ),
+        email: getUpdatedFieldValue(editingUserData.email, editFormData.email),
+        roleId: getUpdatedFieldValue(
+          editingUserData.roleId,
+          editFormData.roleId,
+        ),
+      }
       const updateData = new FormData()
-      updateData.append('userId', editingUserId)
-      updateData.append('firstName', editFormData.firstName)
-      updateData.append('lastName', editFormData.lastName)
-      updateData.append('email', editFormData.email)
-      updateData.append('roleId', editFormData.roleId)
+      updateData.append('userId', editingUserData.id)
+
+      const { email, firstName, lastName, roleId } = inputs
+      if (firstName || lastName) {
+        updateData.append('firstName', editFormData.firstName)
+        updateData.append('lastName', editFormData.lastName)
+        updateData.append(
+          'name',
+          `${editFormData.firstName} ${editFormData.lastName}`,
+        )
+      }
+      if (email) {
+        updateData.append('email', editFormData.email)
+      }
+      if (roleId) {
+        updateData.append('roleId', editFormData.roleId)
+      }
 
       if (editImageInputRef.current?.files?.[0]) {
-        updateData.append('image', editImageInputRef.current.files[0])
+        console.log(
+          '🚀 ~ onSaveClick ~ editImageInputRef.current:',
+          editImageInputRef.current?.files?.[0],
+        )
+        updateData.append('image', editImageInputRef.current.files?.[0] || null)
       }
 
       await updateUserMutation.mutateAsync({
@@ -730,7 +758,7 @@ function UsersPage() {
                 </thead>
                 <tbody>
                   {filteredUsers.map((account, index) => {
-                    const isExpanded = editingUserId === account.user.id
+                    const isExpanded = editingUserData?.id === account.user.id
 
                     return (
                       <Fragment key={account.user.id.toString() + `${index}`}>
@@ -739,9 +767,9 @@ function UsersPage() {
                           onClick={() => {
                             if (!isEditMode) {
                               if (isExpanded) {
-                                setEditingUserId(null)
+                                setEditingUserData(null)
                               } else {
-                                setEditingUserId(account.user.id)
+                                setEditingUserData(account.user)
                               }
                             }
                           }}
@@ -988,7 +1016,7 @@ function UsersPage() {
             {/* Mobile: stacked accordion cards */}
             <div className="md:hidden mt-2 space-y-3">
               {filteredUsers.map((account) => {
-                const isExpanded = editingUserId === account.user.id
+                const isExpanded = editingUserData?.id === account.user.id
 
                 return (
                   <article
@@ -1000,9 +1028,9 @@ function UsersPage() {
                       onClick={() => {
                         if (!isEditMode) {
                           if (isExpanded) {
-                            setEditingUserId(null)
+                            setEditingUserData(null)
                           } else {
-                            setEditingUserId(account.user.id)
+                            setEditingUserData(account.user)
                           }
                         }
                       }}

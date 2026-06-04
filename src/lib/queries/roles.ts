@@ -19,6 +19,8 @@ export type TFetchUserRoles = {
 export type UserSelect = {
   id: string
   name: string
+  firstName: string
+  lastName: string
   email: string
   image: string | null
   emailVerified: boolean

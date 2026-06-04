@@ -18,7 +18,8 @@ function BetterAuthDemo() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -297,7 +298,9 @@ function BetterAuthDemo() {
         const result = await authClient.signUp.email({
           email,
           password,
-          name,
+          name: `${firstName} ${lastName}`,
+          firstName,
+          lastName,
           fetchOptions: {
             credentials: 'include',
           },
@@ -346,16 +349,30 @@ function BetterAuthDemo() {
           {isSignUp && (
             <div className="grid gap-2">
               <label
-                htmlFor="name"
+                htmlFor="firstName"
                 className="text-sm font-medium leading-none"
               >
-                Name
+                First name
               </label>
               <input
-                id="name"
+                id="firstName"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                required
+              />
+              <label
+                htmlFor="lastName"
+                className="text-sm font-medium leading-none"
+              >
+                Last name
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="flex h-9 w-full border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 text-sm focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
