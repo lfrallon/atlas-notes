@@ -182,7 +182,7 @@ function UsersPage() {
   const queryClient = useQueryClient()
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const editImageInputRef = useRef<HTMLInputElement | null>(null)
+  const editImageInputRef = useRef<File | null>(null)
 
   const [search, setSearch] = useState('')
   const [isOnSubmit, setIsOnSubmit] = useState(false)
@@ -321,46 +321,6 @@ function UsersPage() {
     },
   })
 
-  // const updateScopeMutation = useMutation({
-  //   mutationFn: async ({
-  //     userId,
-  //     scope,
-  //   }: {
-  //     userId: string
-  //     scope: string
-  //   }) => {
-  //     const response = await fetch(
-  //       `${USER_API_BASE_URL}/user/${userId}/scope`,
-  //       {
-  //         method: 'PATCH',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //         credentials: 'include',
-  //         body: JSON.stringify({ scope }),
-  //       },
-  //     )
-
-  //     if (!response.ok) {
-  //       throw new Error('Failed to update operational scope')
-  //     }
-  //   },
-  //   onSuccess: async () => {
-  //     await queryClient.invalidateQueries({
-  //       queryKey: [
-  //         'userAccounts',
-  //         {
-  //           baseUrl: `${USER_API_BASE_URL}/accounts`,
-  //           input: {
-  //             pageSize: 10,
-  //             orderBy: 'desc',
-  //           },
-  //         },
-  //       ],
-  //     })
-  //   },
-  // })
-
   const updateUserMutation = useMutation({
     mutationFn: async ({ data }: { data: FormData }) => {
       const formData = cloneFormData(data)
@@ -385,6 +345,7 @@ function UsersPage() {
         image: null,
       })
       setEditImagePreview(null)
+      editImageInputRef.current = null
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
     },
   })
@@ -429,6 +390,7 @@ function UsersPage() {
         ...previous,
         image: file.name,
       }))
+      editImageInputRef.current = file
     } else {
       setEditImagePreview(null)
     }
@@ -507,8 +469,6 @@ function UsersPage() {
   const onSaveClick = async () => {
     if (!editingUserData) return
 
-    console.log('🚀 ~ onSaveClick ~ editingUserData:', editingUserData)
-
     try {
       const inputs = {
         firstName: getUpdatedFieldValue(
@@ -527,9 +487,8 @@ function UsersPage() {
       }
       const updateData = new FormData()
       updateData.append('userId', editingUserData.id)
-
       const { email, firstName, lastName, roleId } = inputs
-      if (firstName || lastName) {
+      if ((firstName || lastName) && !editImageInputRef.current) {
         updateData.append('firstName', editFormData.firstName)
         updateData.append('lastName', editFormData.lastName)
         updateData.append(
@@ -544,12 +503,14 @@ function UsersPage() {
         updateData.append('roleId', editFormData.roleId)
       }
 
-      if (editImageInputRef.current?.files?.[0]) {
-        console.log(
-          '🚀 ~ onSaveClick ~ editImageInputRef.current:',
-          editImageInputRef.current?.files?.[0],
+      if (editImageInputRef.current) {
+        updateData.append('image', editImageInputRef.current)
+        updateData.append('firstName', editingUserData.firstName)
+        updateData.append('lastName', editingUserData.lastName)
+        updateData.append(
+          'name',
+          `${editingUserData.firstName} ${editingUserData.lastName}`,
         )
-        updateData.append('image', editImageInputRef.current.files?.[0] || null)
       }
 
       await updateUserMutation.mutateAsync({
@@ -976,7 +937,6 @@ function UsersPage() {
                                           type="file"
                                           accept="image/*"
                                           onChange={handleEditFileChange}
-                                          ref={editImageInputRef}
                                           className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
                                         />
                                       </div>
@@ -1249,7 +1209,6 @@ function UsersPage() {
                                   type="file"
                                   accept="image/*"
                                   onChange={handleEditFileChange}
-                                  ref={editImageInputRef}
                                   className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
                                 />
                               </div>
