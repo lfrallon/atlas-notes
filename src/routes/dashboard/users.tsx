@@ -254,7 +254,7 @@ const StatusMessage = ({
 )
 
 const StatCard = ({ label, value }: { label: string; value: number }) => (
-  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
+  <div className="rounded-xl border border-white/10 bg-white/4 p-4 shadow-lg shadow-black/10">
     <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
       {label}
     </p>
@@ -265,7 +265,7 @@ const StatCard = ({ label, value }: { label: string; value: number }) => (
 const DetailItem = ({ label, value }: { label: string; value: string }) => (
   <div>
     <p className="mb-1 text-xs text-gray-400">{label}</p>
-    <p className="break-words text-sm text-gray-100">{value || '—'}</p>
+    <p className="wrap-break-word text-sm text-gray-100">{value || '—'}</p>
   </div>
 )
 
@@ -864,10 +864,6 @@ function UsersPage() {
     }
   }, [allUsers, data])
 
-  const imageField = register('image', {
-    onChange: handleFileChange,
-  })
-
   return (
     <div
       className="min-h-screen text-white"
@@ -877,7 +873,7 @@ function UsersPage() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
@@ -891,7 +887,7 @@ function UsersPage() {
                 role-based access from one responsive workspace.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[520px]">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-130">
               <StatCard label="Total" value={userStats.totalUsers} />
               <StatCard label="Loaded" value={userStats.loadedUsers} />
               <StatCard label="Verified" value={userStats.verifiedUsers} />
@@ -925,7 +921,7 @@ function UsersPage() {
               First name
               <input
                 {...register('firstName')}
-                placeholder="Ada"
+                placeholder="John"
                 className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
@@ -935,7 +931,7 @@ function UsersPage() {
               Last name
               <input
                 {...register('lastName')}
-                placeholder="Lovelace"
+                placeholder="Doe"
                 className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
@@ -946,7 +942,7 @@ function UsersPage() {
               <input
                 type="email"
                 {...register('email')}
-                placeholder="ada@example.com"
+                placeholder="john.doe@example.com"
                 className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
@@ -970,14 +966,13 @@ function UsersPage() {
                 type="file"
                 id="image"
                 accept="image/*"
-                name={imageField.name}
-                onBlur={imageField.onBlur}
-                onChange={imageField.onChange}
-                ref={(element) => {
-                  imageField.ref(element)
-                  inputRef.current = element
-                }}
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-2 file:py-1 file:text-gray-100"
+                {...register('image', {
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleFileChange(e)
+                  },
+                })}
+                ref={inputRef}
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-1.5 file:text-gray-100"
                 autoComplete="off"
               />
               <FormError message={createUserErrors.image?.message} />
