@@ -1,13 +1,21 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Fragment, useMemo, useRef, useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 
 // helper
 import { getUpdatedFieldValue } from '@/utils/helper'
@@ -17,7 +25,7 @@ import { getUserRoles } from '@/lib/queries/roles'
 import { buildCursorPaginationQuery } from './admin-query'
 
 // types
-import type { UserRolesPage } from '@/lib/queries/roles'
+import type { UserRolesNodes, UserRolesPage } from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
 
 type TFetchUserAccounts = {
@@ -91,6 +99,15 @@ const USER_API_BASE_URL =
 
 const USER_PROFILE_URL =
   import.meta.env.VITE_USER_PROFILE_URL ?? 'http://localhost:3006'
+
+const EMPTY_EDIT_FORM: EditFormState = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  roleId: '',
+  image: null,
+}
+
 const createUserSchema = z.object({
   firstName: z
     .string()
@@ -160,6 +177,28 @@ interface PasswordResetState {
   isOpen: boolean
 }
 
+type UserStats = {
+  totalUsers: number
+  loadedUsers: number
+  verifiedUsers: number
+  rolesRepresented: number
+}
+
+type UserDetailsPanelProps = {
+  account: UserAccountsNodes
+  editFormData: EditFormState
+  editImagePreview: string | null
+  isEditMode: boolean
+  isSaving: boolean
+  roleOptions: UserRolesNodes[]
+  onCancel: () => void
+  onEdit: (account: UserAccountsNodes) => void
+  onEditFieldChange: (field: keyof EditFormState, value: string) => void
+  onEditFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onResetPassword: (userId: string) => void
+  onSave: () => void
+}
+
 const cloneFormData = (formData: FormData) => {
   const cloned = new FormData()
 
@@ -174,6 +213,239 @@ const cloneFormData = (formData: FormData) => {
   return cloned
 }
 
+const formatDateTime = (date: string | null | undefined) => {
+  if (!date) return '—'
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(date))
+}
+
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return '—'
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+  }).format(new Date(date))
+}
+
+const getFullName = (user: UserInfo) =>
+  [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || '—'
+
+const resetEditForm = () => ({ ...EMPTY_EDIT_FORM })
+
+const StatusMessage = ({
+  children,
+  tone = 'neutral',
+}: {
+  children: React.ReactNode
+  tone?: 'neutral' | 'danger'
+}) => (
+  <p
+    className={`mt-3 rounded-md border px-3 py-2 text-sm ${
+      tone === 'danger'
+        ? 'border-red-500/50 bg-red-500/10 text-red-300'
+        : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-100'
+    }`}
+  >
+    {children}
+  </p>
+)
+
+const StatCard = ({ label, value }: { label: string; value: number }) => (
+  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
+    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      {label}
+    </p>
+    <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+  </div>
+)
+
+const DetailItem = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <p className="mb-1 text-xs text-gray-400">{label}</p>
+    <p className="break-words text-sm text-gray-100">{value || '—'}</p>
+  </div>
+)
+
+const FormError = ({ message }: { message?: string }) => {
+  if (!message) return null
+
+  return <p className="mt-1 text-xs text-red-300">{message}</p>
+}
+
+const UserDetailsPanel = memo(function UserDetailsPanel({
+  account,
+  editFormData,
+  editImagePreview,
+  isEditMode,
+  isSaving,
+  roleOptions,
+  onCancel,
+  onEdit,
+  onEditFieldChange,
+  onEditFileChange,
+  onResetPassword,
+  onSave,
+}: UserDetailsPanelProps) {
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-md font-semibold">User details</h3>
+          <p className="text-xs text-gray-400">ID: {account.user.id}</p>
+        </div>
+        {!isEditMode && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onResetPassword(account.user.id)}
+              className="rounded-md border border-orange-400/40 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/10 hover:text-orange-200"
+            >
+              Reset Password
+            </button>
+            <button
+              type="button"
+              onClick={() => onEdit(account)}
+              className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-xs font-medium text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+            >
+              Edit
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!isEditMode ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <DetailItem label="First Name" value={account.user.firstName} />
+          <DetailItem label="Last Name" value={account.user.lastName} />
+          <DetailItem label="Email" value={account.user.email} />
+          <DetailItem label="Role" value={account.role ?? '—'} />
+          <DetailItem
+            label="Email Status"
+            value={account.user.emailVerified ? 'Verified' : 'Not verified'}
+          />
+          <DetailItem
+            label="Created"
+            value={formatDateTime(account.user.createdAt)}
+          />
+          <div className="sm:col-span-2">
+            <p className="mb-2 text-xs text-gray-400">Permissions</p>
+            {account.permissions.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {account.permissions.map((permission) => (
+                  <span
+                    key={permission}
+                    className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
+                  >
+                    {permission}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-100">—</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-gray-400">
+              First Name
+              <input
+                type="text"
+                value={editFormData.firstName}
+                onChange={(event) =>
+                  onEditFieldChange('firstName', event.target.value)
+                }
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+            </label>
+            <label className="block text-xs text-gray-400">
+              Last Name
+              <input
+                type="text"
+                value={editFormData.lastName}
+                onChange={(event) =>
+                  onEditFieldChange('lastName', event.target.value)
+                }
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+            </label>
+            <label className="block text-xs text-gray-400">
+              Email
+              <input
+                type="email"
+                value={editFormData.email}
+                onChange={(event) =>
+                  onEditFieldChange('email', event.target.value)
+                }
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+            </label>
+            <label className="block text-xs text-gray-400">
+              Role
+              <select
+                value={editFormData.roleId}
+                onChange={(event) =>
+                  onEditFieldChange('roleId', event.target.value)
+                }
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              >
+                <option value="">Select role</option>
+                {roleOptions.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-xs text-gray-400 sm:col-span-2">
+              Profile Picture
+              {editImagePreview && (
+                <div className="mt-2 flex items-center gap-3">
+                  <img
+                    src={editImagePreview}
+                    alt="Profile preview"
+                    className="h-16 w-16 rounded-lg border border-white/10 object-cover"
+                  />
+                  <span className="text-xs text-gray-400">
+                    Preview updates before saving.
+                  </span>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onEditFileChange}
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-2 file:py-1 file:text-gray-100"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={isSaving}
+              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})
+
 export const Route = createFileRoute('/dashboard/users')({
   component: UsersPage,
 })
@@ -181,31 +453,29 @@ export const Route = createFileRoute('/dashboard/users')({
 function UsersPage() {
   const queryClient = useQueryClient()
 
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const editImageInputRef = useRef<File | null>(null)
 
   const [search, setSearch] = useState('')
-  const [isOnSubmit, setIsOnSubmit] = useState(false)
+  const deferredSearch = useDeferredValue(search)
   const [editingUserData, setEditingUserData] = useState<UserInfo | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
-  const [editFormData, setEditFormData] = useState<EditFormState>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    roleId: '',
-    image: null,
-  })
+  const [editFormData, setEditFormData] = useState<EditFormState>(resetEditForm)
   const [passwordReset, setPasswordReset] = useState<PasswordResetState>({
     userId: null,
     isOpen: false,
   })
 
-  const { register, setValue, handleSubmit, reset } = useForm<CreateUserInputs>(
-    {
-      resolver: zodResolver(createUserSchema),
-    },
-  )
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    reset,
+    formState: { errors: createUserErrors },
+  } = useForm<CreateUserInputs>({
+    resolver: zodResolver(createUserSchema),
+  })
 
   const {
     register: resetPasswordRegister,
@@ -300,16 +570,18 @@ function UsersPage() {
   })
 
   const createUserMutation = useMutation({
-    mutationFn: async ({ data }: { data: FormData }) => {
-      const formData = cloneFormData(data)
+    mutationFn: async ({ data: formData }: { data: FormData }) => {
       const response = await fetch(`${USER_API_BASE_URL}/user/create`, {
         method: 'POST',
         credentials: 'include',
-        body: formData,
+        body: cloneFormData(formData),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create user account')
+        const errorData = (await response.json().catch(() => null)) as {
+          message?: string
+        } | null
+        throw new Error(errorData?.message || 'Failed to create user account')
       }
     },
     onSuccess: async () => {
@@ -322,28 +594,24 @@ function UsersPage() {
   })
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ data }: { data: FormData }) => {
-      const formData = cloneFormData(data)
+    mutationFn: async ({ data: formData }: { data: FormData }) => {
       const response = await fetch(`${USER_API_BASE_URL}/user/update`, {
         method: 'PATCH',
         credentials: 'include',
-        body: formData,
+        body: cloneFormData(formData),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update user')
+        const errorData = (await response.json().catch(() => null)) as {
+          message?: string
+        } | null
+        throw new Error(errorData?.message || 'Failed to update user')
       }
     },
     onSuccess: async () => {
       setIsEditMode(false)
       setEditingUserData(null)
-      setEditFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        roleId: '',
-        image: null,
-      })
+      setEditFormData(resetEditForm())
       setEditImagePreview(null)
       editImageInputRef.current = null
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
@@ -351,16 +619,18 @@ function UsersPage() {
   })
 
   const resetPasswordMutation = useMutation({
-    mutationFn: async ({ data }: { data: FormData }) => {
+    mutationFn: async ({ data: formData }: { data: FormData }) => {
       const response = await fetch(`${USER_API_BASE_URL}/user/update`, {
         method: 'PATCH',
         credentials: 'include',
-        body: data,
+        body: formData,
       })
 
       if (!response.ok) {
-        const errorData = (await response.json()) as { message?: string }
-        throw new Error(errorData.message || 'Failed to reset password')
+        const errorData = (await response.json().catch(() => null)) as {
+          message?: string
+        } | null
+        throw new Error(errorData?.message || 'Failed to reset password')
       }
     },
     onSuccess: async () => {
@@ -373,30 +643,48 @@ function UsersPage() {
     },
   })
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null
       setValue('image', file, {
         shouldValidate: true,
       })
-    }
-  }
+    },
+    [setValue],
+  )
 
-  const handleEditFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setEditImagePreview(URL.createObjectURL(file))
+  const handleEditFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (file) {
+        if (editImagePreview?.startsWith('blob:')) {
+          URL.revokeObjectURL(editImagePreview)
+        }
+        setEditImagePreview(URL.createObjectURL(file))
+        setEditFormData((previous) => ({
+          ...previous,
+          image: file.name,
+        }))
+        editImageInputRef.current = file
+      } else {
+        setEditImagePreview(null)
+        editImageInputRef.current = null
+      }
+    },
+    [editImagePreview],
+  )
+
+  const onEditFieldChange = useCallback(
+    (field: keyof EditFormState, value: string) => {
       setEditFormData((previous) => ({
         ...previous,
-        image: file.name,
+        [field]: value,
       }))
-      editImageInputRef.current = file
-    } else {
-      setEditImagePreview(null)
-    }
-  }
+    },
+    [],
+  )
 
-  const onEditClick = (account: UserAccountsNodes) => {
+  const onEditClick = useCallback((account: UserAccountsNodes) => {
     setEditFormData({
       firstName: account.user.firstName ?? '',
       lastName: account.user.lastName ?? '',
@@ -407,104 +695,85 @@ function UsersPage() {
     setEditImagePreview(
       account.user.image ? `${USER_PROFILE_URL}${account.user.image}` : null,
     )
+    editImageInputRef.current = null
     setEditingUserData(account.user)
     setIsEditMode(true)
-  }
+  }, [])
 
-  const onCancelClick = () => {
+  const onCancelClick = useCallback(() => {
     setIsEditMode(false)
-    setEditFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      roleId: '',
-      image: null,
-    })
+    setEditFormData(resetEditForm())
     setEditImagePreview(null)
-    if (editImageInputRef.current) {
-      editImageInputRef.current = null
-    }
-  }
+    editImageInputRef.current = null
+  }, [])
 
-  const onResetPasswordClick = (userId: string) => {
+  const onResetPasswordClick = useCallback((userId: string) => {
     setPasswordReset({
       userId,
       isOpen: true,
     })
-  }
+  }, [])
 
-  const onPasswordResetCancel = () => {
+  const onPasswordResetCancel = useCallback(() => {
     setPasswordReset({
       userId: null,
       isOpen: false,
     })
-  }
+    resetPasswordReset()
+  }, [resetPasswordReset])
 
-  const onPasswordResetSubmit: SubmitHandler<ResetPasswordInputs> = async (
-    data,
-  ) => {
-    if (!passwordReset.userId) return
-
-    try {
-      const { confirmPassword, ...payload } = data
-      const input = {
-        userId: passwordReset.userId,
-        ...payload,
-      }
+  const onPasswordResetSubmit: SubmitHandler<ResetPasswordInputs> = useCallback(
+    async (formValues) => {
+      if (!passwordReset.userId) return
 
       const resetPasswordData = new FormData()
-      resetPasswordData.append('userId', input.userId)
-      resetPasswordData.append('password', input.password)
+      resetPasswordData.append('userId', passwordReset.userId)
+      resetPasswordData.append('password', formValues.password)
 
       await resetPasswordMutation.mutateAsync({
         data: resetPasswordData,
       })
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to reset password'
-      console.error('Reset password error:', errorMessage)
-    }
-  }
+    },
+    [passwordReset.userId, resetPasswordMutation],
+  )
 
-  const onSaveClick = async () => {
+  const onSaveClick = useCallback(async () => {
     if (!editingUserData) return
 
-    try {
-      const inputs = {
-        firstName: getUpdatedFieldValue(
-          editingUserData.firstName,
-          editFormData.firstName,
-        ),
-        lastName: getUpdatedFieldValue(
-          editingUserData.lastName,
-          editFormData.lastName,
-        ),
-        email: getUpdatedFieldValue(editingUserData.email, editFormData.email),
-        roleId: getUpdatedFieldValue(
-          editingUserData.roleId,
-          editFormData.roleId,
-        ),
-      }
-      const updateData = new FormData()
-      updateData.append('userId', editingUserData.id)
-      const { email, firstName, lastName, roleId } = inputs
-      if ((firstName || lastName) && !editImageInputRef.current) {
-        updateData.append('firstName', editFormData.firstName)
-        updateData.append('lastName', editFormData.lastName)
-        updateData.append(
-          'name',
-          `${editFormData.firstName} ${editFormData.lastName}`,
-        )
-      }
-      if (email) {
-        updateData.append('email', editFormData.email)
-      }
-      if (roleId) {
-        updateData.append('roleId', editFormData.roleId)
-      }
+    const inputs = {
+      firstName: getUpdatedFieldValue(
+        editingUserData.firstName,
+        editFormData.firstName,
+      ),
+      lastName: getUpdatedFieldValue(
+        editingUserData.lastName,
+        editFormData.lastName,
+      ),
+      email: getUpdatedFieldValue(editingUserData.email, editFormData.email),
+      roleId: getUpdatedFieldValue(editingUserData.roleId, editFormData.roleId),
+    }
+    const updateData = new FormData()
+    updateData.append('userId', editingUserData.id)
 
-      if (editImageInputRef.current) {
-        updateData.append('image', editImageInputRef.current)
+    if (inputs.firstName || inputs.lastName) {
+      updateData.append('firstName', editFormData.firstName)
+      updateData.append('lastName', editFormData.lastName)
+      updateData.append(
+        'name',
+        `${editFormData.firstName} ${editFormData.lastName}`,
+      )
+    }
+    if (inputs.email) {
+      updateData.append('email', editFormData.email.toLowerCase())
+    }
+    if (inputs.roleId) {
+      updateData.append('roleId', editFormData.roleId)
+    }
+
+    if (editImageInputRef.current) {
+      updateData.append('image', editImageInputRef.current)
+
+      if (!inputs.firstName && !inputs.lastName) {
         updateData.append('firstName', editingUserData.firstName)
         updateData.append('lastName', editingUserData.lastName)
         updateData.append(
@@ -512,228 +781,303 @@ function UsersPage() {
           `${editingUserData.firstName} ${editingUserData.lastName}`,
         )
       }
-
-      await updateUserMutation.mutateAsync({
-        data: updateData,
-      })
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to update user'
-      console.error('Update user error:', errorMessage)
     }
-  }
 
-  const onCreateUser: SubmitHandler<CreateUserInputs> = async (data) => {
-    const createUserData = new FormData()
-    createUserData.append('firstName', data.firstName)
-    createUserData.append('lastName', data.lastName)
-    createUserData.append('email', data.email.toLowerCase())
-    createUserData.append('password', data.password)
-    createUserData.append('roleId', data.roleId)
-    createUserData.append('image', data.image || '')
-    setIsOnSubmit(true)
+    await updateUserMutation.mutateAsync({
+      data: updateData,
+    })
+  }, [editFormData, editingUserData, updateUserMutation])
 
-    try {
-      await createUserMutation.mutateAsync({ data: createUserData })
-    } catch (error) {
-      setIsOnSubmit(false)
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unknown error occurred'
-      console.log('🚀 ~ fetchMoreUsers ~ errorMessage:', errorMessage)
-    }
-  }
-
-  const fetchMoreUsers = async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      try {
-        await fetchNextPage()
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : JSON.stringify(error)
-        console.log('🚀 ~ onCreateUser ~ errorMessage:', errorMessage)
+  const onCreateUser: SubmitHandler<CreateUserInputs> = useCallback(
+    async (formValues) => {
+      const createUserData = new FormData()
+      createUserData.append('firstName', formValues.firstName)
+      createUserData.append('lastName', formValues.lastName)
+      createUserData.append('email', formValues.email.toLowerCase())
+      createUserData.append('password', formValues.password)
+      createUserData.append('roleId', formValues.roleId)
+      if (formValues.image) {
+        createUserData.append('image', formValues.image)
       }
+
+      await createUserMutation.mutateAsync({ data: createUserData })
+    },
+    [createUserMutation],
+  )
+
+  const fetchMoreUsers = useCallback(async () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage()
     }
-  }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+  const toggleUserExpanded = useCallback(
+    (account: UserAccountsNodes) => {
+      if (isEditMode) return
+
+      setEditingUserData((current) =>
+        current?.id === account.user.id ? null : account.user,
+      )
+    },
+    [isEditMode],
+  )
+
+  const allUsers = useMemo(
+    () => data?.pages.flatMap((page) => page.nodes) ?? [],
+    [data],
+  )
 
   const filteredUsers = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    const users = data?.pages.flatMap((page) => page.nodes) ?? []
+    const term = deferredSearch.trim().toLowerCase()
 
-    if (!term) return users
+    if (!term) return allUsers
 
-    return users.filter((account) => {
-      return [
-        account.user.name,
+    return allUsers.filter((account) =>
+      [
+        getFullName(account.user),
         account.user.email,
         account.role,
         account.permissions.join(','),
       ]
         .filter(Boolean)
-        .some((value) => value?.toLowerCase().includes(term))
-    })
-  }, [search, data])
+        .some((value) => value?.toLowerCase().includes(term)),
+    )
+  }, [allUsers, deferredSearch])
 
   const roleOptions = useMemo(
     () => rolesQuery.data?.pages.flatMap((page) => page.nodes) ?? [],
     [rolesQuery.data],
   )
 
+  const userStats = useMemo<UserStats>(() => {
+    const representedRoleIds = new Set(
+      allUsers.map((account) => account.user.roleId).filter(Boolean),
+    )
+    const totalUsers = data?.pages.at(0)?.totalCount ?? allUsers.length
+
+    return {
+      totalUsers,
+      loadedUsers: allUsers.length,
+      verifiedUsers: allUsers.filter((account) => account.user.emailVerified)
+        .length,
+      rolesRepresented: representedRoleIds.size,
+    }
+  }, [allUsers, data])
+
+  const imageField = register('image', {
+    onChange: handleFileChange,
+  })
+
   return (
     <div
-      className="min-h-screen text-white gap-6"
+      className="min-h-screen text-white"
       style={{
         background:
           'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <h1 className="text-3xl font-bold">Admin • User Management</h1>
-        <p className="mt-2 text-sm text-gray-300">
-          View all users, create new accounts, and assign role-based
-          permissions.
-        </p>
-
-        <form className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
-          <h2 className="text-lg font-semibold">Create user</h2>
-          {createUserMutation.isError && (
-            <p className="mt-3 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {createUserMutation.error.message}
-            </p>
-          )}
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input
-              {...register('firstName')}
-              placeholder="First name"
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
-            />
-            <input
-              {...register('lastName')}
-              placeholder="Last name"
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
-            />
-            <input
-              type="email"
-              {...register('email')}
-              placeholder="Email"
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
-            />
-            <input
-              type="password"
-              minLength={8}
-              {...register('password')}
-              placeholder="Temporary password"
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
-            />
-            <input
-              type="file"
-              id="image"
-              accept="image/*"
-              {...register('image', {
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                  handleFileChange(e)
-                },
-              })}
-              ref={inputRef}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              autoComplete="off"
-            />
-            <select
-              {...register('roleId')}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
-            >
-              <option value="">Select role</option>
-              {roleOptions.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/20 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+                Admin Console
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                User Management
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-gray-300">
+                View users, create accounts, reset credentials, and tune
+                role-based access from one responsive workspace.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[520px]">
+              <StatCard label="Total" value={userStats.totalUsers} />
+              <StatCard label="Loaded" value={userStats.loadedUsers} />
+              <StatCard label="Verified" value={userStats.verifiedUsers} />
+              <StatCard label="Roles" value={userStats.rolesRepresented} />
+            </div>
           </div>
-          <div className="mt-4 flex justify-end">
+        </div>
+
+        <form
+          onSubmit={handleSubmit(onCreateUser)}
+          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
+        >
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-lg font-semibold">Create user</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Add a teammate and assign their initial role.
+              </p>
+            </div>
+            {rolesQuery.isLoading && (
+              <span className="text-xs text-gray-400">Loading roles…</span>
+            )}
+          </div>
+          {createUserMutation.isError && (
+            <StatusMessage tone="danger">
+              {createUserMutation.error.message}
+            </StatusMessage>
+          )}
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <label className="text-xs font-medium text-gray-300">
+              First name
+              <input
+                {...register('firstName')}
+                placeholder="Ada"
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                required
+              />
+              <FormError message={createUserErrors.firstName?.message} />
+            </label>
+            <label className="text-xs font-medium text-gray-300">
+              Last name
+              <input
+                {...register('lastName')}
+                placeholder="Lovelace"
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                required
+              />
+              <FormError message={createUserErrors.lastName?.message} />
+            </label>
+            <label className="text-xs font-medium text-gray-300">
+              Email
+              <input
+                type="email"
+                {...register('email')}
+                placeholder="ada@example.com"
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                required
+              />
+              <FormError message={createUserErrors.email?.message} />
+            </label>
+            <label className="text-xs font-medium text-gray-300">
+              Temporary password
+              <input
+                type="password"
+                minLength={8}
+                {...register('password')}
+                placeholder="Include letters, numbers, symbols"
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                required
+              />
+              <FormError message={createUserErrors.password?.message} />
+            </label>
+            <label className="text-xs font-medium text-gray-300">
+              Profile image
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                name={imageField.name}
+                onBlur={imageField.onBlur}
+                onChange={imageField.onChange}
+                ref={(element) => {
+                  imageField.ref(element)
+                  inputRef.current = element
+                }}
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-2 file:py-1 file:text-gray-100"
+                autoComplete="off"
+              />
+              <FormError message={createUserErrors.image?.message} />
+            </label>
+            <label className="text-xs font-medium text-gray-300">
+              Role
+              <select
+                {...register('roleId')}
+                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                required
+              >
+                <option value="">Select role</option>
+                {roleOptions.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+              <FormError message={createUserErrors.roleId?.message} />
+            </label>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
             <button
               type="reset"
               onClick={() => reset()}
-              disabled={createUserMutation.isPending || isOnSubmit}
-              style={{
-                cursor: isOnSubmit ? 'not-allowed' : 'pointer',
-              }}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
+              disabled={createUserMutation.isPending}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
-              onClick={handleSubmit(onCreateUser)}
-              disabled={createUserMutation.isPending || isOnSubmit}
-              style={{
-                cursor: isOnSubmit ? 'not-allowed' : 'pointer',
-              }}
-              className="ml-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60"
+              disabled={createUserMutation.isPending}
+              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {createUserMutation.isPending ? 'Creating…' : 'Create user'}
             </button>
           </div>
         </form>
 
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
-          <label
-            htmlFor="search-users"
-            className="mb-2 block text-sm font-medium"
-          >
-            Search users
-          </label>
-          <input
-            id="search-users"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Filter by name, email, role, or scope"
-            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500"
-          />
+        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <label
+              htmlFor="search-users"
+              className="block flex-1 text-sm font-medium"
+            >
+              Search users
+              <input
+                id="search-users"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Filter by name, email, role, or permission"
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+              />
+            </label>
+            <p className="text-sm text-gray-400">
+              Showing{' '}
+              <span className="font-semibold text-gray-100">
+                {filteredUsers.length}
+              </span>{' '}
+              of {allUsers.length} loaded users
+            </p>
+          </div>
         </div>
 
-        {isLoading && <p className="mt-4 text-sm">Loading users…</p>}
+        {isLoading && <StatusMessage>Loading users…</StatusMessage>}
         {isError && (
-          <p className="mt-4 text-sm text-red-400">
+          <StatusMessage tone="danger">
             Could not load users. Check your API connection and admin session.
-          </p>
+          </StatusMessage>
+        )}
+        {updateUserMutation.isError && (
+          <StatusMessage tone="danger">
+            {updateUserMutation.error.message}
+          </StatusMessage>
         )}
 
         {isSuccess && (
           <div className="mt-6">
-            {/* Desktop / wide screens: table with expandable rows */}
-            <div className="hidden md:block overflow-hidden rounded-lg border border-gray-700">
+            <div className="hidden overflow-hidden rounded-xl border border-gray-700 shadow-xl shadow-black/10 md:block">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
-                    <th className="px-4 py-3 w-10"></th>
+                    <th className="w-10 px-4 py-3"></th>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Email</th>
                     <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Created</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((account, index) => {
+                  {filteredUsers.map((account) => {
                     const isExpanded = editingUserData?.id === account.user.id
 
                     return (
-                      <Fragment key={account.user.id.toString() + `${index}`}>
+                      <Fragment key={account.user.id}>
                         <tr
-                          className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
-                          onClick={() => {
-                            if (!isEditMode) {
-                              if (isExpanded) {
-                                setEditingUserData(null)
-                              } else {
-                                setEditingUserData(account.user)
-                              }
-                            }
-                          }}
+                          className="cursor-pointer border-t border-gray-700 align-top transition-colors hover:bg-gray-800/40"
+                          onClick={() => toggleUserExpanded(account)}
                         >
                           <td className="px-4 py-3">
                             <span
@@ -745,7 +1089,7 @@ function UsersPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 font-medium">
-                            {account.user.name ?? '—'}
+                            {getFullName(account.user)}
                           </td>
                           <td className="px-4 py-3 text-gray-300">
                             {account.user.email ?? '—'}
@@ -753,216 +1097,40 @@ function UsersPage() {
                           <td className="px-4 py-3 text-gray-300">
                             {account.role ?? '—'}
                           </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`rounded-full px-2 py-1 text-xs ${
+                                account.user.emailVerified
+                                  ? 'bg-emerald-500/10 text-emerald-300'
+                                  : 'bg-amber-500/10 text-amber-300'
+                              }`}
+                            >
+                              {account.user.emailVerified
+                                ? 'Verified'
+                                : 'Pending'}
+                            </span>
+                          </td>
                           <td className="px-4 py-3 text-gray-300">
-                            {account.user.createdAt
-                              ? new Date(
-                                  account.user.createdAt,
-                                ).toLocaleString()
-                              : '—'}
+                            {formatDateTime(account.user.createdAt)}
                           </td>
                         </tr>
                         {isExpanded && (
-                          <tr
-                            key={
-                              account.user.id.toString() +
-                              account.user.roleId?.toString()
-                            }
-                            className="border-t border-gray-700 bg-gray-900/40"
-                          >
-                            <td colSpan={5} className="px-4 py-4">
-                              <div>
-                                <div className="flex items-center justify-between mb-3">
-                                  <h3 className="text-md font-semibold">
-                                    User details
-                                  </h3>
-                                  {!isEditMode && (
-                                    <div className="flex gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          onResetPasswordClick(account.user.id)
-                                        }
-                                        className="text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
-                                      >
-                                        Reset Password
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => onEditClick(account)}
-                                        className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                                      >
-                                        Edit
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {!isEditMode ? (
-                                  <div className="grid gap-3 sm:grid-cols-2">
-                                    <div>
-                                      <p className="text-xs text-gray-400 mb-1">
-                                        First Name
-                                      </p>
-                                      <p className="text-sm text-gray-100">
-                                        {account.user.name?.split(' ')[0] ??
-                                          '—'}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-400 mb-1">
-                                        Last Name
-                                      </p>
-                                      <p className="text-sm text-gray-100">
-                                        {account.user.name?.split(' ')[1] ??
-                                          '—'}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-400 mb-1">
-                                        Email
-                                      </p>
-                                      <p className="text-sm text-gray-100">
-                                        {account.user.email ?? '—'}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-gray-400 mb-1">
-                                        Role
-                                      </p>
-                                      <p className="text-sm text-gray-100">
-                                        {account.role ?? '—'}
-                                      </p>
-                                    </div>
-                                    <div className="sm:col-span-2">
-                                      <p className="text-xs text-gray-400 mb-1">
-                                        Permissions
-                                      </p>
-                                      <p className="text-sm text-gray-100">
-                                        {account.permissions.length > 0
-                                          ? account.permissions.join(', ')
-                                          : '—'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="space-y-4">
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                      <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                          First Name
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={editFormData.firstName}
-                                          onChange={(e) =>
-                                            setEditFormData((prev) => ({
-                                              ...prev,
-                                              firstName: e.target.value,
-                                            }))
-                                          }
-                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                          Last Name
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={editFormData.lastName}
-                                          onChange={(e) =>
-                                            setEditFormData((prev) => ({
-                                              ...prev,
-                                              lastName: e.target.value,
-                                            }))
-                                          }
-                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                          Email
-                                        </label>
-                                        <input
-                                          type="email"
-                                          value={editFormData.email}
-                                          onChange={(e) =>
-                                            setEditFormData((prev) => ({
-                                              ...prev,
-                                              email: e.target.value,
-                                            }))
-                                          }
-                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                          Role
-                                        </label>
-                                        <select
-                                          value={editFormData.roleId}
-                                          onChange={(e) =>
-                                            setEditFormData((prev) => ({
-                                              ...prev,
-                                              roleId: e.target.value,
-                                            }))
-                                          }
-                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                        >
-                                          <option value="">Select role</option>
-                                          {roleOptions.map((role) => (
-                                            <option
-                                              key={role.id}
-                                              value={role.id}
-                                            >
-                                              {role.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </div>
-                                      <div className="sm:col-span-2">
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                          Profile Picture
-                                        </label>
-                                        {editImagePreview && (
-                                          <div className="mb-2">
-                                            <img
-                                              src={editImagePreview}
-                                              alt="Profile preview"
-                                              className="w-16 h-16 rounded object-cover"
-                                            />
-                                          </div>
-                                        )}
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          onChange={handleEditFileChange}
-                                          className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-end gap-2 pt-2">
-                                      <button
-                                        type="button"
-                                        onClick={onCancelClick}
-                                        className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
-                                      >
-                                        Cancel
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={onSaveClick}
-                                        disabled={updateUserMutation.isPending}
-                                        className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
-                                      >
-                                        {updateUserMutation.isPending
-                                          ? 'Saving…'
-                                          : 'Save'}
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                          <tr className="border-t border-gray-700 bg-gray-900/40">
+                            <td colSpan={6} className="px-4 py-4">
+                              <UserDetailsPanel
+                                account={account}
+                                editFormData={editFormData}
+                                editImagePreview={editImagePreview}
+                                isEditMode={isEditMode}
+                                isSaving={updateUserMutation.isPending}
+                                roleOptions={roleOptions}
+                                onCancel={onCancelClick}
+                                onEdit={onEditClick}
+                                onEditFieldChange={onEditFieldChange}
+                                onEditFileChange={handleEditFileChange}
+                                onResetPassword={onResetPasswordClick}
+                                onSave={onSaveClick}
+                              />
                             </td>
                           </tr>
                         )}
@@ -973,40 +1141,31 @@ function UsersPage() {
               </table>
             </div>
 
-            {/* Mobile: stacked accordion cards */}
-            <div className="md:hidden mt-2 space-y-3">
+            <div className="mt-2 space-y-3 md:hidden">
               {filteredUsers.map((account) => {
                 const isExpanded = editingUserData?.id === account.user.id
 
                 return (
                   <article
-                    key={account.user.id.toString()}
-                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
+                    key={account.user.id}
+                    className="overflow-hidden rounded-xl border border-gray-700 bg-gray-900/60 shadow-xl shadow-black/10"
                   >
                     <button
                       type="button"
-                      onClick={() => {
-                        if (!isEditMode) {
-                          if (isExpanded) {
-                            setEditingUserData(null)
-                          } else {
-                            setEditingUserData(account.user)
-                          }
-                        }
-                      }}
-                      className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors"
+                      onClick={() => toggleUserExpanded(account)}
+                      className="w-full p-4 text-left transition-colors hover:bg-gray-800/40"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h2 className="text-lg font-semibold leading-tight">
-                            {account.user.name ?? '—'}
+                        <div className="min-w-0 flex-1">
+                          <h2 className="truncate text-lg font-semibold leading-tight">
+                            {getFullName(account.user)}
                           </h2>
-                          <p className="mt-2 text-sm text-gray-300">
+                          <p className="mt-2 truncate text-sm text-gray-300">
                             {account.user.email ?? '—'}
                           </p>
                         </div>
                         <span
-                          className={`inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                          className={`inline-flex shrink-0 transform text-gray-400 transition-transform ${
                             isExpanded ? 'rotate-180' : ''
                           }`}
                         >
@@ -1015,22 +1174,18 @@ function UsersPage() {
                       </div>
 
                       {!isExpanded && (
-                        <div className="mt-3 text-sm text-gray-300">
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-gray-300">
                           <p>
                             <span className="font-medium text-gray-100">
                               Role:
                             </span>{' '}
                             {account.role ?? '—'}
                           </p>
-                          <p className="mt-1">
+                          <p>
                             <span className="font-medium text-gray-100">
                               Created:
                             </span>{' '}
-                            {account.user.createdAt
-                              ? new Date(
-                                  account.user.createdAt,
-                                ).toLocaleDateString()
-                              : '—'}
+                            {formatDate(account.user.createdAt)}
                           </p>
                         </div>
                       )}
@@ -1038,202 +1193,20 @@ function UsersPage() {
 
                     {isExpanded && (
                       <div className="border-t border-gray-700 bg-gray-900/40 p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-md font-semibold">
-                            User details
-                          </h3>
-                          {!isEditMode && (
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  onResetPasswordClick(account.user.id)
-                                }
-                                className="text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
-                              >
-                                Reset Password
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onEditClick(account)}
-                                className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
-                              >
-                                Edit
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {!isEditMode ? (
-                          <div className="grid gap-4">
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                First Name
-                              </p>
-                              <p className="text-sm text-gray-100">
-                                {account.user.name?.split(' ')[0] ?? '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                Last Name
-                              </p>
-                              <p className="text-sm text-gray-100">
-                                {account.user.name?.split(' ')[1] ?? '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                Email
-                              </p>
-                              <p className="text-sm text-gray-100">
-                                {account.user.email ?? '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">Role</p>
-                              <p className="text-sm text-gray-100">
-                                {account.role ?? '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                Permissions
-                              </p>
-                              <p className="text-sm text-gray-100">
-                                {account.permissions.length > 0
-                                  ? account.permissions.join(', ')
-                                  : '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400 mb-1">
-                                Created
-                              </p>
-                              <p className="text-sm text-gray-100">
-                                {account.user.createdAt
-                                  ? new Date(
-                                      account.user.createdAt,
-                                    ).toLocaleString()
-                                  : '—'}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="grid gap-3">
-                              <div>
-                                <label className="block text-xs text-gray-400 mb-1">
-                                  First Name
-                                </label>
-                                <input
-                                  type="text"
-                                  value={editFormData.firstName}
-                                  onChange={(e) =>
-                                    setEditFormData((prev) => ({
-                                      ...prev,
-                                      firstName: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-gray-400 mb-1">
-                                  Last Name
-                                </label>
-                                <input
-                                  type="text"
-                                  value={editFormData.lastName}
-                                  onChange={(e) =>
-                                    setEditFormData((prev) => ({
-                                      ...prev,
-                                      lastName: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-gray-400 mb-1">
-                                  Email
-                                </label>
-                                <input
-                                  type="email"
-                                  value={editFormData.email}
-                                  onChange={(e) =>
-                                    setEditFormData((prev) => ({
-                                      ...prev,
-                                      email: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs text-gray-400 mb-1">
-                                  Role
-                                </label>
-                                <select
-                                  value={editFormData.roleId}
-                                  onChange={(e) =>
-                                    setEditFormData((prev) => ({
-                                      ...prev,
-                                      roleId: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100"
-                                >
-                                  <option value="">Select role</option>
-                                  {roleOptions.map((role) => (
-                                    <option key={role.id} value={role.id}>
-                                      {role.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div>
-                                <label className="block text-xs text-gray-400 mb-1">
-                                  Profile Picture
-                                </label>
-                                {editImagePreview && (
-                                  <div className="mb-2">
-                                    <img
-                                      src={editImagePreview}
-                                      alt="Profile preview"
-                                      className="w-16 h-16 rounded object-cover"
-                                    />
-                                  </div>
-                                )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleEditFileChange}
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-700 file:text-gray-100 file:cursor-pointer"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-2 pt-2">
-                              <button
-                                type="button"
-                                onClick={onCancelClick}
-                                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="button"
-                                onClick={onSaveClick}
-                                disabled={updateUserMutation.isPending}
-                                className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-60"
-                              >
-                                {updateUserMutation.isPending
-                                  ? 'Saving…'
-                                  : 'Save'}
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        <UserDetailsPanel
+                          account={account}
+                          editFormData={editFormData}
+                          editImagePreview={editImagePreview}
+                          isEditMode={isEditMode}
+                          isSaving={updateUserMutation.isPending}
+                          roleOptions={roleOptions}
+                          onCancel={onCancelClick}
+                          onEdit={onEditClick}
+                          onEditFieldChange={onEditFieldChange}
+                          onEditFileChange={handleEditFileChange}
+                          onResetPassword={onResetPasswordClick}
+                          onSave={onSaveClick}
+                        />
                       </div>
                     )}
                   </article>
@@ -1242,9 +1215,10 @@ function UsersPage() {
             </div>
 
             {filteredUsers.length === 0 && (
-              <p className="mt-4 text-sm text-gray-300">
-                No users match your current search.
-              </p>
+              <StatusMessage>
+                No users match your current search. Try another name, role, or
+                permission.
+              </StatusMessage>
             )}
 
             <div className="mt-6 flex justify-center">
@@ -1252,10 +1226,10 @@ function UsersPage() {
                 type="button"
                 onClick={fetchMoreUsers}
                 disabled={!hasNextPage || isFetchingNextPage}
-                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 transition-colors hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingNextPage
-                  ? 'Loading more...'
+                  ? 'Loading more…'
                   : hasNextPage
                     ? 'Load more users'
                     : 'No more users'}
@@ -1265,18 +1239,22 @@ function UsersPage() {
         )}
       </div>
 
-      {/* Password Reset Modal */}
       {passwordReset.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-gray-700 bg-gray-900 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">
-                Reset Password
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Reset Password
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Set a new temporary password for this user.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={onPasswordResetCancel}
-                className="text-gray-400 hover:text-gray-300"
+                className="text-gray-400 transition-colors hover:text-gray-300"
                 aria-label="Close"
               >
                 ✕
@@ -1291,36 +1269,30 @@ function UsersPage() {
             )}
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
                 New password
               </label>
               <input
                 type="password"
                 {...resetPasswordRegister('password')}
                 placeholder="Enter new password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-500"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
-              {resetPasswordErrors.password && (
-                <p className="text-sm opacity-50 text-red-400">
-                  {resetPasswordErrors.password.message}
-                </p>
-              )}
+              <FormError message={resetPasswordErrors.password?.message} />
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
                 Confirm password
               </label>
               <input
                 type="password"
                 {...resetPasswordRegister('confirmPassword')}
                 placeholder="Enter confirm password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-500"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
-              {resetPasswordErrors.confirmPassword && (
-                <p className="text-sm opacity-50 text-red-400">
-                  {resetPasswordErrors.confirmPassword.message}
-                </p>
-              )}
+              <FormError
+                message={resetPasswordErrors.confirmPassword?.message}
+              />
               <p className="mt-2 text-xs text-gray-400">
                 Password must contain at least 8 characters, including at least
                 one letter, one number, and one special character.
@@ -1332,7 +1304,7 @@ function UsersPage() {
                 type="button"
                 onClick={onPasswordResetCancel}
                 disabled={resetPasswordMutation.isPending}
-                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800/40 transition-colors disabled:opacity-60"
+                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -1340,7 +1312,7 @@ function UsersPage() {
                 type="submit"
                 onClick={resetPasswordHandleSubmit(onPasswordResetSubmit)}
                 disabled={resetPasswordMutation.isPending}
-                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-500 transition-colors disabled:opacity-60"
+                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {resetPasswordMutation.isPending ? 'Resetting…' : 'Reset'}
               </button>
