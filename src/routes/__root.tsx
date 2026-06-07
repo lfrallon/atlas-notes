@@ -89,6 +89,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         style={
           {
             '--app-header-height': '4rem',
+            background:
+              'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
           } as CSSProperties
         }
       >
