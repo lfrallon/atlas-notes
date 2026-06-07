@@ -17,6 +17,11 @@ import {
 import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
 
+// custom components
+import DetailItem from '@/components/DetailItem'
+import StatCard from '@/components/StatCard'
+import StatusMessage from '@/components/StatusMessage'
+
 // helper
 import { getUpdatedFieldValue } from '@/utils/helper'
 
@@ -234,40 +239,6 @@ const getFullName = (user: UserInfo) =>
   [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || '—'
 
 const resetEditForm = () => ({ ...EMPTY_EDIT_FORM })
-
-const StatusMessage = ({
-  children,
-  tone = 'neutral',
-}: {
-  children: React.ReactNode
-  tone?: 'neutral' | 'danger'
-}) => (
-  <p
-    className={`mt-3 rounded-md border px-3 py-2 text-sm ${
-      tone === 'danger'
-        ? 'border-red-500/50 bg-red-500/10 text-red-300'
-        : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-100'
-    }`}
-  >
-    {children}
-  </p>
-)
-
-const StatCard = ({ label, value }: { label: string; value: number }) => (
-  <div className="rounded-xl border border-white/10 bg-white/4 p-4 shadow-lg shadow-black/10">
-    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-      {label}
-    </p>
-    <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
-  </div>
-)
-
-const DetailItem = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <p className="mb-1 text-xs text-gray-400">{label}</p>
-    <p className="wrap-break-word text-sm text-gray-100">{value || '—'}</p>
-  </div>
-)
 
 const FormError = ({ message }: { message?: string }) => {
   if (!message) return null

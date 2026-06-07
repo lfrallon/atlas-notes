@@ -107,7 +107,13 @@ function BetterAuthDemo() {
 
   if (isPending) {
     return (
-      <div className="flex items-center justify-center py-10">
+      <div
+        className="flex justify-center items-center min-h-[calc(100dvh-var(--app-header-height))] text-white py-10"
+        style={{
+          background:
+            'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
+        }}
+      >
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900 dark:border-neutral-800 dark:border-t-neutral-100" />
       </div>
     )
@@ -116,7 +122,13 @@ function BetterAuthDemo() {
   if (session?.user) {
     if (isEditing) {
       return (
-        <div className="flex justify-center py-10 px-4">
+        <div
+          className="flex justify-center items-center min-h-[calc(100dvh-var(--app-header-height))] text-white py-10 px-4"
+          style={{
+            background:
+              'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
+          }}
+        >
           <div className="w-full max-w-md p-6">
             <h1 className="text-lg font-semibold leading-none tracking-tight">
               Update Account Details
@@ -231,7 +243,13 @@ function BetterAuthDemo() {
     }
 
     return (
-      <div className="flex justify-center py-10 px-4">
+      <div
+        className="flex justify-center items-center min-h-[calc(100dvh-var(--app-header-height))] text-white py-10 px-4"
+        style={{
+          background:
+            'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
+        }}
+      >
         <div className="w-full max-w-md p-6 space-y-6">
           <div className="space-y-1.5">
             <h1 className="text-lg font-semibold leading-none tracking-tight">
@@ -334,7 +352,13 @@ function BetterAuthDemo() {
   }
 
   return (
-    <div className="flex justify-center py-10 px-4">
+    <div
+      className="flex justify-center items-center min-h-[calc(100dvh-var(--app-header-height))] text-white py-10 px-4"
+      style={{
+        background:
+          'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
+      }}
+    >
       <div className="w-full max-w-md p-6">
         <h1 className="text-lg font-semibold leading-none tracking-tight">
           {isSignUp ? 'Create an account' : 'Sign in'}

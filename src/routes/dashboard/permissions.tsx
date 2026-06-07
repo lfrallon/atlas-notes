@@ -6,6 +6,10 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useMemo, useState } from 'react'
 
+// custom components
+import StatCard from '@/components/StatCard'
+import StatusMessage from '@/components/StatusMessage'
+
 // libs
 import {
   getPermissionLabel,
@@ -13,6 +17,7 @@ import {
   PermissionMutationResponse,
   UpdatePermissionRequest,
 } from '@/lib/queries/permissions'
+import { getUserRoles, UserRolesPage } from '@/lib/queries/roles'
 
 // types
 import type {
@@ -21,7 +26,13 @@ import type {
   UserPermissionsPage,
 } from '@/lib/queries/permissions'
 import type { CursorQuery, PaginationInput } from './admin-query'
-import { getUserRoles, UserRolesPage } from '@/lib/queries/roles'
+
+type PermissionStats = {
+  totalPermissions: number
+  loadedPermissions: number
+  systemPermissions: number
+  rolesRepresented: number
+}
 
 const PERMISSION_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
@@ -221,14 +232,17 @@ function RouteComponent() {
     }
   }
 
-  const permissions = data?.pages.flatMap((page) => page.nodes) ?? []
+  const allPermissions = useMemo(
+    () => data?.pages.flatMap((page) => page.nodes) ?? [],
+    [data],
+  )
 
   const filteredPermissions = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    if (!term) return permissions
+    if (!term) return allPermissions
 
-    return permissions.filter((permission) => {
+    return allPermissions.filter((permission) => {
       const permissionLabel = getPermissionLabel(permission)
 
       return [
@@ -243,7 +257,7 @@ function RouteComponent() {
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(term))
     })
-  }, [search, permissions])
+  }, [search, allPermissions])
 
   const startEditing = (permission: PermissionRecord) => {
     if (permission.role?.isSystem) return
@@ -262,6 +276,23 @@ function RouteComponent() {
     [rolesQuery.data],
   )
 
+  const permissionStats = useMemo<PermissionStats>(() => {
+    const representedRoleIds = new Set(
+      allPermissions.map((account) => account.roleId).filter(Boolean),
+    )
+    const totalPermissions =
+      data?.pages.at(0)?.totalCount ?? allPermissions.length
+
+    return {
+      totalPermissions,
+      loadedPermissions: allPermissions.length,
+      systemPermissions: allPermissions.filter(
+        (account) => account.role?.isSystem,
+      ).length,
+      rolesRepresented: representedRoleIds.size,
+    }
+  }, [allPermissions, data])
+
   return (
     <div
       className="min-h-screen text-white gap-6"
@@ -271,18 +302,60 @@ function RouteComponent() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <h1 className="text-3xl font-bold">Admin • Permission Management</h1>
-        <p className="mt-2 text-sm text-gray-300">
-          View, search, create, and update permission definitions used by roles
-          and users.
-        </p>
+        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+                Admin Console
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                Permission Management
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-gray-300">
+                View, search, create, and update permission definitions used by
+                roles and users.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-130">
+              <StatCard
+                label="Total"
+                value={permissionStats.totalPermissions}
+              />
+              <StatCard
+                label="Loaded"
+                value={permissionStats.loadedPermissions}
+              />
+              <StatCard
+                label="System"
+                value={permissionStats.systemPermissions}
+              />
+              <StatCard
+                label="Roles"
+                value={permissionStats.rolesRepresented}
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
-          <h2 className="text-lg font-semibold">Create permission</h2>
+        <form
+          onSubmit={() => createPermissionMutation.mutate(createForm)}
+          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
+        >
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-lg font-semibold">Create permission</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Add a permission and assign its initial role.
+              </p>
+            </div>
+            {rolesQuery.isLoading && (
+              <span className="text-xs text-gray-400">Loading roles…</span>
+            )}
+          </div>
           {createPermissionMutation.isError && (
-            <p className="mt-3 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            <StatusMessage tone="danger">
               {createPermissionMutation.error.message}
-            </p>
+            </StatusMessage>
           )}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <input
@@ -342,14 +415,8 @@ function RouteComponent() {
             </select>
             <div className="sm:col-span-2">
               <button
-                type="button"
-                onClick={() => createPermissionMutation.mutate(createForm)}
-                disabled={
-                  createPermissionMutation.isPending ||
-                  !createForm.resource.trim() ||
-                  !createForm.action.trim() ||
-                  !createForm.key.trim()
-                }
+                type="submit"
+                disabled={createPermissionMutation.isPending}
                 className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {createPermissionMutation.isPending
@@ -358,36 +425,44 @@ function RouteComponent() {
               </button>
             </div>
           </div>
+        </form>
+
+        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <label
+              htmlFor="search-permissions"
+              className="block flex-1 text-sm font-medium"
+            >
+              Search permissions
+              <input
+                id="search-permissions"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Filter by name, email, role, or permission"
+                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+              />
+            </label>
+            <p className="text-sm text-gray-400">
+              Showing{' '}
+              <span className="font-semibold text-gray-100">
+                {filteredPermissions.length}
+              </span>{' '}
+              of {allPermissions.length} loaded permissions
+            </p>
+          </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
-          <label
-            htmlFor="search-permissions"
-            className="mb-2 block text-sm font-medium"
-          >
-            Search permissions
-          </label>
-          <input
-            id="search-permissions"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Filter by key, resource, action, description, or status"
-            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500"
-          />
-        </div>
-
-        {isLoading && <p className="mt-4 text-sm">Loading permissions…</p>}
+        {isLoading && <StatusMessage>Loading permissions…</StatusMessage>}
         {isError && (
-          <p className="mt-4 text-sm text-red-400">
+          <StatusMessage tone="danger">
             Could not load permissions. Check your API connection and admin
             session.
-          </p>
+          </StatusMessage>
         )}
-
         {updatePermissionMutation.isError && (
-          <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <StatusMessage tone="danger">
             {updatePermissionMutation.error.message}
-          </p>
+          </StatusMessage>
         )}
 
         {isSuccess && (
