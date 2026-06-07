@@ -413,17 +413,31 @@ function RouteComponent() {
                 </option>
               ))}
             </select>
-            <div className="sm:col-span-2">
-              <button
-                type="submit"
-                disabled={createPermissionMutation.isPending}
-                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {createPermissionMutation.isPending
-                  ? 'Creating permission…'
-                  : 'Create permission'}
-              </button>
-            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="reset"
+              onClick={() => setCreateForm(emptyPermissionForm)}
+              disabled={createPermissionMutation.isPending}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={
+                createPermissionMutation.isPending ||
+                createForm.action.trim().length === 0 ||
+                createForm.key.trim().length === 0 ||
+                createForm.resource.trim().length === 0 ||
+                createForm.roleId.trim().length === 0
+              }
+              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {createPermissionMutation.isPending
+                ? 'Creating permission…'
+                : 'Create permission'}
+            </button>
           </div>
         </form>
 
@@ -608,7 +622,19 @@ function RouteComponent() {
                                     }
                                     className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   />
-                                  <div className="flex gap-2 sm:col-span-2">
+                                  <div className="flex justify-end gap-2 sm:col-span-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setEditingPermissionId(null)
+                                      }
+                                      disabled={
+                                        updatePermissionMutation.isPending
+                                      }
+                                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      Cancel
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -629,18 +655,6 @@ function RouteComponent() {
                                       {updatePermissionMutation.isPending
                                         ? 'Saving…'
                                         : 'Save changes'}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setEditingPermissionId(null)
-                                      }
-                                      disabled={
-                                        updatePermissionMutation.isPending
-                                      }
-                                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                      Cancel
                                     </button>
                                   </div>
                                 </div>
@@ -791,37 +805,37 @@ function RouteComponent() {
                               </option>
                             ))}
                           </select>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!editingPermissionId) return
-                                updatePermissionMutation.mutate({
-                                  permissionId: editingPermissionId,
-                                  ...editForm,
-                                })
-                              }}
-                              disabled={
-                                updatePermissionMutation.isPending ||
-                                !editForm.resource.trim() ||
-                                !editForm.action.trim() ||
-                                !editForm.key.trim()
-                              }
-                              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {updatePermissionMutation.isPending
-                                ? 'Saving…'
-                                : 'Save changes'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingPermissionId(null)}
-                              disabled={updatePermissionMutation.isPending}
-                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                        </div>
+                        <div className="mt-2 flex justify-end gap-2 sm:col-span-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingPermissionId(null)}
+                            disabled={updatePermissionMutation.isPending}
+                            className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!editingPermissionId) return
+                              updatePermissionMutation.mutate({
+                                permissionId: editingPermissionId,
+                                ...editForm,
+                              })
+                            }}
+                            disabled={
+                              updatePermissionMutation.isPending ||
+                              !editForm.resource.trim() ||
+                              !editForm.action.trim() ||
+                              !editForm.key.trim()
+                            }
+                            className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {updatePermissionMutation.isPending
+                              ? 'Saving…'
+                              : 'Save changes'}
+                          </button>
                         </div>
                       </div>
                     )}

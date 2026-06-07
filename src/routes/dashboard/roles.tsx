@@ -7,6 +7,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useMemo, useState } from 'react'
 import { MonitorCog, Pencil, X } from 'lucide-react'
 
+// custom components
+import StatCard from '@/components/StatCard'
+import StatusMessage from '@/components/StatusMessage'
+
 // libs
 import {
   getUserRoles,
@@ -21,6 +25,13 @@ import type {
   UserRolesPage,
 } from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
+
+type RoleStats = {
+  totalRoles: number
+  loadedRoles: number
+  systemRoles: number
+  customRoles: number
+}
 
 const ROLE_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
@@ -183,20 +194,24 @@ function RouteComponent() {
     }
   }
 
+  const allRoles = useMemo(
+    () => data?.pages.flatMap((page) => page.nodes) ?? [],
+    [data],
+  )
+
   const filteredRoles = useMemo(() => {
     const term = search.trim().toLowerCase()
-    const roles = data?.pages.flatMap((page) => page.nodes) ?? []
 
-    if (!term) return roles
+    if (!term) return allRoles
 
-    return roles.filter((role) => {
+    return allRoles.filter((role) => {
       const permissionLabels = role.permissions.join(',')
 
       return [role.name, role.description, permissionLabels]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(term))
     })
-  }, [search, data])
+  }, [search, allRoles])
 
   const startEditing = (role: UserRolesNodes) => {
     if (role.isSystem) return
@@ -235,6 +250,17 @@ function RouteComponent() {
     }))
   }
 
+  const roleStats = useMemo<RoleStats>(() => {
+    const totalRoles = data?.pages.at(0)?.totalCount ?? allRoles.length
+
+    return {
+      totalRoles,
+      loadedRoles: allRoles.length,
+      systemRoles: allRoles.filter((role) => role?.isSystem).length,
+      customRoles: allRoles.filter((role) => !role?.isSystem).length,
+    }
+  }, [allRoles, data])
+
   return (
     <div
       className="min-h-screen text-white gap-6"
@@ -244,17 +270,47 @@ function RouteComponent() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <h1 className="text-3xl font-bold">Admin • Role Management</h1>
-        <p className="mt-2 text-sm text-gray-300">
-          View and search roles, their permissions, and assignment usage.
-        </p>
+        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
+                Admin Console
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                Role Management
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-gray-300">
+                View and search roles, their permissions, and assignment usage.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-130">
+              <StatCard label="Total" value={roleStats.totalRoles} />
+              <StatCard label="Loaded" value={roleStats.loadedRoles} />
+              <StatCard label="System" value={roleStats.systemRoles} />
+              <StatCard label="Custom" value={roleStats.customRoles} />
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
-          <h2 className="text-lg font-semibold">Create role</h2>
+        <form
+          onSubmit={() => createRoleMutation.mutate(createForm)}
+          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
+        >
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-lg font-semibold">Create user</h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Add a role and assign their initial role.
+              </p>
+            </div>
+            {isLoading && (
+              <span className="text-xs text-gray-400">Loading roles…</span>
+            )}
+          </div>
           {createRoleMutation.isError && (
-            <p className="mt-3 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            <StatusMessage tone="danger">
               {createRoleMutation.error.message}
-            </p>
+            </StatusMessage>
           )}
           <div className="mt-3 grid gap-3">
             <input
@@ -300,9 +356,10 @@ function RouteComponent() {
                 ))}
               </div>
             </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
             <button
-              type="button"
-              onClick={() => createRoleMutation.mutate(createForm)}
+              type="submit"
               disabled={
                 createRoleMutation.isPending ||
                 !createForm.name.trim() ||
@@ -313,7 +370,7 @@ function RouteComponent() {
               {createRoleMutation.isPending ? 'Creating role…' : 'Create role'}
             </button>
           </div>
-        </div>
+        </form>
 
         <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
           <label
@@ -331,17 +388,16 @@ function RouteComponent() {
           />
         </div>
 
-        {isLoading && <p className="mt-4 text-sm">Loading roles…</p>}
+        {isLoading && <StatusMessage>Loading roles…</StatusMessage>}
         {isError && (
-          <p className="mt-4 text-sm text-red-400">
+          <StatusMessage tone="danger">
             Could not load roles. Check your API connection and admin session.
-          </p>
+          </StatusMessage>
         )}
-
         {updateRoleMutation.isError && (
-          <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <StatusMessage tone="danger">
             {updateRoleMutation.error.message}
-          </p>
+          </StatusMessage>
         )}
 
         {isSuccess && (
@@ -463,7 +519,15 @@ function RouteComponent() {
                                     </label>
                                   ))}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingRoleId(null)}
+                                    disabled={updateRoleMutation.isPending}
+                                    className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Cancel
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -483,14 +547,6 @@ function RouteComponent() {
                                     {updateRoleMutation.isPending
                                       ? 'Saving…'
                                       : 'Save changes'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingRoleId(null)}
-                                    disabled={updateRoleMutation.isPending}
-                                    className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    Cancel
                                   </button>
                                 </div>
                               </div>
@@ -632,6 +688,14 @@ function RouteComponent() {
                           <div className="flex gap-2 pt-2">
                             <button
                               type="button"
+                              onClick={() => setEditingRoleId(null)}
+                              disabled={updateRoleMutation.isPending}
+                              className="flex-1 rounded-md border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => {
                                 if (!editingRoleId) return
                                 updateRoleMutation.mutate({
@@ -649,14 +713,6 @@ function RouteComponent() {
                               {updateRoleMutation.isPending
                                 ? 'Saving…'
                                 : 'Save'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingRoleId(null)}
-                              disabled={updateRoleMutation.isPending}
-                              className="flex-1 rounded-md border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Cancel
                             </button>
                           </div>
                         </div>
