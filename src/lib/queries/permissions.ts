@@ -24,6 +24,7 @@ export interface PermissionRecord {
   roleId: string
   permission: string
   createdAt: string
+  updatedAt: string
   role: {
     id: string
     name: string
@@ -55,7 +56,7 @@ export interface CreatePermissionRequest {
 }
 
 export interface UpdatePermissionRequest extends CreatePermissionRequest {
-  permissionId: string
+  id: string
 }
 
 export interface PermissionMutationResponse extends PermissionRecord {}

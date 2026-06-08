@@ -167,14 +167,17 @@ function RouteComponent() {
     CreatePermissionRequest
   >({
     mutationFn: async (payload) => {
-      const response = await fetch(`${PERMISSION_API_BASE_URL}/permissions`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${PERMISSION_API_BASE_URL}/permissions/create`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      })
+      )
 
       if (!response.ok) {
         throw new Error('Unable to create permission.')
@@ -194,16 +197,16 @@ function RouteComponent() {
     Error,
     UpdatePermissionRequest
   >({
-    mutationFn: async ({ permissionId, ...payload }) => {
+    mutationFn: async (data) => {
       const response = await fetch(
-        `${PERMISSION_API_BASE_URL}/permissions/${permissionId}`,
+        `${PERMISSION_API_BASE_URL}/permissions/update`,
         {
           method: 'PATCH',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
         },
       )
 
@@ -252,7 +255,7 @@ function RouteComponent() {
         permission.role?.description,
         getPermissionStatus(permission),
         permission.createdAt,
-        permission.createdAt,
+        permission.updatedAt,
       ]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(term))
@@ -551,7 +554,7 @@ function RouteComponent() {
                             {formatDate(permission.createdAt)}
                           </td>
                           <td className="px-4 py-3 text-gray-300">
-                            {formatDate(permission.createdAt)}
+                            {formatDate(permission.updatedAt)}
                           </td>
                         </tr>
                         {isExpanded && (
@@ -640,7 +643,7 @@ function RouteComponent() {
                                       onClick={() => {
                                         if (!editingPermissionId) return
                                         updatePermissionMutation.mutate({
-                                          permissionId: editingPermissionId,
+                                          id: editingPermissionId,
                                           ...editForm,
                                         })
                                       }}
@@ -820,7 +823,7 @@ function RouteComponent() {
                             onClick={() => {
                               if (!editingPermissionId) return
                               updatePermissionMutation.mutate({
-                                permissionId: editingPermissionId,
+                                id: editingPermissionId,
                                 ...editForm,
                               })
                             }}
