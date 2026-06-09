@@ -15,6 +15,7 @@ import {
   useState,
 } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
+import { UserX } from 'lucide-react'
 import z from 'zod'
 
 // custom components
@@ -28,6 +29,7 @@ import { getUpdatedFieldValue } from '@/utils/helper'
 // libs
 import { getUserRoles } from '@/lib/queries/roles'
 import { buildCursorPaginationQuery } from './admin-query'
+import { useSession } from '@/lib/auth-client'
 
 // types
 import type { UserRolesNodes, UserRolesPage } from '@/lib/queries/roles'
@@ -167,7 +169,23 @@ const passwordResetSchema = z
     message: 'Passwords should be the same.',
   })
 
+const deleteUserSchema = z.object({
+  userId: z.string().min(2, 'User id is required.'),
+  password: z
+    .string()
+    .min(8, `Confirm password must contain at least 8 characters.`)
+    .regex(/[a-zA-Z]/, `Confirm password must contain at least one letter.`)
+    .regex(/[0-9]/, `Confirm password must contain at least one number.`)
+    .regex(
+      /[^a-zA-Z0-9]/,
+      `Confirm password must contain at least one special character.`,
+    )
+    .trim(),
+})
+
 type ResetPasswordInputs = z.infer<typeof passwordResetSchema>
+
+type DeleteUserInputs = z.infer<typeof deleteUserSchema>
 
 interface EditFormState {
   firstName: string
@@ -179,6 +197,11 @@ interface EditFormState {
 
 interface PasswordResetState {
   userId: string | null
+  isOpen: boolean
+}
+
+interface DeleteUserState {
+  user: UserInfo | null
   isOpen: boolean
 }
 
@@ -194,12 +217,14 @@ type UserDetailsPanelProps = {
   editFormData: EditFormState
   editImagePreview: string | null
   isEditMode: boolean
+  isPending: boolean
   isSaving: boolean
   roleOptions: UserRolesNodes[]
   onCancel: () => void
   onEdit: (account: UserAccountsNodes) => void
   onEditFieldChange: (field: keyof EditFormState, value: string) => void
   onEditFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onDeleteUser: (user: UserInfo | null) => void
   onResetPassword: (userId: string) => void
   onSave: () => void
 }
@@ -251,15 +276,19 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
   editFormData,
   editImagePreview,
   isEditMode,
+  isPending,
   isSaving,
   roleOptions,
   onCancel,
   onEdit,
   onEditFieldChange,
   onEditFileChange,
+  onDeleteUser,
   onResetPassword,
   onSave,
 }: UserDetailsPanelProps) {
+  const { data: session } = useSession()
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -282,6 +311,17 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
               className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-xs font-medium text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
             >
               Edit
+            </button>
+            <button
+              type="button"
+              disabled={isPending || account.user.id === session?.user.id}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteUser(account.user)
+              }}
+              className="block md:hidden cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <UserX size={14} />
             </button>
           </div>
         )}
@@ -423,6 +463,7 @@ export const Route = createFileRoute('/dashboard/users')({
 
 function UsersPage() {
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
 
   const inputRef = useRef<HTMLInputElement | null>(null)
   const editImageInputRef = useRef<File | null>(null)
@@ -435,6 +476,10 @@ function UsersPage() {
   const [editFormData, setEditFormData] = useState<EditFormState>(resetEditForm)
   const [passwordReset, setPasswordReset] = useState<PasswordResetState>({
     userId: null,
+    isOpen: false,
+  })
+  const [deleteUser, setDeleteUser] = useState<DeleteUserState>({
+    user: null,
     isOpen: false,
   })
 
@@ -455,6 +500,15 @@ function UsersPage() {
     formState: { errors: resetPasswordErrors },
   } = useForm<ResetPasswordInputs>({
     resolver: zodResolver(passwordResetSchema),
+  })
+
+  const {
+    register: deleteUserRegister,
+    reset: deleteUserReset,
+    handleSubmit: deleteUserHandleSubmit,
+    formState: { errors: deleteUserErrors },
+  } = useForm<DeleteUserInputs>({
+    resolver: zodResolver(deleteUserSchema),
   })
 
   const {
@@ -614,6 +668,31 @@ function UsersPage() {
     },
   })
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async ({ data: formData }: { data: FormData }) => {
+      const response = await fetch(`${USER_API_BASE_URL}/accounts`, {
+        method: 'DELETE',
+        credentials: 'include',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as {
+          message?: string
+        } | null
+        throw new Error(errorData?.message || 'Failed to delete user')
+      }
+    },
+    onSuccess: async () => {
+      setDeleteUser({
+        user: null,
+        isOpen: false,
+      })
+      deleteUserReset()
+      await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
+    },
+  })
+
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0] ?? null
@@ -677,6 +756,36 @@ function UsersPage() {
     setEditImagePreview(null)
     editImageInputRef.current = null
   }, [])
+
+  const onDeleteUserClick = useCallback((user: UserInfo | null) => {
+    setDeleteUser({
+      user,
+      isOpen: true,
+    })
+  }, [])
+
+  // TODO: selected user is not properly cleaned when the user clicks cancel
+  const onDeleteUserCancel = useCallback(() => {
+    setDeleteUser({
+      user: null,
+      isOpen: false,
+    })
+  }, [])
+
+  const onDeleteUserSubmit: SubmitHandler<DeleteUserInputs> = useCallback(
+    async (formValues) => {
+      if (!deleteUser.user) return
+
+      const deleteUserData = new FormData()
+      deleteUserData.append('userId', deleteUser.user.id)
+      deleteUserData.append('password', formValues.password)
+
+      await deleteUserMutation.mutateAsync({
+        data: deleteUserData,
+      })
+    },
+    [deleteUser.user, deleteUserMutation],
+  )
 
   const onResetPasswordClick = useCallback((userId: string) => {
     setPasswordReset({
@@ -1023,7 +1132,7 @@ function UsersPage() {
 
         {isSuccess && (
           <div className="mt-6">
-            <div className="hidden overflow-hidden rounded-xl border border-gray-700 shadow-xl shadow-black/10 md:block">
+            <div className="hidden md:block overflow-hidden rounded-lg border border-gray-700">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
@@ -1033,6 +1142,8 @@ function UsersPage() {
                     <th className="px-4 py-3">Role</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3">Updated</th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1079,21 +1190,42 @@ function UsersPage() {
                           <td className="px-4 py-3 text-gray-300">
                             {formatDateTime(account.user.createdAt)}
                           </td>
+                          <td className="px-4 py-3 text-gray-300">
+                            {formatDateTime(account.user.updatedAt)}
+                          </td>
+                          <td className="flex justify-center px-4 py-3 text-gray-300">
+                            <button
+                              type="button"
+                              disabled={
+                                deleteUserMutation.isPending ||
+                                account.user.id === session?.user.id
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteUserClick(account.user)
+                              }}
+                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <UserX size={14} />
+                            </button>
+                          </td>
                         </tr>
                         {isExpanded && (
                           <tr className="border-t border-gray-700 bg-gray-900/40">
-                            <td colSpan={6} className="px-4 py-4">
+                            <td colSpan={8} className="px-4 py-4">
                               <UserDetailsPanel
                                 account={account}
                                 editFormData={editFormData}
                                 editImagePreview={editImagePreview}
                                 isEditMode={isEditMode}
+                                isPending={deleteUserMutation.isPending}
                                 isSaving={updateUserMutation.isPending}
                                 roleOptions={roleOptions}
                                 onCancel={onCancelClick}
                                 onEdit={onEditClick}
                                 onEditFieldChange={onEditFieldChange}
                                 onEditFileChange={handleEditFileChange}
+                                onDeleteUser={onDeleteUserClick}
                                 onResetPassword={onResetPasswordClick}
                                 onSave={onSaveClick}
                               />
@@ -1164,12 +1296,14 @@ function UsersPage() {
                           editFormData={editFormData}
                           editImagePreview={editImagePreview}
                           isEditMode={isEditMode}
+                          isPending={deleteUserMutation.isPending}
                           isSaving={updateUserMutation.isPending}
                           roleOptions={roleOptions}
                           onCancel={onCancelClick}
                           onEdit={onEditClick}
                           onEditFieldChange={onEditFieldChange}
                           onEditFileChange={handleEditFileChange}
+                          onDeleteUser={onDeleteUserClick}
                           onResetPassword={onResetPasswordClick}
                           onSave={onSaveClick}
                         />
@@ -1281,6 +1415,88 @@ function UsersPage() {
                 className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {resetPasswordMutation.isPending ? 'Resetting…' : 'Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteUser.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Delete User
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Permanently remove user account.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onDeleteUserCancel}
+                className="text-gray-400 transition-colors hover:text-gray-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {deleteUserMutation.isError && (
+              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {deleteUserMutation.error?.message ||
+                  'Failed to delete user account'}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Enter your password
+              </label>
+              <input
+                type="password"
+                {...deleteUserRegister('password')}
+                placeholder="Enter your password"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+              <FormError message={deleteUserErrors.password?.message} />
+            </div>
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                User Account
+              </label>
+              <input
+                type="text"
+                disabled
+                value={deleteUser.user?.email ?? ''}
+                {...deleteUserRegister('userId')}
+                placeholder="User account"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+              />
+              <FormError message={deleteUserErrors.userId?.message} />
+              <p className="mt-2 text-xs text-gray-400">
+                Must enter your password to verify your identity in performing a
+                user account removal.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onDeleteUserCancel}
+                disabled={deleteUserMutation.isPending}
+                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={deleteUserHandleSubmit(onDeleteUserSubmit)}
+                disabled={deleteUserMutation.isPending}
+                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleteUserMutation.isPending ? 'Removing' : 'Remove'}
               </button>
             </div>
           </div>
