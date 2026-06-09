@@ -458,7 +458,7 @@ function RouteComponent() {
                                 }
                               }}
                               disabled={editingBlocked || isUpdatingThisRole}
-                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-3 py-1 text-xs font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer rounded-md border border-gray-400/40 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-500/10 hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {editingBlocked ? (
                                 <MonitorCog size={14} />

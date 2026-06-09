@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useMemo, useState } from 'react'
+import { TriangleAlert, X } from 'lucide-react'
 
 // custom components
 import StatCard from '@/components/StatCard'
@@ -496,6 +497,7 @@ function RouteComponent() {
                     <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Created</th>
                     <th className="px-4 py-3">Updated</th>
+                    <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -556,10 +558,28 @@ function RouteComponent() {
                           <td className="px-4 py-3 text-gray-300">
                             {formatDate(permission.updatedAt)}
                           </td>
+                          <td className="flex justify-center px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (editingBlocked) return
+                                // deletePermissionMutation.mutate(permission)
+                              }}
+                              disabled={editingBlocked}
+                              className="z-50 cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {editingBlocked ? (
+                                <TriangleAlert size={14} />
+                              ) : (
+                                <X size={14} />
+                              )}
+                            </button>
+                          </td>
                         </tr>
                         {isExpanded && (
                           <tr className="border-t border-gray-700 bg-gray-900/40">
-                            <td colSpan={8} className="px-4 py-4">
+                            <td colSpan={9} className="px-4 py-4">
                               <div>
                                 <h3 className="text-md font-semibold mb-3">
                                   Edit permission
