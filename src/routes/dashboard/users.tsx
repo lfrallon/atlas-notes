@@ -15,7 +15,7 @@ import {
   useState,
 } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
-import { UserX } from 'lucide-react'
+import { CircleX, UserX } from 'lucide-react'
 import z from 'zod'
 
 // custom components
@@ -215,7 +215,6 @@ type UserStats = {
 type UserDetailsPanelProps = {
   account: UserAccountsNodes
   editFormData: EditFormState
-  editImagePreview: string | null
   isEditMode: boolean
   isPending: boolean
   isSaving: boolean
@@ -225,6 +224,7 @@ type UserDetailsPanelProps = {
   onEditFieldChange: (field: keyof EditFormState, value: string) => void
   onEditFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onDeleteUser: (user: UserInfo | null) => void
+  onRemoveImage: () => void
   onResetPassword: (userId: string) => void
   onSave: () => void
 }
@@ -274,7 +274,6 @@ const FormError = ({ message }: { message?: string }) => {
 const UserDetailsPanel = memo(function UserDetailsPanel({
   account,
   editFormData,
-  editImagePreview,
   isEditMode,
   isPending,
   isSaving,
@@ -284,10 +283,22 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
   onEditFieldChange,
   onEditFileChange,
   onDeleteUser,
+  onRemoveImage,
   onResetPassword,
   onSave,
 }: UserDetailsPanelProps) {
   const { data: session } = useSession()
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
+
+  const clearImageInput = (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    event.stopPropagation()
+    if (imageInputRef.current) {
+      imageInputRef.current.value = ''
+    }
+    onRemoveImage()
+  }
 
   return (
     <div>
@@ -328,37 +339,51 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
       </div>
 
       {!isEditMode ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <DetailItem label="First Name" value={account.user.firstName} />
-          <DetailItem label="Last Name" value={account.user.lastName} />
-          <DetailItem label="Email" value={account.user.email} />
-          <DetailItem label="Role" value={account.role ?? '—'} />
-          <DetailItem
-            label="Email Status"
-            value={account.user.emailVerified ? 'Verified' : 'Not verified'}
-          />
-          <DetailItem
-            label="Created"
-            value={formatDateTime(account.user.createdAt)}
-          />
-          <div className="sm:col-span-2">
-            <p className="mb-2 text-xs text-gray-400">Permissions</p>
-            {account.permissions.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {account.permissions.map((permission) => (
-                  <span
-                    key={permission}
-                    className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
-                  >
-                    {permission}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-100">—</p>
-            )}
+        <>
+          {account.user.image && (
+            <div className="mb-2 text-xs text-gray-400">
+              <p className="mb-1 text-xs text-gray-400">Profile Picture</p>
+              <img
+                src={`${USER_PROFILE_URL}${account.user.image}`}
+                alt="Profile preview"
+                className="h-16 w-16 rounded-lg border border-white/10 object-cover"
+              />
+            </div>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <DetailItem label="First Name" value={account.user.firstName} />
+              <DetailItem label="Last Name" value={account.user.lastName} />
+              <DetailItem label="Email" value={account.user.email} />
+              <DetailItem label="Role" value={account.role ?? '—'} />
+              <DetailItem
+                label="Email Status"
+                value={account.user.emailVerified ? 'Verified' : 'Not verified'}
+              />
+              <DetailItem
+                label="Created"
+                value={formatDateTime(account.user.createdAt)}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <p className="mb-2 text-xs text-gray-400">Permissions</p>
+              {account.permissions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {account.permissions.map((permission) => (
+                    <span
+                      key={permission}
+                      className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
+                    >
+                      {permission}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-100">—</p>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       ) : (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -412,21 +437,38 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 ))}
               </select>
             </label>
-            <label className="block text-xs text-gray-400 sm:col-span-2">
-              Profile Picture
-              {editImagePreview && (
-                <div className="mt-2 flex items-center gap-3">
-                  <img
-                    src={editImagePreview}
-                    alt="Profile preview"
-                    className="h-16 w-16 rounded-lg border border-white/10 object-cover"
-                  />
-                  <span className="text-xs text-gray-400">
-                    Preview updates before saving.
-                  </span>
+            {editFormData.image && (
+              <div className="text-xs text-gray-400 col-span-1">
+                Profile Picture
+                <div className="flex flex-1 gap-3 mt-2">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={
+                        editFormData.image.includes('/profile/')
+                          ? `${USER_PROFILE_URL}${editFormData.image}`
+                          : editFormData.image
+                      }
+                      alt="Profile preview"
+                      className="h-16 w-16 rounded-lg border border-white/10 object-cover"
+                    />
+                    <span className="text-xs text-gray-400">
+                      Preview updates before saving.
+                    </span>
+                  </div>
+                  <div className="flex justify-center items-center">
+                    <button
+                      className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={clearImageInput}
+                    >
+                      <CircleX size={14} />
+                    </button>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
+            <label className="block text-xs text-gray-400 sm:col-span-2">
               <input
+                ref={imageInputRef}
                 type="file"
                 accept="image/*"
                 onChange={onEditFileChange}
@@ -472,7 +514,6 @@ function UsersPage() {
   const deferredSearch = useDeferredValue(search)
   const [editingUserData, setEditingUserData] = useState<UserInfo | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
   const [editFormData, setEditFormData] = useState<EditFormState>(resetEditForm)
   const [passwordReset, setPasswordReset] = useState<PasswordResetState>({
     userId: null,
@@ -637,7 +678,6 @@ function UsersPage() {
       setIsEditMode(false)
       setEditingUserData(null)
       setEditFormData(resetEditForm())
-      setEditImagePreview(null)
       editImageInputRef.current = null
       await queryClient.invalidateQueries({ queryKey: ['userAccounts'] })
     },
@@ -705,23 +745,29 @@ function UsersPage() {
 
   const handleEditFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      editImageInputRef.current = null
+      setEditFormData((previous) => ({
+        ...previous,
+        image: null,
+      }))
+
       const file = event.target.files?.[0]
       if (file) {
-        if (editImagePreview?.startsWith('blob:')) {
-          URL.revokeObjectURL(editImagePreview)
+        if (editFormData.image?.startsWith('blob:')) {
+          URL.revokeObjectURL(editFormData.image)
         }
-        setEditImagePreview(URL.createObjectURL(file))
         setEditFormData((previous) => ({
           ...previous,
-          image: file.name,
+          image: URL.createObjectURL(file),
         }))
         editImageInputRef.current = file
-      } else {
-        setEditImagePreview(null)
-        editImageInputRef.current = null
       }
+
+      setValue('image', file, {
+        shouldValidate: true,
+      })
     },
-    [editImagePreview],
+    [],
   )
 
   const onEditFieldChange = useCallback(
@@ -742,9 +788,6 @@ function UsersPage() {
       roleId: account.user.roleId ?? '',
       image: account.user.image,
     })
-    setEditImagePreview(
-      account.user.image ? `${USER_PROFILE_URL}${account.user.image}` : null,
-    )
     editImageInputRef.current = null
     setEditingUserData(account.user)
     setIsEditMode(true)
@@ -753,7 +796,17 @@ function UsersPage() {
   const onCancelClick = useCallback(() => {
     setIsEditMode(false)
     setEditFormData(resetEditForm())
-    setEditImagePreview(null)
+    editImageInputRef.current = null
+  }, [])
+
+  const onRemoveImage = useCallback(() => {
+    if (editFormData.image?.startsWith('blob:')) {
+      URL.revokeObjectURL(editFormData.image)
+    }
+    setEditFormData((previous) => ({
+      ...previous,
+      image: null,
+    }))
     editImageInputRef.current = null
   }, [])
 
@@ -762,14 +815,15 @@ function UsersPage() {
       user,
       isOpen: true,
     })
+    deleteUserReset()
   }, [])
 
-  // TODO: selected user is not properly cleaned when the user clicks cancel
   const onDeleteUserCancel = useCallback(() => {
     setDeleteUser({
       user: null,
       isOpen: false,
     })
+    deleteUserReset()
   }, [])
 
   const onDeleteUserSubmit: SubmitHandler<DeleteUserInputs> = useCallback(
@@ -831,7 +885,9 @@ function UsersPage() {
       ),
       email: getUpdatedFieldValue(editingUserData.email, editFormData.email),
       roleId: getUpdatedFieldValue(editingUserData.roleId, editFormData.roleId),
+      image: getUpdatedFieldValue(editingUserData.image, editFormData.image),
     }
+
     const updateData = new FormData()
     updateData.append('userId', editingUserData.id)
 
@@ -850,16 +906,22 @@ function UsersPage() {
       updateData.append('roleId', editFormData.roleId)
     }
 
-    if (editImageInputRef.current) {
-      updateData.append('image', editImageInputRef.current)
+    if (inputs.image === null) {
+      updateData.append('image', 'null')
+    }
 
-      if (!inputs.firstName && !inputs.lastName) {
-        updateData.append('firstName', editingUserData.firstName)
-        updateData.append('lastName', editingUserData.lastName)
-        updateData.append(
-          'name',
-          `${editingUserData.firstName} ${editingUserData.lastName}`,
-        )
+    if (inputs.image && inputs.image.trim().length > 0) {
+      if (editImageInputRef.current) {
+        updateData.append('image', editImageInputRef.current)
+
+        if (!inputs.firstName && !inputs.lastName) {
+          updateData.append('firstName', editingUserData.firstName)
+          updateData.append('lastName', editingUserData.lastName)
+          updateData.append(
+            'name',
+            `${editingUserData.firstName} ${editingUserData.lastName}`,
+          )
+        }
       }
     }
 
@@ -1216,7 +1278,6 @@ function UsersPage() {
                               <UserDetailsPanel
                                 account={account}
                                 editFormData={editFormData}
-                                editImagePreview={editImagePreview}
                                 isEditMode={isEditMode}
                                 isPending={deleteUserMutation.isPending}
                                 isSaving={updateUserMutation.isPending}
@@ -1226,6 +1287,7 @@ function UsersPage() {
                                 onEditFieldChange={onEditFieldChange}
                                 onEditFileChange={handleEditFileChange}
                                 onDeleteUser={onDeleteUserClick}
+                                onRemoveImage={onRemoveImage}
                                 onResetPassword={onResetPasswordClick}
                                 onSave={onSaveClick}
                               />
@@ -1294,7 +1356,6 @@ function UsersPage() {
                         <UserDetailsPanel
                           account={account}
                           editFormData={editFormData}
-                          editImagePreview={editImagePreview}
                           isEditMode={isEditMode}
                           isPending={deleteUserMutation.isPending}
                           isSaving={updateUserMutation.isPending}
@@ -1304,6 +1365,7 @@ function UsersPage() {
                           onEditFieldChange={onEditFieldChange}
                           onEditFileChange={handleEditFileChange}
                           onDeleteUser={onDeleteUserClick}
+                          onRemoveImage={onRemoveImage}
                           onResetPassword={onResetPasswordClick}
                           onSave={onSaveClick}
                         />
