@@ -1,11 +1,14 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { TriangleAlert, X } from 'lucide-react'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import z from 'zod'
 
 // custom components
 import StatCard from '@/components/StatCard'
@@ -28,11 +31,39 @@ import type {
 } from '@/lib/queries/permissions'
 import type { CursorQuery, PaginationInput } from './admin-query'
 
+const deletePermissionSchema = z.object({
+  password: z
+    .string()
+    .min(8, `Confirm password must contain at least 8 characters.`)
+    .regex(/[a-zA-Z]/, `Confirm password must contain at least one letter.`)
+    .regex(/[0-9]/, `Confirm password must contain at least one number.`)
+    .regex(
+      /[^a-zA-Z0-9]/,
+      `Confirm password must contain at least one special character.`,
+    )
+    .trim(),
+  ids: z
+    .array(z.string(), {
+      error: "No id's provided.",
+    })
+    .meta({
+      description: "Permission id's",
+      example: ['123e4567-e89b-12d3-a456-426614174000'],
+    }),
+})
+
+type DeletePermissionInputs = z.infer<typeof deletePermissionSchema>
+
 type PermissionStats = {
   totalPermissions: number
   loadedPermissions: number
   systemPermissions: number
   rolesRepresented: number
+}
+
+interface DeletePermissionState {
+  permission: PermissionRecord | null
+  isOpen: boolean
 }
 
 const PERMISSION_API_BASE_URL =
@@ -73,6 +104,12 @@ function formatDate(value?: string | null): string {
   }).format(date)
 }
 
+const FormError = ({ message }: { message?: string }) => {
+  if (!message) return null
+
+  return <p className="mt-1 text-xs text-red-300">{message}</p>
+}
+
 function getPermissionStatus(permission: PermissionRecord): string {
   return permission.role?.isSystem ? 'System' : 'Custom'
 }
@@ -87,6 +124,21 @@ function RouteComponent() {
     useState<CreatePermissionRequest>(emptyPermissionForm)
   const [editForm, setEditForm] =
     useState<CreatePermissionRequest>(emptyPermissionForm)
+  const [deletePermission, setDeletePermission] =
+    useState<DeletePermissionState>({
+      permission: null,
+      isOpen: false,
+    })
+
+  const {
+    register: deletePermissionRegister,
+    reset: deletePermissionReset,
+    setValue: deletePermissionSetValue,
+    handleSubmit: deletePermissionHandleSubmit,
+    formState: { errors: deletePermissionErrors },
+  } = useForm<DeletePermissionInputs>({
+    resolver: zodResolver(deletePermissionSchema),
+  })
 
   const {
     data,
@@ -224,6 +276,42 @@ function RouteComponent() {
     },
   })
 
+  const deletePermissionMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: { password: string; ids: string[] }
+    }) => {
+      const response = await fetch(
+        `${PERMISSION_API_BASE_URL}/permissions/delete`,
+        {
+          method: 'DELETE',
+          headers: {
+            accept: '*/*',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(data),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(errorData?.error || 'Failed to permission')
+      }
+    },
+    onSuccess: async () => {
+      setDeletePermission({
+        permission: null,
+        isOpen: false,
+      })
+      deletePermissionReset()
+      await queryClient.invalidateQueries({ queryKey: permissionsQueryKey })
+    },
+  })
+
   const fetchMorePermissions = async () => {
     if (hasNextPage && !isFetchingNextPage) {
       try {
@@ -296,6 +384,36 @@ function RouteComponent() {
       rolesRepresented: representedRoleIds.size,
     }
   }, [allPermissions, data])
+
+  const handleDeletePermission = (permission: PermissionRecord) => {
+    deletePermissionReset()
+    setDeletePermission({
+      permission,
+      isOpen: true,
+    })
+    deletePermissionSetValue('ids', [permission.id])
+  }
+
+  const onDeletePermissionCancel = () => {
+    setDeletePermission({
+      permission: null,
+      isOpen: false,
+    })
+    deletePermissionReset()
+  }
+
+  const onDeletePermission: SubmitHandler<DeletePermissionInputs> = useCallback(
+    async (formValues) => {
+      console.log('🚀 ~ RouteComponent ~ formValues:', formValues)
+
+      if (formValues.ids.length > 0) {
+        await deletePermissionMutation.mutateAsync({
+          data: { password: formValues.password, ids: formValues.ids },
+        })
+      }
+    },
+    [deletePermissionMutation],
+  )
 
   return (
     <div
@@ -564,10 +682,10 @@ function RouteComponent() {
                               onClick={(e) => {
                                 e.stopPropagation()
                                 if (editingBlocked) return
-                                // deletePermissionMutation.mutate(permission)
+                                handleDeletePermission(permission)
                               }}
                               disabled={editingBlocked}
-                              className="z-50 cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {editingBlocked ? (
                                 <TriangleAlert size={14} />
@@ -829,36 +947,56 @@ function RouteComponent() {
                             ))}
                           </select>
                         </div>
-                        <div className="mt-2 flex justify-end gap-2 sm:col-span-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditingPermissionId(null)}
-                            disabled={updatePermissionMutation.isPending}
-                            className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!editingPermissionId) return
-                              updatePermissionMutation.mutate({
-                                id: editingPermissionId,
-                                ...editForm,
-                              })
-                            }}
-                            disabled={
-                              updatePermissionMutation.isPending ||
-                              !editForm.resource.trim() ||
-                              !editForm.action.trim() ||
-                              !editForm.key.trim()
-                            }
-                            className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {updatePermissionMutation.isPending
-                              ? 'Saving…'
-                              : 'Save changes'}
-                          </button>
+                        <div className="mt-2 flex sm:col-span-2">
+                          <div className="flex justify-start">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (editingBlocked) return
+                                handleDeletePermission(permission)
+                              }}
+                              disabled={editingBlocked}
+                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {editingBlocked ? (
+                                <TriangleAlert size={14} />
+                              ) : (
+                                <X size={14} />
+                              )}
+                            </button>
+                          </div>
+                          <div className="flex flex-1 justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setEditingPermissionId(null)}
+                              disabled={updatePermissionMutation.isPending}
+                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!editingPermissionId) return
+                                updatePermissionMutation.mutate({
+                                  id: editingPermissionId,
+                                  ...editForm,
+                                })
+                              }}
+                              disabled={
+                                updatePermissionMutation.isPending ||
+                                !editForm.resource.trim() ||
+                                !editForm.action.trim() ||
+                                !editForm.key.trim()
+                              }
+                              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {updatePermissionMutation.isPending
+                                ? 'Saving…'
+                                : 'Save changes'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -890,6 +1028,87 @@ function RouteComponent() {
           </div>
         )}
       </div>
+
+      {deletePermission.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Delete Permission
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Permanently remove created permission.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onDeletePermissionCancel}
+                className="text-gray-400 transition-colors hover:text-gray-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {deletePermissionMutation.isError && (
+              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {deletePermissionMutation.error?.message ||
+                  'Failed to delete permission'}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Enter your password
+              </label>
+              <input
+                type="password"
+                {...deletePermissionRegister('password')}
+                placeholder="Enter your password"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+              <FormError message={deletePermissionErrors.password?.message} />
+            </div>
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Permission
+              </label>
+              <input
+                type="text"
+                disabled
+                value={`${deletePermission.permission?.role?.name} - ${deletePermission.permission?.permission}`}
+                placeholder="Permission"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+              />
+              <FormError message={deletePermissionErrors.ids?.message} />
+              <p className="mt-2 text-xs text-gray-400">
+                Must enter your password to verify your identity in performing a
+                permission removal.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onDeletePermissionCancel}
+                disabled={deletePermissionMutation.isPending}
+                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={deletePermissionHandleSubmit(onDeletePermission)}
+                disabled={deletePermissionMutation.isPending}
+                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deletePermissionMutation.isPending ? 'Removing' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
