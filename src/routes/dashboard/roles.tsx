@@ -1,3 +1,4 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   useInfiniteQuery,
   useMutation,
@@ -6,6 +7,8 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useMemo, useState } from 'react'
 import { MonitorCog, Pencil, X } from 'lucide-react'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import z from 'zod'
 
 // custom components
 import StatCard from '@/components/StatCard'
@@ -13,7 +16,7 @@ import StatusMessage from '@/components/StatusMessage'
 
 // libs
 import {
-  getUserRoles,
+  getRoles,
   RoleMutationResponse,
   UpdateRoleRequest,
 } from '@/lib/queries/roles'
@@ -21,10 +24,14 @@ import {
 // types
 import type {
   CreateRoleRequest,
-  UserRolesNodes,
-  UserRolesPage,
+  RolesNodes,
+  RolesPage,
 } from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
+import {
+  getUserPermissions,
+  UserPermissionsPage,
+} from '@/lib/queries/permissions'
 
 type RoleStats = {
   totalRoles: number
@@ -33,8 +40,84 @@ type RoleStats = {
   customRoles: number
 }
 
+const createRoleSchema = z.object({
+  roleName: z.string().min(2, 'Role name.').max(30).trim(),
+  description: z.string().min(2, 'Role description.').max(170).trim(),
+  permissions: z
+    .array(
+      z.object({
+        id: z.string('Permission id.'),
+        createdAt: z.string('Permission created at.'),
+        updatedAt: z.string('Permission updated at.'),
+        action: z.enum(
+          ['create', 'read', 'update', 'delete'],
+          'Permission action.',
+        ),
+        resource: z.string('Permission resource.'),
+        permission: z.string('Permission key.'),
+        checked: z.boolean('Permission checked.'),
+      }),
+    )
+    .meta({
+      description: "Role permission id's.",
+      example: `["123e4567-e89b-12d3-a456-426614174000"]`,
+    }),
+})
+
+const updateRoleSchema = z.object({
+  roleId: z.uuid('User role id.'),
+  roleName: z.string().min(2, 'Role name.').max(30).trim().optional(),
+  description: z
+    .string()
+    .min(2, 'Role description.')
+    .max(170)
+    .trim()
+    .optional(),
+  permissions: z
+    .array(
+      z.object({
+        id: z.string('Permission id.'),
+        createdAt: z.string('Permission created at.'),
+        updatedAt: z.string('Permission updated at.'),
+        action: z.enum(
+          ['create', 'read', 'update', 'delete'],
+          'Permission action.',
+        ),
+        resource: z.string('Permission resource.'),
+        permission: z.string('Permission key.'),
+        checked: z.boolean('Permission checked.'),
+      }),
+    )
+    .meta({
+      description: "Role permission id's.",
+      example: `["123e4567-e89b-12d3-a456-426614174000"]`,
+    }),
+})
+
+type CreateRoleInputs = z.infer<typeof createRoleSchema>
+
+type UpdateRoleInputs = z.infer<typeof updateRoleSchema>
+
 const ROLE_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
+
+const permissionsQueryKey = [
+  'userPermissions',
+  {
+    baseUrl: `${ROLE_API_BASE_URL}/permissions`,
+    input: {
+      pageSize: 10,
+      orderBy: 'desc' as const,
+      limit: 25,
+    },
+  },
+]
+
+const FormError = ({ message }: { message?: string }) => {
+  if (!message) return null
+
+  return <p className="mt-1 text-xs text-red-300">{message}</p>
+}
 
 export const Route = createFileRoute('/dashboard/roles')({
   component: RouteComponent,
@@ -43,17 +126,41 @@ export const Route = createFileRoute('/dashboard/roles')({
 function RouteComponent() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
 
-  const [createForm, setCreateForm] = useState<CreateRoleRequest>({
-    name: '',
-    description: '',
-    permissions: [],
-  })
-  const [editForm, setEditForm] = useState<CreateRoleRequest>({
-    name: '',
-    description: '',
-    permissions: [],
+  const {
+    data: permissionsQuery,
+    // hasNextPage: permissionsHasNextPage,
+    // isLoading: permissionsIsLoading,
+    // isError: permissionsIsError,
+    // isFetchingNextPage: permissionsIsFetchingNextPage,
+    // isSuccess: permissionsIsSuccess,
+    // fetchNextPage: permissionsFetchNextPage,
+  } = useInfiniteQuery<UserPermissionsPage, Error>({
+    queryKey: permissionsQueryKey,
+    queryFn: async ({ pageParam, queryKey }) =>
+      await getUserPermissions({
+        pageParam: pageParam as CursorQuery,
+        queryKey: queryKey as [
+          string,
+          {
+            baseUrl: string
+            input?: PaginationInput
+          },
+        ],
+      }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      if ('error' in lastPage) {
+        return undefined
+      }
+
+      if (lastPage.pageInfo.hasNextPage) {
+        return {
+          nextCursor: lastPage.pageInfo.nextCursor,
+        }
+      }
+      return undefined
+    },
   })
 
   const {
@@ -64,9 +171,9 @@ function RouteComponent() {
     isFetchingNextPage,
     isSuccess,
     fetchNextPage,
-  } = useInfiniteQuery<UserRolesPage, Error>({
+  } = useInfiniteQuery<RolesPage, Error>({
     queryKey: [
-      'userRoles',
+      'roles',
       {
         baseUrl: `${ROLE_API_BASE_URL}/roles`,
         input: {
@@ -77,7 +184,7 @@ function RouteComponent() {
       },
     ],
     queryFn: async ({ pageParam, queryKey }) =>
-      await getUserRoles({
+      await getRoles({
         pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
@@ -108,7 +215,7 @@ function RouteComponent() {
     CreateRoleRequest
   >({
     mutationFn: async (payload) => {
-      const response = await fetch(`${ROLE_API_BASE_URL}/roles`, {
+      const response = await fetch(`${ROLE_API_BASE_URL}/roles/create`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -125,10 +232,10 @@ function RouteComponent() {
       return body
     },
     onSuccess: async () => {
-      setCreateForm({ name: '', description: '', permissions: [] })
+      reset()
       await queryClient.invalidateQueries({
         queryKey: [
-          'userRoles',
+          'roles',
           {
             baseUrl: `${ROLE_API_BASE_URL}/roles`,
             input: {
@@ -147,14 +254,14 @@ function RouteComponent() {
     Error,
     UpdateRoleRequest
   >({
-    mutationFn: async ({ roleId, ...payload }) => {
-      const response = await fetch(`${ROLE_API_BASE_URL}/roles/${roleId}`, {
+    mutationFn: async (data) => {
+      const response = await fetch(`${ROLE_API_BASE_URL}/roles/update`, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
       })
 
       if (!response.ok) {
@@ -165,10 +272,10 @@ function RouteComponent() {
       return body
     },
     onSuccess: async () => {
-      setEditingRoleId(null)
+      resetUpdateRole()
       await queryClient.invalidateQueries({
         queryKey: [
-          'userRoles',
+          'roles',
           {
             baseUrl: `${ROLE_API_BASE_URL}/roles`,
             input: {
@@ -181,6 +288,156 @@ function RouteComponent() {
       })
     },
   })
+
+  const permissionOptions = useMemo(() => {
+    const allPermissions = permissionsQuery?.pages.flatMap((page) =>
+      page.nodes.map((node) => node),
+    )
+
+    return Array.from(new Set(allPermissions ?? []))
+  }, [data])
+
+  const {
+    register,
+    setValues,
+    getValues,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors: createRoleErrors },
+  } = useForm<CreateRoleInputs>({
+    resolver: zodResolver(createRoleSchema),
+    defaultValues: {
+      description: '',
+      permissions: [],
+      roleName: '',
+    },
+  })
+
+  const {
+    register: registerUpdateRole,
+    setValues: setValuesUpdateRole,
+    getValues: getValuesUpdateRole,
+    watch: watchUpdateRole,
+    handleSubmit: handleSubmitUpdateRole,
+    reset: resetUpdateRole,
+    formState: { errors: updateRoleErrors },
+  } = useForm<UpdateRoleInputs>({
+    resolver: zodResolver(updateRoleSchema),
+    defaultValues: {
+      description: '',
+      permissions: [],
+      roleId: '',
+      roleName: '',
+    },
+  })
+
+  const onCreateRole: SubmitHandler<CreateRoleInputs> = async (data) => {
+    if (!data) return
+
+    try {
+      const { description, roleName, permissions } = data
+      const permissionData = permissions.map((p) => p.id)
+      await createRoleMutation.mutateAsync({
+        description,
+        roleName,
+        permissions: permissionData,
+      })
+    } catch (error) {
+      console.log('🚀 ~ onCreateRole ~ error:', error)
+    }
+  }
+
+  const onUpdateRole: SubmitHandler<UpdateRoleInputs> = async (data) => {
+    if (!data || selectedUpdateRoleId.trim().length === 0) return
+
+    try {
+      const { permissions, roleId, description, roleName } = data
+      const permissionData = permissions ? permissions.map((p) => p.id) : []
+      updateRoleMutation.mutate({
+        roleId: roleId,
+        permissions: permissionData.length === 0 ? null : permissionData,
+        ...(roleName ? { roleName: roleName } : {}),
+        ...(description ? { description: description } : {}),
+      })
+    } catch (error) {
+      console.log('🚀 ~ onUpdateRole ~ error:', error)
+    }
+  }
+
+  const handleCreatePermissionToggle = (id: string) => {
+    const foundItem = permissionOptions.find((p) => p.id === id)
+    const itemChecked = getValues('permissions').find((p) => p.id === id)
+
+    if (foundItem) {
+      if (itemChecked) {
+        const unCheckedPerm = getValues('permissions').filter(
+          (p) => p.id !== id,
+        )
+        setValues((previous) => ({
+          ...previous,
+          permissions: unCheckedPerm,
+        }))
+      } else {
+        setValues((previous) => ({
+          ...previous,
+          permissions: [
+            ...previous.permissions,
+            { ...foundItem, checked: true },
+          ],
+        }))
+      }
+    }
+  }
+
+  const handleUpdatePermissionToggle = (id: string) => {
+    const foundItem = permissionOptions.find((p) => p.id === id)
+    const itemChecked = getValuesUpdateRole('permissions').find(
+      (p) => p.id === id,
+    )
+
+    if (foundItem) {
+      if (itemChecked) {
+        const unCheckedPerm = getValuesUpdateRole('permissions').filter(
+          (p) => p.id !== id,
+        )
+        setValuesUpdateRole((previous) => ({
+          ...previous,
+          permissions: unCheckedPerm,
+        }))
+      } else {
+        setValuesUpdateRole((previous) => ({
+          ...previous,
+          permissions: [
+            ...previous.permissions,
+            { ...foundItem, checked: true },
+          ],
+        }))
+      }
+    }
+  }
+
+  const handleEditForm = (role: RolesNodes) => {
+    setValuesUpdateRole(
+      {
+        roleId: role.id,
+        roleName: role.name ?? undefined,
+        description: role.description ?? undefined,
+        permissions: role.permissions.map((p) => ({
+          id: p.id,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          action: p.action,
+          resource: p.resource,
+          permission: p.permission,
+          checked: true,
+        })),
+      },
+      {
+        shouldValidate: true,
+      },
+    )
+  }
 
   const fetchMoreRoles = async () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -213,43 +470,6 @@ function RouteComponent() {
     })
   }, [search, allRoles])
 
-  const startEditing = (role: UserRolesNodes) => {
-    if (role.isSystem) return
-
-    setEditingRoleId(role.id)
-    setEditForm({
-      description: role.description,
-      name: role.name,
-      permissions: role.permissions,
-    })
-  }
-
-  const permissionOptions = useMemo(() => {
-    const allPermissions = data?.pages.flatMap((page) =>
-      page.nodes.flatMap((node) => node.permissions),
-    )
-
-    return Array.from(new Set(allPermissions ?? []))
-  }, [data])
-
-  const toggleCreatePermission = (permission: string) => {
-    setCreateForm((previous) => ({
-      ...previous,
-      permissions: previous.permissions.includes(permission)
-        ? previous.permissions.filter((item) => item !== permission)
-        : [...previous.permissions, permission],
-    }))
-  }
-
-  const toggleEditPermission = (permission: string) => {
-    setEditForm((previous) => ({
-      ...previous,
-      permissions: previous.permissions.includes(permission)
-        ? previous.permissions.filter((item) => item !== permission)
-        : [...previous.permissions, permission],
-    }))
-  }
-
   const roleStats = useMemo<RoleStats>(() => {
     const totalRoles = data?.pages.at(0)?.totalCount ?? allRoles.length
 
@@ -260,6 +480,10 @@ function RouteComponent() {
       customRoles: allRoles.filter((role) => !role?.isSystem).length,
     }
   }, [allRoles, data])
+
+  const selectedPermissions = watch('permissions')
+  const selectedUpdateRolePermissions = watchUpdateRole('permissions')
+  const selectedUpdateRoleId = watchUpdateRole('roleId')
 
   return (
     <div
@@ -292,10 +516,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        <form
-          onSubmit={() => createRoleMutation.mutate(createForm)}
-          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
-        >
+        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-lg font-semibold">Create user</h2>
@@ -314,63 +535,68 @@ function RouteComponent() {
           )}
           <div className="mt-3 grid gap-3">
             <input
-              value={createForm.name}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  name: event.target.value,
-                }))
-              }
+              {...register('roleName')}
               placeholder="Role name"
               disabled={createRoleMutation.isPending}
               className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
+            <FormError message={createRoleErrors.roleName?.message} />
             <textarea
-              value={createForm.description}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  description: event.target.value,
-                }))
-              }
+              {...register('description')}
               placeholder="Role description"
               disabled={createRoleMutation.isPending}
               className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
+            <FormError message={createRoleErrors.description?.message} />
             <div>
               <p className="mb-2 text-sm font-medium">Permissions</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {permissionOptions.map((permission) => (
-                  <label
-                    key={permission}
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={createForm.permissions.includes(permission)}
-                      onChange={() => toggleCreatePermission(permission)}
-                      disabled={createRoleMutation.isPending}
-                    />
-                    <span>{permission}</span>
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
+                {permissionOptions.map((permission) => {
+                  return (
+                    <label
+                      key={permission.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        value={permission.id}
+                        checked={
+                          selectedPermissions.find(
+                            (p) => p.id === permission.id,
+                          )?.checked ?? false
+                        }
+                        onChange={(event) => {
+                          handleCreatePermissionToggle(event.target.value)
+                        }}
+                        disabled={createRoleMutation.isPending}
+                      />
+                      <span>{permission.permission}</span>
+                    </label>
+                  )
+                })}
               </div>
+              <FormError message={createRoleErrors.permissions?.message} />
             </div>
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <button
-              type="submit"
-              disabled={
-                createRoleMutation.isPending ||
-                !createForm.name.trim() ||
-                createForm.permissions.length === 0
-              }
+              type="reset"
+              onClick={() => reset()}
+              disabled={createRoleMutation.isPending}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              disabled={createRoleMutation.isPending}
+              onClick={handleSubmit(onCreateRole)}
               className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {createRoleMutation.isPending ? 'Creating role…' : 'Create role'}
             </button>
           </div>
-        </form>
+        </div>
 
         <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
           <label
@@ -409,14 +635,13 @@ function RouteComponent() {
                     <th className="px-4 py-3">Role</th>
                     <th className="px-4 py-3">Description</th>
                     <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Users</th>
                     <th className="px-4 py-3">Permissions</th>
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRoles.map((role, index) => {
-                    const isExpanded = editingRoleId === role.id
+                    const isExpanded = selectedUpdateRoleId === role.id
                     const isUpdatingThisRole =
                       updateRoleMutation.isPending &&
                       updateRoleMutation.variables?.roleId === role.id
@@ -440,10 +665,18 @@ function RouteComponent() {
                               {role.isSystem ? 'System' : 'Custom'}
                             </span>
                           </td>
-                          <td className="px-4 py-3">{role.users.length}</td>
                           <td className="px-4 py-3 text-gray-300">
                             {role.permissions.length > 0
-                              ? role.permissions.join(', ')
+                              ? role.permissions
+                                  .map((p) => p.permission)
+                                  .join(', ').length > 150
+                                ? role.permissions
+                                    .map((p) => p.permission)
+                                    .join(', ')
+                                    .slice(0, 170) + '...'
+                                : role.permissions
+                                    .map((p) => p.permission)
+                                    .join(', ')
                               : 'No permissions'}
                           </td>
                           <td className="px-4 py-3">
@@ -452,9 +685,9 @@ function RouteComponent() {
                               onClick={() => {
                                 if (editingBlocked) return
                                 if (isExpanded) {
-                                  setEditingRoleId(null)
+                                  resetUpdateRole()
                                 } else {
-                                  startEditing(role)
+                                  handleEditForm(role)
                                 }
                               }}
                               disabled={editingBlocked || isUpdatingThisRole}
@@ -478,51 +711,48 @@ function RouteComponent() {
                               </h3>
                               <div className="mt-3 grid gap-3">
                                 <input
-                                  value={editForm.name}
-                                  onChange={(event) =>
-                                    setEditForm((previous) => ({
-                                      ...previous,
-                                      name: event.target.value,
-                                    }))
-                                  }
+                                  {...registerUpdateRole('roleName')}
                                   disabled={updateRoleMutation.isPending}
                                   className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                 />
                                 <textarea
-                                  value={editForm.description}
-                                  onChange={(event) =>
-                                    setEditForm((previous) => ({
-                                      ...previous,
-                                      description: event.target.value,
-                                    }))
-                                  }
+                                  {...registerUpdateRole('description')}
                                   disabled={updateRoleMutation.isPending}
                                   className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                 />
-                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
                                   {permissionOptions.map((permission) => (
-                                    <label
-                                      key={permission}
-                                      className="flex items-center gap-2 text-sm"
+                                    <div
+                                      key={permission.id}
+                                      className="flex gap-2"
                                     >
-                                      <input
-                                        type="checkbox"
-                                        checked={editForm.permissions.includes(
-                                          permission,
-                                        )}
-                                        onChange={() =>
-                                          toggleEditPermission(permission)
-                                        }
-                                        disabled={updateRoleMutation.isPending}
-                                      />
-                                      <span>{permission}</span>
-                                    </label>
+                                      <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                          type="checkbox"
+                                          value={permission.id}
+                                          checked={
+                                            selectedUpdateRolePermissions.find(
+                                              (p) => p.id === permission.id,
+                                            )?.checked ?? false
+                                          }
+                                          onChange={(event) => {
+                                            handleUpdatePermissionToggle(
+                                              event.target.value,
+                                            )
+                                          }}
+                                          disabled={
+                                            updateRoleMutation.isPending
+                                          }
+                                        />
+                                      </label>
+                                      <span>{permission.permission}</span>
+                                    </div>
                                   ))}
                                 </div>
                                 <div className="flex justify-end gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => setEditingRoleId(null)}
+                                    onClick={() => resetUpdateRole()}
                                     disabled={updateRoleMutation.isPending}
                                     className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
@@ -530,18 +760,10 @@ function RouteComponent() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      if (!editingRoleId) return
-                                      updateRoleMutation.mutate({
-                                        roleId: editingRoleId,
-                                        ...editForm,
-                                      })
-                                    }}
-                                    disabled={
-                                      updateRoleMutation.isPending ||
-                                      !editForm.name.trim() ||
-                                      editForm.permissions.length === 0
-                                    }
+                                    onClick={handleSubmitUpdateRole(
+                                      onUpdateRole,
+                                    )}
+                                    disabled={updateRoleMutation.isPending}
                                     className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     {updateRoleMutation.isPending
@@ -562,7 +784,7 @@ function RouteComponent() {
 
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {filteredRoles.map((role) => {
-                const isExpanded = editingRoleId === role.id
+                const isExpanded = selectedUpdateRoleId === role.id
                 const isEditingBlocked = role.isSystem
                 return (
                   <article
@@ -574,9 +796,9 @@ function RouteComponent() {
                       onClick={() => {
                         if (isEditingBlocked) return
                         if (isExpanded) {
-                          setEditingRoleId(null)
+                          resetUpdateRole()
                         } else {
-                          startEditing(role)
+                          handleEditForm(role)
                         }
                       }}
                       disabled={isEditingBlocked}
@@ -614,18 +836,14 @@ function RouteComponent() {
 
                       {!isExpanded && (
                         <div className="mt-3 text-sm text-gray-300">
-                          <p>
-                            <span className="font-medium text-gray-100">
-                              Assigned users:
-                            </span>{' '}
-                            {role.users.length}
-                          </p>
                           <p className="mt-1">
                             <span className="font-medium text-gray-100">
                               Permissions:
                             </span>{' '}
                             {role.permissions.length > 0
-                              ? role.permissions.join(', ')
+                              ? role.permissions
+                                  .map((p) => p.permission)
+                                  .join(', ')
                               : 'No permissions'}
                           </p>
                         </div>
@@ -637,50 +855,52 @@ function RouteComponent() {
                         <h2 className="text-lg font-semibold">Edit role</h2>
                         <div className="mt-3 grid gap-3">
                           <input
-                            value={editForm.name}
-                            onChange={(event) =>
-                              setEditForm((previous) => ({
-                                ...previous,
-                                name: event.target.value,
-                              }))
-                            }
+                            {...registerUpdateRole('roleName')}
                             placeholder="Role name"
                             disabled={updateRoleMutation.isPending}
                             className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
+                          <FormError
+                            message={updateRoleErrors.roleName?.message}
+                          />
                           <textarea
-                            value={editForm.description}
-                            onChange={(event) =>
-                              setEditForm((previous) => ({
-                                ...previous,
-                                description: event.target.value,
-                              }))
-                            }
+                            {...registerUpdateRole('description')}
                             placeholder="Role description"
                             disabled={updateRoleMutation.isPending}
                             className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                          />
+                          <FormError
+                            message={updateRoleErrors.description?.message}
                           />
                           <div>
                             <p className="mb-2 text-sm font-medium">
                               Permissions
                             </p>
+                            <FormError
+                              message={updateRoleErrors.permissions?.message}
+                            />
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                               {permissionOptions.map((permission) => (
                                 <label
-                                  key={permission}
+                                  key={permission.id}
                                   className="flex items-center gap-2 text-sm"
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={editForm.permissions.includes(
-                                      permission,
-                                    )}
-                                    onChange={() =>
-                                      toggleEditPermission(permission)
+                                    value={permission.id}
+                                    checked={
+                                      selectedUpdateRolePermissions.find(
+                                        (p) => p.id === permission.id,
+                                      )?.checked ?? false
                                     }
+                                    onChange={(event) => {
+                                      handleUpdatePermissionToggle(
+                                        event.target.value,
+                                      )
+                                    }}
                                     disabled={updateRoleMutation.isPending}
                                   />
-                                  <span>{permission}</span>
+                                  <span>{permission.permission}</span>
                                 </label>
                               ))}
                             </div>
@@ -688,7 +908,7 @@ function RouteComponent() {
                           <div className="flex gap-2 pt-2">
                             <button
                               type="button"
-                              onClick={() => setEditingRoleId(null)}
+                              onClick={() => resetUpdateRole()}
                               disabled={updateRoleMutation.isPending}
                               className="flex-1 rounded-md border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
@@ -696,18 +916,8 @@ function RouteComponent() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                if (!editingRoleId) return
-                                updateRoleMutation.mutate({
-                                  roleId: editingRoleId,
-                                  ...editForm,
-                                })
-                              }}
-                              disabled={
-                                updateRoleMutation.isPending ||
-                                !editForm.description.trim() ||
-                                !editForm.name.trim()
-                              }
+                              onClick={handleSubmitUpdateRole(onUpdateRole)}
+                              disabled={updateRoleMutation.isPending}
                               className="flex-1 rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {updateRoleMutation.isPending

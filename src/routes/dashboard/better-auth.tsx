@@ -351,6 +351,17 @@ function BetterAuthDemo() {
     }
   }
 
+  const handleGuestAccess = async () => {
+    setLoading(true)
+    try {
+      await authClient.signIn.anonymous()
+    } catch (error) {
+      console.log('🚀 ~ handleGuestAccess ~ error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div
       className="flex justify-center items-center min-h-[calc(100dvh-var(--app-header-height))] text-white py-10 px-4"
@@ -456,6 +467,14 @@ function BetterAuthDemo() {
             ) : (
               'Sign in'
             )}
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={handleGuestAccess}
+            className="w-full h-9 px-4 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 dark:bg-gray-50 dark:text-neutral-900 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Guest
           </button>
         </form>
 

@@ -27,12 +27,12 @@ import StatusMessage from '@/components/StatusMessage'
 import { getUpdatedFieldValue } from '@/utils/helper'
 
 // libs
-import { getUserRoles } from '@/lib/queries/roles'
+import { getRoles } from '@/lib/queries/roles'
 import { buildCursorPaginationQuery } from './admin-query'
 import { useSession } from '@/lib/auth-client'
 
 // types
-import type { UserRolesNodes, UserRolesPage } from '@/lib/queries/roles'
+import type { RolesNodes, RolesPage } from '@/lib/queries/roles'
 import type { CursorQuery, PaginationInput } from './admin-query'
 
 type TFetchUserAccounts = {
@@ -218,7 +218,7 @@ type UserDetailsPanelProps = {
   isEditMode: boolean
   isPending: boolean
   isSaving: boolean
-  roleOptions: UserRolesNodes[]
+  roleOptions: RolesNodes[]
   onCancel: () => void
   onEdit: (account: UserAccountsNodes) => void
   onEditFieldChange: (field: keyof EditFormState, value: string) => void
@@ -597,7 +597,7 @@ function UsersPage() {
     },
   })
 
-  const rolesQuery = useInfiniteQuery<UserRolesPage, Error>({
+  const rolesQuery = useInfiniteQuery<RolesPage, Error>({
     queryKey: [
       'userRoles',
       {
@@ -610,7 +610,7 @@ function UsersPage() {
       },
     ],
     queryFn: async ({ pageParam, queryKey }) =>
-      await getUserRoles({
+      await getRoles({
         pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
@@ -1143,7 +1143,7 @@ function UsersPage() {
               disabled={createUserMutation.isPending}
               className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancel
+              Clear
             </button>
             <button
               type="submit"

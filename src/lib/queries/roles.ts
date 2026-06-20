@@ -5,7 +5,7 @@ import {
   PaginationInput,
 } from '@/routes/dashboard/admin-query'
 
-export type TFetchUserRoles = {
+export type TFetchRoles = {
   pageParam: CursorQuery
   queryKey: [
     string,
@@ -16,32 +16,27 @@ export type TFetchUserRoles = {
   ]
 }
 
-export type UserSelect = {
+export type RolePermissions = {
   id: string
-  name: string
-  firstName: string
-  lastName: string
-  email: string
-  image: string | null
-  emailVerified: boolean
   createdAt: string
   updatedAt: string
-  roleId: string | null
+  action: 'create' | 'read' | 'update' | 'delete'
+  resource: string
+  permission: string
 }
 
-export interface UserRolesNodes {
+export interface RolesNodes {
   id: string
   name: string
-  description: string
+  description: string | null
   isSystem: boolean
   createdAt: string
   updatedAt: string
-  users: UserSelect[]
-  permissions: string[]
+  permissions: RolePermissions[]
 }
 
-export type UserRolesPage = {
-  nodes: Array<UserRolesNodes>
+export type RolesPage = {
+  nodes: Array<RolesNodes>
   pageInfo: {
     hasNextPage: boolean
     nextCursor: {
@@ -54,13 +49,16 @@ export type UserRolesPage = {
 }
 
 export interface CreateRoleRequest {
-  name: string
-  description: string
+  roleName: string
+  description: string | null
   permissions: string[]
 }
 
-export interface UpdateRoleRequest extends CreateRoleRequest {
+export interface UpdateRoleRequest {
   roleId: string
+  roleName?: string
+  description?: string
+  permissions?: string[] | null
 }
 
 export interface RoleMutationResponse {
@@ -68,12 +66,12 @@ export interface RoleMutationResponse {
   name: string
   description: string | null
   isSystem: boolean
-  permissions: string[]
   createdAt: string
   updatedAt: string
+  permissions: string[]
 }
 
-export async function getUserRoles({ pageParam, queryKey }: TFetchUserRoles) {
+export async function getRoles({ pageParam, queryKey }: TFetchRoles) {
   const [, { baseUrl, input }] = queryKey
 
   const response = await fetch(
@@ -83,6 +81,6 @@ export async function getUserRoles({ pageParam, queryKey }: TFetchUserRoles) {
     },
   )
 
-  const data: UserRolesPage = await response.json()
+  const data: RolesPage = await response.json()
   return data
 }

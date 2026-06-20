@@ -5,8 +5,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment, useCallback, useMemo, useState } from 'react'
-import { TriangleAlert, X } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { X } from 'lucide-react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
 
@@ -21,7 +21,7 @@ import {
   PermissionMutationResponse,
   UpdatePermissionRequest,
 } from '@/lib/queries/permissions'
-import { getUserRoles, UserRolesPage } from '@/lib/queries/roles'
+import { getRoles, RolesPage } from '@/lib/queries/roles'
 
 // types
 import type {
@@ -57,8 +57,6 @@ type DeletePermissionInputs = z.infer<typeof deletePermissionSchema>
 type PermissionStats = {
   totalPermissions: number
   loadedPermissions: number
-  systemPermissions: number
-  rolesRepresented: number
 }
 
 interface DeletePermissionState {
@@ -85,7 +83,6 @@ const emptyPermissionForm: CreatePermissionRequest = {
   resource: '',
   action: '',
   key: '',
-  roleId: '',
 }
 
 export const Route = createFileRoute('/dashboard/permissions')({
@@ -108,10 +105,6 @@ const FormError = ({ message }: { message?: string }) => {
   if (!message) return null
 
   return <p className="mt-1 text-xs text-red-300">{message}</p>
-}
-
-function getPermissionStatus(permission: PermissionRecord): string {
-  return permission.role?.isSystem ? 'System' : 'Custom'
 }
 
 function RouteComponent() {
@@ -176,7 +169,7 @@ function RouteComponent() {
     },
   })
 
-  const rolesQuery = useInfiniteQuery<UserRolesPage, Error>({
+  const rolesQuery = useInfiniteQuery<RolesPage, Error>({
     queryKey: [
       'userRoles',
       {
@@ -189,7 +182,7 @@ function RouteComponent() {
       },
     ],
     queryFn: async ({ pageParam, queryKey }) =>
-      await getUserRoles({
+      await getRoles({
         pageParam: pageParam as CursorQuery,
         queryKey: queryKey as [
           string,
@@ -341,8 +334,6 @@ function RouteComponent() {
         permissionLabel,
         permission.permission.split(':')[0] ?? '',
         permission.permission.split(':')[1] ?? '',
-        permission.role?.description,
-        getPermissionStatus(permission),
         permission.createdAt,
         permission.updatedAt,
       ]
@@ -352,36 +343,21 @@ function RouteComponent() {
   }, [search, allPermissions])
 
   const startEditing = (permission: PermissionRecord) => {
-    if (permission.role?.isSystem) return
-
     setEditingPermissionId(permission.id)
     setEditForm({
       resource: permission.permission.split(':')[0] ?? '',
       action: permission.permission.split(':')[1] ?? '',
       key: getPermissionLabel(permission),
-      roleId: permission.role?.id ?? '',
     })
   }
 
-  const roleOptions = useMemo(
-    () => rolesQuery.data?.pages.flatMap((page) => page.nodes) ?? [],
-    [rolesQuery.data],
-  )
-
   const permissionStats = useMemo<PermissionStats>(() => {
-    const representedRoleIds = new Set(
-      allPermissions.map((account) => account.roleId).filter(Boolean),
-    )
     const totalPermissions =
       data?.pages.at(0)?.totalCount ?? allPermissions.length
 
     return {
       totalPermissions,
       loadedPermissions: allPermissions.length,
-      systemPermissions: allPermissions.filter(
-        (account) => account.role?.isSystem,
-      ).length,
-      rolesRepresented: representedRoleIds.size,
     }
   }, [allPermissions, data])
 
@@ -415,6 +391,24 @@ function RouteComponent() {
     [deletePermissionMutation],
   )
 
+  useEffect(() => {
+    if (createForm.action || createForm.resource) {
+      setCreateForm((previous) => ({
+        ...previous,
+        key: `${previous.resource}:${previous.action}`,
+      }))
+    }
+  }, [createForm.action, createForm.resource])
+
+  useEffect(() => {
+    if (editForm.action || editForm.resource) {
+      setEditForm((previous) => ({
+        ...previous,
+        key: `${previous.resource}:${previous.action}`,
+      }))
+    }
+  }, [editForm.action, editForm.resource])
+
   return (
     <div
       className="min-h-screen text-white gap-6"
@@ -447,14 +441,14 @@ function RouteComponent() {
                 label="Loaded"
                 value={permissionStats.loadedPermissions}
               />
-              <StatCard
+              {/* <StatCard
                 label="System"
                 value={permissionStats.systemPermissions}
               />
               <StatCard
                 label="Roles"
                 value={permissionStats.rolesRepresented}
-              />
+              /> */}
             </div>
           </div>
         </div>
@@ -479,7 +473,7 @@ function RouteComponent() {
               {createPermissionMutation.error.message}
             </StatusMessage>
           )}
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <input
               value={createForm.resource}
               onChange={(event) =>
@@ -492,7 +486,7 @@ function RouteComponent() {
               disabled={createPermissionMutation.isPending}
               className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
-            <input
+            <select
               value={createForm.action}
               onChange={(event) =>
                 setCreateForm((previous) => ({
@@ -500,41 +494,21 @@ function RouteComponent() {
                   action: event.target.value,
                 }))
               }
-              placeholder="Action (for example, read)"
-              disabled={createPermissionMutation.isPending}
               className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-            />
-            <input
-              value={createForm.key}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  key: event.target.value,
-                }))
-              }
-              placeholder="Permission key (for example, todos:read)"
-              disabled={createPermissionMutation.isPending}
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-            />
-            <select
-              value={createForm.roleId}
-              onChange={(event) =>
-                setCreateForm((previous) => ({
-                  ...previous,
-                  roleId: event.target.value,
-                }))
-              }
-              disabled={createPermissionMutation.isPending}
-              className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-              required
             >
-              <option value="">Select role</option>
-              {roleOptions.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
+              <option value="">Action</option>
+              {['create', 'read', 'update', 'delete'].map((action) => (
+                <option key={action} value={action}>
+                  {action}
                 </option>
               ))}
             </select>
+            <input
+              value={createForm.key}
+              placeholder="Permission key (for example, todos:read)"
+              disabled
+              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+            />
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <button
@@ -543,7 +517,7 @@ function RouteComponent() {
               disabled={createPermissionMutation.isPending}
               className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancel
+              Clear
             </button>
             <button
               type="submit"
@@ -551,8 +525,7 @@ function RouteComponent() {
                 createPermissionMutation.isPending ||
                 createForm.action.trim().length === 0 ||
                 createForm.key.trim().length === 0 ||
-                createForm.resource.trim().length === 0 ||
-                createForm.roleId.trim().length === 0
+                createForm.resource.trim().length === 0
               }
               className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -610,25 +583,20 @@ function RouteComponent() {
                     <th className="px-4 py-3 w-10"></th>
                     <th className="px-4 py-3">Permission</th>
                     <th className="px-4 py-3">Resource</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Description</th>
-                    <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Created</th>
                     <th className="px-4 py-3">Updated</th>
-                    <th className="px-4 py-3 text-center">Actions</th>
+                    <th className="px-4 py-3 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredPermissions.map((permission, index) => {
                     const isExpanded = editingPermissionId === permission.id
-                    const editingBlocked = permission.role?.isSystem
 
                     return (
                       <Fragment key={permission.id.toString() + `${index}`}>
                         <tr
                           className="border-t border-gray-700 align-top cursor-pointer hover:bg-gray-800/40 transition-colors"
                           onClick={() => {
-                            if (editingBlocked) return
                             if (isExpanded) {
                               setEditingPermissionId(null)
                             } else {
@@ -637,38 +605,19 @@ function RouteComponent() {
                           }}
                         >
                           <td className="px-4 py-3">
-                            {!editingBlocked && (
-                              <span
-                                className={`inline-flex transform transition-transform ${
-                                  isExpanded ? 'rotate-180' : ''
-                                }`}
-                              >
-                                ▼
-                              </span>
-                            )}
+                            <span
+                              className={`inline-flex transform transition-transform ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`}
+                            >
+                              ▼
+                            </span>
                           </td>
                           <td className="px-4 py-3 font-medium">
                             {getPermissionLabel(permission)}
                           </td>
                           <td className="px-4 py-3 text-gray-300">
                             {permission.permission.split(':')[0] ?? '—'}
-                          </td>
-                          <td className="px-4 py-3 text-gray-300">
-                            {permission.role?.name ?? '—'}
-                          </td>
-                          <td className="px-4 py-3 text-gray-300">
-                            {permission.role?.description ?? '—'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                                permission.role?.isSystem
-                                  ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
-                                  : 'bg-gray-700/60 text-gray-200 border border-gray-600'
-                              }`}
-                            >
-                              {getPermissionStatus(permission)}
-                            </span>
                           </td>
                           <td className="px-4 py-3 text-gray-300">
                             {formatDate(permission.createdAt)}
@@ -681,17 +630,11 @@ function RouteComponent() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (editingBlocked) return
                                 handleDeletePermission(permission)
                               }}
-                              disabled={editingBlocked}
                               className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {editingBlocked ? (
-                                <TriangleAlert size={14} />
-                              ) : (
-                                <X size={14} />
-                              )}
+                              <X size={14} />
                             </button>
                           </td>
                         </tr>
@@ -702,7 +645,7 @@ function RouteComponent() {
                                 <h3 className="text-md font-semibold mb-3">
                                   Edit permission
                                 </h3>
-                                <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="grid gap-3 sm:grid-cols-3">
                                   <input
                                     value={editForm.resource}
                                     onChange={(event) =>
@@ -716,7 +659,7 @@ function RouteComponent() {
                                     }
                                     className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   />
-                                  <input
+                                  <select
                                     value={editForm.action}
                                     onChange={(event) =>
                                       setEditForm((previous) => ({
@@ -728,42 +671,22 @@ function RouteComponent() {
                                       updatePermissionMutation.isPending
                                     }
                                     className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                                  />
-                                  <select
-                                    value={editForm.roleId}
-                                    onChange={(event) =>
-                                      setEditForm((previous) => ({
-                                        ...previous,
-                                        roleId: event.target.value,
-                                      }))
-                                    }
-                                    disabled={
-                                      updatePermissionMutation.isPending
-                                    }
-                                    className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-                                    required
                                   >
-                                    <option value="">Select role</option>
-                                    {roleOptions.map((role) => (
-                                      <option key={role.id} value={role.id}>
-                                        {role.name}
-                                      </option>
-                                    ))}
+                                    <option value="">Action</option>
+                                    {['create', 'read', 'update', 'delete'].map(
+                                      (action) => (
+                                        <option key={action} value={action}>
+                                          {action}
+                                        </option>
+                                      ),
+                                    )}
                                   </select>
                                   <input
                                     value={editForm.key}
-                                    onChange={(event) =>
-                                      setEditForm((previous) => ({
-                                        ...previous,
-                                        key: event.target.value,
-                                      }))
-                                    }
-                                    disabled={
-                                      updatePermissionMutation.isPending
-                                    }
+                                    disabled
                                     className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   />
-                                  <div className="flex justify-end gap-2 sm:col-span-2">
+                                  <div className="flex justify-end gap-2 sm:col-span-3">
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -813,7 +736,6 @@ function RouteComponent() {
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {filteredPermissions.map((permission) => {
                 const isExpanded = editingPermissionId === permission.id
-                const editingBlocked = permission.role?.isSystem
 
                 return (
                   <article
@@ -823,14 +745,12 @@ function RouteComponent() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (editingBlocked) return
                         if (isExpanded) {
                           setEditingPermissionId(null)
                         } else {
                           startEditing(permission)
                         }
                       }}
-                      disabled={editingBlocked}
                       className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors disabled:cursor-not-allowed"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -838,29 +758,15 @@ function RouteComponent() {
                           <h2 className="text-lg font-semibold leading-tight">
                             {getPermissionLabel(permission)}
                           </h2>
-                          <p className="mt-2 text-sm text-gray-300">
-                            {permission.role?.description ?? '—'}
-                          </p>
                         </div>
                         <div className="flex gap-2 items-start shrink-0">
                           <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                              permission.role?.isSystem
-                                ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
-                                : 'bg-gray-700/60 text-gray-200 border border-gray-600'
+                            className={`inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                              isExpanded ? 'rotate-180' : ''
                             }`}
                           >
-                            {getPermissionStatus(permission)}
+                            ▼
                           </span>
-                          {!editingBlocked && (
-                            <span
-                              className={`inline-flex transform transition-transform text-gray-400 shrink-0 ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`}
-                            >
-                              ▼
-                            </span>
-                          )}
                         </div>
                       </div>
 
@@ -871,12 +777,6 @@ function RouteComponent() {
                               Resource:
                             </span>{' '}
                             {permission.permission.split(':')[0] ?? '—'}
-                          </p>
-                          <p className="mt-1">
-                            <span className="font-medium text-gray-100">
-                              User:
-                            </span>{' '}
-                            {permission.role?.name ?? '—'}
                           </p>
                           <p className="mt-1">
                             <span className="font-medium text-gray-100">
@@ -905,7 +805,7 @@ function RouteComponent() {
                             disabled={updatePermissionMutation.isPending}
                             className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
-                          <input
+                          <select
                             value={editForm.action}
                             onChange={(event) =>
                               setEditForm((previous) => ({
@@ -915,37 +815,21 @@ function RouteComponent() {
                             }
                             disabled={updatePermissionMutation.isPending}
                             className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
-                          />
+                          >
+                            <option value="">Action</option>
+                            {['create', 'read', 'update', 'delete'].map(
+                              (action) => (
+                                <option key={action} value={action}>
+                                  {action}
+                                </option>
+                              ),
+                            )}
+                          </select>
                           <input
                             value={editForm.key}
-                            onChange={(event) =>
-                              setEditForm((previous) => ({
-                                ...previous,
-                                key: event.target.value,
-                              }))
-                            }
-                            disabled={updatePermissionMutation.isPending}
+                            disabled
                             className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
-                          <select
-                            value={editForm.roleId}
-                            onChange={(event) =>
-                              setEditForm((previous) => ({
-                                ...previous,
-                                roleId: event.target.value,
-                              }))
-                            }
-                            disabled={updatePermissionMutation.isPending}
-                            className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm"
-                            required
-                          >
-                            <option value="">Select role</option>
-                            {roleOptions.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.name}
-                              </option>
-                            ))}
-                          </select>
                         </div>
                         <div className="mt-2 flex sm:col-span-2">
                           <div className="flex justify-start">
@@ -953,17 +837,11 @@ function RouteComponent() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (editingBlocked) return
                                 handleDeletePermission(permission)
                               }}
-                              disabled={editingBlocked}
                               className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {editingBlocked ? (
-                                <TriangleAlert size={14} />
-                              ) : (
-                                <X size={14} />
-                              )}
+                              <X size={14} />
                             </button>
                           </div>
                           <div className="flex flex-1 justify-end gap-2">
@@ -1077,7 +955,7 @@ function RouteComponent() {
               <input
                 type="text"
                 disabled
-                value={`${deletePermission.permission?.role?.name} - ${deletePermission.permission?.permission}`}
+                value={`${deletePermission.permission?.resource} - ${deletePermission.permission?.permission}`}
                 placeholder="Permission"
                 className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
               />

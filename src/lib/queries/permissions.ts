@@ -21,18 +21,11 @@ export type TFetchUserPermissions = {
 
 export interface PermissionRecord {
   id: string
-  roleId: string
-  permission: string
   createdAt: string
   updatedAt: string
-  role: {
-    id: string
-    name: string
-    description: string | null
-    isSystem: boolean
-    createdAt: string
-    updatedAt: string
-  } | null
+  action: 'create' | 'read' | 'update' | 'delete'
+  resource: string
+  permission: string
 }
 
 export type UserPermissionsPage = {
@@ -52,7 +45,6 @@ export interface CreatePermissionRequest {
   resource: string
   action: Action | string
   key: string
-  roleId: string
 }
 
 export interface UpdatePermissionRequest extends CreatePermissionRequest {
