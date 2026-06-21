@@ -40,7 +40,10 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 // utils
 import { dmsCoordinates } from '@/utils/dms'
-import { authClient, useSession } from '@/lib/auth-client'
+import {
+  // authClient,
+  useSession,
+} from '@/lib/auth-client'
 
 // hooks
 import { useUserAccess } from '@/hooks/use-user-access'
@@ -463,13 +466,17 @@ function RouteComponent() {
     },
   })
 
-  const handleGuestAccess = async () => {
-    try {
-      await authClient.signIn.anonymous()
-    } catch (error) {
-      console.log('🚀 ~ handleGuestAccess ~ error:', error)
-    }
-  }
+  // const handleGuestAccess = async () => {
+  //   try {
+  //     const { data, error } = await authClient.signIn.anonymous()
+
+  //     if (!data && error) {
+  //       throw new Error(error.message)
+  //     }
+  //   } catch (error) {
+  //     console.log('🚀 ~ handleGuestAccess ~ error:', error)
+  //   }
+  // }
 
   const hotspotQueries = useQueries({
     queries: HOTSPOTS.map((hotspot) => ({

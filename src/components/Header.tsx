@@ -77,7 +77,7 @@ export default function Header() {
             <span className="font-medium">Home</span>
           </Link>
 
-          {data && (
+          {data?.user.roleId && (
             <Link
               to="/dashboard/todos"
               onClick={() => setIsOpen(false)}
