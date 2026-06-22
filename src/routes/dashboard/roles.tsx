@@ -5,8 +5,8 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment, useMemo, useState } from 'react'
-import { MonitorCog, Pencil, X } from 'lucide-react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Pencil, X } from 'lucide-react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import z from 'zod'
 
@@ -39,6 +39,34 @@ type RoleStats = {
   systemRoles: number
   customRoles: number
 }
+
+interface DeleteRoleState {
+  role: RolesNodes | null
+  isOpen: boolean
+}
+
+const deleteRoleSchema = z.object({
+  password: z
+    .string()
+    .min(8, `Confirm password must contain at least 8 characters.`)
+    .regex(/[a-zA-Z]/, `Confirm password must contain at least one letter.`)
+    .regex(/[0-9]/, `Confirm password must contain at least one number.`)
+    .regex(
+      /[^a-zA-Z0-9]/,
+      `Confirm password must contain at least one special character.`,
+    )
+    .trim(),
+  ids: z
+    .array(z.string(), {
+      error: "No id's provided.",
+    })
+    .meta({
+      description: "Permission id's",
+      example: ['123e4567-e89b-12d3-a456-426614174000'],
+    }),
+})
+
+type DeleteRoleInputs = z.infer<typeof deleteRoleSchema>
 
 const createRoleSchema = z.object({
   roleName: z.string().min(2, 'Role name.').max(30).trim(),
@@ -126,6 +154,20 @@ export const Route = createFileRoute('/dashboard/roles')({
 function RouteComponent() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [deleteRole, setDeleteRole] = useState<DeleteRoleState>({
+    role: null,
+    isOpen: false,
+  })
+
+  const {
+    register: deleteRoleRegister,
+    reset: deleteRoleReset,
+    setValue: deleteRoleSetValue,
+    handleSubmit: deleteRoleHandleSubmit,
+    formState: { errors: deleteRoleErrors },
+  } = useForm<DeleteRoleInputs>({
+    resolver: zodResolver(deleteRoleSchema),
+  })
 
   const {
     data: permissionsQuery,
@@ -273,6 +315,51 @@ function RouteComponent() {
     },
     onSuccess: async () => {
       resetUpdateRole()
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'roles',
+          {
+            baseUrl: `${ROLE_API_BASE_URL}/roles`,
+            input: {
+              pageSize: 10,
+              orderBy: 'desc',
+              limit: 25,
+            },
+          },
+        ],
+      })
+    },
+  })
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: async ({
+      data,
+    }: {
+      data: { password: string; ids: string[] }
+    }) => {
+      const response = await fetch(`${ROLE_API_BASE_URL}/roles/delete`, {
+        method: 'DELETE',
+        headers: {
+          accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(errorData?.error || 'Failed to delete roles.')
+      }
+    },
+    onSuccess: async () => {
+      setDeleteRole({
+        role: null,
+        isOpen: false,
+      })
+      deleteRoleReset()
       await queryClient.invalidateQueries({
         queryKey: [
           'roles',
@@ -438,6 +525,34 @@ function RouteComponent() {
       },
     )
   }
+
+  const handleDeleteRole = (role: RolesNodes) => {
+    deleteRoleReset()
+    setDeleteRole({
+      role,
+      isOpen: true,
+    })
+    deleteRoleSetValue('ids', [role.id])
+  }
+
+  const onDeleteRoleCancel = () => {
+    setDeleteRole({
+      role: null,
+      isOpen: false,
+    })
+    deleteRoleReset()
+  }
+
+  const onDeleteRole: SubmitHandler<DeleteRoleInputs> = useCallback(
+    async (formValues) => {
+      if (formValues.ids.length > 0) {
+        await deleteRoleMutation.mutateAsync({
+          data: { password: formValues.password, ids: formValues.ids },
+        })
+      }
+    },
+    [deleteRoleMutation],
+  )
 
   const fetchMoreRoles = async () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -645,7 +760,7 @@ function RouteComponent() {
                     const isUpdatingThisRole =
                       updateRoleMutation.isPending &&
                       updateRoleMutation.variables?.roleId === role.id
-                    const editingBlocked = role.isSystem
+                    // const editingBlocked = role.isSystem
 
                     return (
                       <Fragment key={role.id.toString() + `${index}`}>
@@ -683,23 +798,26 @@ function RouteComponent() {
                             <button
                               type="button"
                               onClick={() => {
-                                if (editingBlocked) return
+                                // if (editingBlocked) return
                                 if (isExpanded) {
                                   resetUpdateRole()
                                 } else {
                                   handleEditForm(role)
                                 }
                               }}
-                              disabled={editingBlocked || isUpdatingThisRole}
+                              disabled={isUpdatingThisRole}
                               className="cursor-pointer rounded-md border border-gray-400/40 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-500/10 hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {editingBlocked ? (
-                                <MonitorCog size={14} />
-                              ) : isExpanded ? (
-                                <X size={14} />
-                              ) : (
-                                <Pencil size={14} />
-                              )}
+                              {
+                                // editingBlocked ? (
+                                //   <MonitorCog size={14} />
+                                // ) :
+                                isExpanded ? (
+                                  <X size={14} />
+                                ) : (
+                                  <Pencil size={14} />
+                                )
+                              }
                             </button>
                           </td>
                         </tr>
@@ -760,6 +878,16 @@ function RouteComponent() {
                                   </button>
                                   <button
                                     type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteRole(role)
+                                    }}
+                                    className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Delete
+                                  </button>
+                                  <button
+                                    type="button"
                                     onClick={handleSubmitUpdateRole(
                                       onUpdateRole,
                                     )}
@@ -785,7 +913,7 @@ function RouteComponent() {
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {filteredRoles.map((role) => {
                 const isExpanded = selectedUpdateRoleId === role.id
-                const isEditingBlocked = role.isSystem
+                // const isEditingBlocked = role.isSystem
                 return (
                   <article
                     key={role.id}
@@ -794,14 +922,14 @@ function RouteComponent() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (isEditingBlocked) return
+                        // if (isEditingBlocked) return
                         if (isExpanded) {
                           resetUpdateRole()
                         } else {
                           handleEditForm(role)
                         }
                       }}
-                      disabled={isEditingBlocked}
+                      // disabled={isEditingBlocked}
                       className="w-full text-left p-4 hover:bg-gray-800/40 transition-colors disabled:cursor-not-allowed"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -818,15 +946,15 @@ function RouteComponent() {
                           >
                             {role.isSystem ? 'System' : 'Custom'}
                           </span>
-                          {!isEditingBlocked && (
-                            <span
-                              className={`ml-2 inline-flex transform transition-transform text-gray-400 shrink-0 ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`}
-                            >
-                              ▼
-                            </span>
-                          )}
+                          {/* {!isEditingBlocked && ( */}
+                          <span
+                            className={`ml-2 inline-flex transform transition-transform text-gray-400 shrink-0 ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`}
+                          >
+                            ▼
+                          </span>
+                          {/* )} */}
                         </div>
                       </div>
 
@@ -916,6 +1044,16 @@ function RouteComponent() {
                             </button>
                             <button
                               type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteRole(role)
+                              }}
+                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              type="button"
                               onClick={handleSubmitUpdateRole(onUpdateRole)}
                               disabled={updateRoleMutation.isPending}
                               className="flex-1 rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
@@ -956,6 +1094,85 @@ function RouteComponent() {
           </div>
         )}
       </div>
+
+      {deleteRole.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Delete Role
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Permanently remove created role.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onDeleteRoleCancel}
+                className="text-gray-400 transition-colors hover:text-gray-300"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {deleteRoleMutation.isError && (
+              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                {deleteRoleMutation.error?.message || 'Failed to delete role'}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Enter your password
+              </label>
+              <input
+                type="password"
+                {...deleteRoleRegister('password')}
+                placeholder="Enter your password"
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+              />
+              <FormError message={deleteRoleErrors.password?.message} />
+            </div>
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Permission
+              </label>
+              <input
+                type="text"
+                disabled
+                value={`${deleteRole.role?.name} - ${deleteRole.role?.description}`}
+                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+              />
+              <FormError message={deleteRoleErrors.ids?.message} />
+              <p className="mt-2 text-xs text-gray-400">
+                Must enter your password to verify your identity in performing a
+                role removal.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onDeleteRoleCancel}
+                disabled={deleteRoleMutation.isPending}
+                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={deleteRoleHandleSubmit(onDeleteRole)}
+                disabled={deleteRoleMutation.isPending}
+                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleteRoleMutation.isPending ? 'Removing' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -292,7 +292,7 @@ function RouteComponent() {
         const errorData = (await response.json().catch(() => null)) as {
           error?: string
         } | null
-        throw new Error(errorData?.error || 'Failed to permission')
+        throw new Error(errorData?.error || 'Failed to delete permissions.')
       }
     },
     onSuccess: async () => {
@@ -380,8 +380,6 @@ function RouteComponent() {
 
   const onDeletePermission: SubmitHandler<DeletePermissionInputs> = useCallback(
     async (formValues) => {
-      console.log('🚀 ~ RouteComponent ~ formValues:', formValues)
-
       if (formValues.ids.length > 0) {
         await deletePermissionMutation.mutateAsync({
           data: { password: formValues.password, ids: formValues.ids },
@@ -432,7 +430,7 @@ function RouteComponent() {
                 roles and users.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-130">
+            <div className="grid grid-cols-2 gap-3 lg:min-w-130">
               <StatCard
                 label="Total"
                 value={permissionStats.totalPermissions}
@@ -441,14 +439,6 @@ function RouteComponent() {
                 label="Loaded"
                 value={permissionStats.loadedPermissions}
               />
-              {/* <StatCard
-                label="System"
-                value={permissionStats.systemPermissions}
-              />
-              <StatCard
-                label="Roles"
-                value={permissionStats.rolesRepresented}
-              /> */}
             </div>
           </div>
         </div>
