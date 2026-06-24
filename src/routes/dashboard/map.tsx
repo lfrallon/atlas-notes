@@ -688,7 +688,7 @@ function RouteComponent() {
       x: e.clientX - updateCardPosition.x,
       y: e.clientY - updateCardPosition.y,
     }
-    // e.currentTarget.setPointerCapture(e.pointerId)
+    e.currentTarget.setPointerCapture(e.pointerId)
   }
 
   const handleUpdateCardPointerMove = (
@@ -1854,6 +1854,9 @@ function RouteComponent() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                    }}
                     onClick={handleUpdateCancel}
                     className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
                   >
@@ -1861,6 +1864,9 @@ function RouteComponent() {
                   </button>
                   <button
                     type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                    }}
                     onClick={handleUpdate}
                     disabled={!canUpdate}
                     className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
@@ -1941,6 +1947,9 @@ function RouteComponent() {
                   (userAccess && userAccess.role === 'Admin') ? (
                     <button
                       type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                      }}
                       onClick={() =>
                         handleDeleteMessage({
                           id: selectedMessage.id,
@@ -1969,6 +1978,9 @@ function RouteComponent() {
                   (userAccess && userAccess.role === 'Admin') ? (
                     <button
                       type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                      }}
                       onClick={() =>
                         handleUpdateMessage({
                           id: selectedMessage.id,
@@ -1985,6 +1997,9 @@ function RouteComponent() {
                   ) : null}
                   <button
                     type="button"
+                    onPointerDown={(e) => {
+                      e.stopPropagation()
+                    }}
                     onClick={() => {
                       const messageId = `message-${selectedMessage.id}`
                       removeCardState(messageId)
