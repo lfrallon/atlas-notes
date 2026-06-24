@@ -323,7 +323,7 @@ function RouteComponent() {
   const { data: session } = useSession()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
-  const selectedCardRef = useRef<HTMLDivElement | null>(null)
+  const selectedCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
@@ -343,9 +343,7 @@ function RouteComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null,
-  )
+  const [openMessageIds, setOpenMessageIds] = useState<string[]>([])
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
@@ -617,7 +615,9 @@ function RouteComponent() {
     videoUrl?: string | null
   }) => {
     setSelectedCardPosition({ x: 0, y: 40 })
-    setSelectedMessageId(null)
+    setOpenMessageIds((currentIds) =>
+      currentIds.filter((id) => id !== `message-${data.id}`),
+    )
     setUpdateId(data.id)
     setUpdateTitle(data.title)
     setUpdateMessage(data.geoNote)
@@ -652,6 +652,9 @@ function RouteComponent() {
                 }[]
               }
               console.log('🚀 ~ handleDeleteMessage ~ result:', result.message)
+              setOpenMessageIds((currentIds) =>
+                currentIds.filter((id) => id !== `message-${data.id}`),
+              )
             }
           },
           onError: (error) => {
@@ -746,28 +749,39 @@ function RouteComponent() {
     return `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`
   }, [selectedPosition])
 
-  const selectedMessage = useMemo(() => {
-    if (!selectedMessageId) return null
-    return messages.find(
-      (message) => `message-${message.id}` === selectedMessageId,
+  const openMessages = useMemo(() => {
+    if (openMessageIds.length === 0) return []
+
+    const messagesByEntityId = new Map(
+      messages.map((message) => [`message-${message.id}`, message]),
     )
-  }, [messages, selectedMessageId])
+
+    return openMessageIds.flatMap((messageId) => {
+      const message = messagesByEntityId.get(messageId)
+      return message ? [message] : []
+    })
+  }, [messages, openMessageIds])
+
+  const focusedMessage = openMessages.at(-1) ?? null
+  const focusedMessageId = focusedMessage
+    ? `message-${focusedMessage.id}`
+    : null
 
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
     if (isPinning) return
 
-    if (!selectedMessage || !selectedMessageId) {
+    if (!focusedMessage || !focusedMessageId) {
       lastFocusedMessageIdRef.current = null
       return
     }
 
-    if (lastFocusedMessageIdRef.current === selectedMessageId) return
+    if (lastFocusedMessageIdRef.current === focusedMessageId) return
 
     const destination = Cartesian3.fromDegrees(
-      selectedMessage.longitude,
-      selectedMessage.latitude,
+      focusedMessage.longitude,
+      focusedMessage.latitude,
       lastKnownCameraHeightRef.current,
     )
 
@@ -785,12 +799,12 @@ function RouteComponent() {
     //     windowPosition.y - centerY,
     //   )
     //   if (centerDistance < 72 && cameraHeight <= 280_000) {
-    //     lastFocusedMessageIdRef.current = selectedMessageId
+    //     lastFocusedMessageIdRef.current = focusedMessageId
     //     return
     //   }
     // }
 
-    lastFocusedMessageIdRef.current = selectedMessageId
+    lastFocusedMessageIdRef.current = focusedMessageId
     viewer.camera.flyTo({
       destination,
       duration: 1.5,
@@ -798,7 +812,7 @@ function RouteComponent() {
         heading: viewer.camera.heading,
       },
     })
-  }, [isPinning, selectedMessage, selectedMessageId])
+  }, [isPinning, focusedMessage, focusedMessageId])
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
@@ -814,13 +828,6 @@ function RouteComponent() {
       Number(selectedLabel?.split(',')[1]),
     )
   }, [selectedLabel])
-
-  const formattedSelectedMessageCoordinates = useMemo(() => {
-    return dmsCoordinates(
-      Number(selectedMessage?.latitude),
-      selectedMessage?.longitude,
-    )
-  }, [selectedMessage])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -869,10 +876,14 @@ function RouteComponent() {
 
         if (!isPinningRef.current) {
           if (pickedMessageId) {
-            setSelectedMessageId(pickedMessageId)
+            setOpenMessageIds((currentIds) =>
+              currentIds.includes(pickedMessageId)
+                ? currentIds
+                : [...currentIds, pickedMessageId],
+            )
           } else {
             setSelectedCardPosition({ x: 0, y: 40 })
-            setSelectedMessageId(null)
+            setOpenMessageIds([])
           }
           return
         }
@@ -1221,7 +1232,7 @@ function RouteComponent() {
       if (!entityId.startsWith('message-')) return
       if (entityId.includes('-wave-')) return
 
-      const isSelected = entityId === selectedMessageId
+      const isSelected = openMessageIds.includes(entityId)
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
@@ -1341,7 +1352,7 @@ function RouteComponent() {
     staleWaveEntities.forEach((entity) => {
       viewer.entities.remove(entity)
     })
-  }, [hoveredMessageId, selectedMessageId, messages])
+  }, [hoveredMessageId, openMessageIds, messages])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -1367,7 +1378,7 @@ function RouteComponent() {
       const visibleIds = new Set(
         ranked.slice(0, LABEL_MAX_VISIBLE).map((message) => message.id),
       )
-      if (selectedMessageId) visibleIds.add(selectedMessageId)
+      openMessageIds.forEach((messageId) => visibleIds.add(messageId))
 
       viewer.entities.values.forEach((entity) => {
         const entityId = entity.id.toString()
@@ -1383,32 +1394,34 @@ function RouteComponent() {
       if (viewer.isDestroyed()) return
       viewer.camera.changed.removeEventListener(applyLabelVisibility)
     }
-  }, [messages, selectedMessageId])
+  }, [messages, openMessageIds])
 
   useEffect(() => {
     const viewer = viewerRef.current
-    if (!viewer || !selectedMessage || viewer.isDestroyed()) return
+    if (!viewer || openMessages.length === 0 || viewer.isDestroyed()) return
 
-    const position = Cartesian3.fromDegrees(
-      selectedMessage.longitude,
-      selectedMessage.latitude,
-      24,
-    )
+    const updateCardPositions = () => {
+      if (!viewer.scene) return
 
-    const updateCardPosition = () => {
-      const card = selectedCardRef.current
-      if (!card || !viewer.scene) return
+      openMessages.forEach((message, index) => {
+        const card = selectedCardRefs.current[message.id]
+        if (!card) return
 
-      const windowPosition = SceneTransforms.worldToWindowCoordinates(
-        viewer.scene,
-        position,
-      )
+        const position = Cartesian3.fromDegrees(
+          message.longitude,
+          message.latitude,
+          24,
+        )
+        const windowPosition = SceneTransforms.worldToWindowCoordinates(
+          viewer.scene,
+          position,
+        )
 
-      if (windowPosition) {
-        const isVisible = isPointVisibleFromCamera(viewer.scene, position)
-
-        if (isVisible) {
-          card.style.transform = `translate(${windowPosition.x + 240}px, ${windowPosition.y - 30}px) translate(-50%, 20px)`
+        if (
+          windowPosition &&
+          isPointVisibleFromCamera(viewer.scene, position)
+        ) {
+          card.style.transform = `translate(${windowPosition.x + 240 + index * 20}px, ${windowPosition.y - 30 + index * 20}px) translate(-50%, 20px)`
           card.style.opacity = '1'
           card.style.pointerEvents = 'auto'
           card.style.visibility = 'visible'
@@ -1417,22 +1430,18 @@ function RouteComponent() {
           card.style.pointerEvents = 'none'
           card.style.visibility = 'hidden'
         }
-      } else {
-        card.style.opacity = '0'
-        card.style.pointerEvents = 'none'
-        card.style.visibility = 'hidden'
-      }
+      })
     }
 
-    viewer.scene.preRender.addEventListener(updateCardPosition)
-    updateCardPosition()
+    viewer.scene.preRender.addEventListener(updateCardPositions)
+    updateCardPositions()
 
     return () => {
       if (!viewer.isDestroyed()) {
-        viewer.scene.preRender.removeEventListener(updateCardPosition)
+        viewer.scene.preRender.removeEventListener(updateCardPositions)
       }
     }
-  }, [selectedMessage])
+  }, [openMessages])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -1637,7 +1646,7 @@ function RouteComponent() {
         />
       </div>
 
-      {!selectedMessage && (
+      {openMessages.length === 0 && (
         <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-50 flex flex-col gap-3 sm:inset-x-auto sm:left-1.5 sm:w-104">
           {!isPinning && (
             <button
@@ -1663,7 +1672,7 @@ function RouteComponent() {
                 setIsPinning(true)
                 setSelectedCardPosition({ x: 0, y: 40 })
                 setSelectedPosition(null)
-                setSelectedMessageId(null)
+                setOpenMessageIds([])
               }}
               className="mt-3 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
             >
@@ -1839,138 +1848,153 @@ function RouteComponent() {
         </div>
       )}
 
-      {selectedMessage ? (
-        <div
-          ref={selectedCardRef}
-          onPointerDown={handleSelectedCardPointerDown}
-          onPointerMove={handleSelectedCardPointerMove}
-          onPointerUp={handleSelectedCardPointerUp}
-          style={{
-            left: `${selectedCardPosition.x}px`,
-            top: `${selectedCardPosition.y}px`,
-            cursor: 'grab',
-            userSelect: 'none',
-            touchAction: 'none',
-          }}
-          className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
-        >
-          {selectedMessage.videoUrl ? (
-            <div className="relative aspect-video w-full bg-black/80">
-              <ReactPlayer
-                src={selectedMessage.videoUrl}
-                width="100%"
-                height="100%"
-                playing
-                controls
-                loop
-                style={{ position: 'absolute', top: 0, left: 0 }}
-              />
-              <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
-                Focus View
+      {openMessages.map((selectedMessage) => {
+        const formattedSelectedMessageCoordinates = dmsCoordinates(
+          Number(selectedMessage.latitude),
+          selectedMessage.longitude,
+        )
+
+        return (
+          <div
+            key={selectedMessage.id}
+            ref={(element) => {
+              selectedCardRefs.current[selectedMessage.id] = element
+            }}
+            onPointerDown={handleSelectedCardPointerDown}
+            onPointerMove={handleSelectedCardPointerMove}
+            onPointerUp={handleSelectedCardPointerUp}
+            style={{
+              left: `${selectedCardPosition.x}px`,
+              top: `${selectedCardPosition.y}px`,
+              cursor: 'grab',
+              userSelect: 'none',
+              touchAction: 'none',
+            }}
+            className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
+          >
+            {selectedMessage.videoUrl ? (
+              <div className="relative aspect-video w-full bg-black/80">
+                <ReactPlayer
+                  src={selectedMessage.videoUrl}
+                  width="100%"
+                  height="100%"
+                  playing
+                  controls
+                  loop
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                />
+                <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
+                  Focus View
+                </div>
               </div>
-            </div>
-          ) : null}
-          <div className="p-5">
-            <div className="flex justify-evenly items-center">
-              <h3 className="text-sm font-semibold text-zinc-100">
-                {selectedMessage.title}
-              </h3>
-              <div className="flex flex-1 justify-end items-center gap-2">
-                {(userAccess &&
-                  userAccess.permissions.includes('geo-notes:delete') &&
-                  selectedMessage.userId === session?.session.userId) ||
-                (userAccess && userAccess.role === 'Admin') ? (
+            ) : null}
+            <div className="p-5">
+              <div className="flex justify-evenly items-center">
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  {selectedMessage.title}
+                </h3>
+                <div className="flex flex-1 justify-end items-center gap-2">
+                  {(userAccess &&
+                    userAccess.permissions.includes('geo-notes:delete') &&
+                    selectedMessage.userId === session?.session.userId) ||
+                  (userAccess && userAccess.role === 'Admin') ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeleteMessage({
+                          id: selectedMessage.id,
+                          orderBy:
+                            debouncedViewportQueryState?.input.orderBy ??
+                            'desc',
+                          pageSize:
+                            debouncedViewportQueryState?.input.pageSize ?? 500,
+                          bbox: debouncedViewportQueryState?.input.bbox,
+                          east: viewport?.east,
+                          north: viewport?.north,
+                          south: viewport?.south,
+                          west: viewport?.west,
+                          zoomBucket: debouncedViewportQueryState?.zoomBucket,
+                        })
+                      }
+                      className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
+                      aria-label="Remove note"
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                  {(userAccess &&
+                    userAccess.permissions.includes('geo-notes:update') &&
+                    selectedMessage.userId === session?.session.userId) ||
+                  (userAccess && userAccess.role === 'Admin') ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdateMessage({
+                          id: selectedMessage.id,
+                          title: selectedMessage.title,
+                          geoNote: selectedMessage.geoNote,
+                          videoUrl: selectedMessage.videoUrl,
+                        })
+                      }
+                      className="right-12 z-30 rounded-full border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
+                      aria-label="Modify Icon"
+                    >
+                      <SquarePen className="w-4 h-4" />
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    onClick={() =>
-                      handleDeleteMessage({
-                        id: selectedMessage.id,
-                        orderBy:
-                          debouncedViewportQueryState?.input.orderBy ?? 'desc',
-                        pageSize:
-                          debouncedViewportQueryState?.input.pageSize ?? 500,
-                        bbox: debouncedViewportQueryState?.input.bbox,
-                        east: viewport?.east,
-                        north: viewport?.north,
-                        south: viewport?.south,
-                        west: viewport?.west,
-                        zoomBucket: debouncedViewportQueryState?.zoomBucket,
-                      })
-                    }
-                    className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
-                    aria-label="Remove note"
+                    onClick={() => {
+                      setSelectedCardPosition({ x: 0, y: 40 })
+                      setOpenMessageIds((currentIds) =>
+                        currentIds.filter(
+                          (id) => id !== `message-${selectedMessage.id}`,
+                        ),
+                      )
+                    }}
+                    className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
+                    aria-label="Close Icon"
                   >
-                    Delete
+                    <XIcon className="w-4 h-4" />
                   </button>
-                ) : null}
-                {(userAccess &&
-                  userAccess.permissions.includes('geo-notes:update') &&
-                  selectedMessage.userId === session?.session.userId) ||
-                (userAccess && userAccess.role === 'Admin') ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdateMessage({
-                        id: selectedMessage.id,
-                        title: selectedMessage.title,
-                        geoNote: selectedMessage.geoNote,
-                        videoUrl: selectedMessage.videoUrl,
-                      })
-                    }
-                    className="right-12 z-30 rounded-full border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
-                    aria-label="Modify Icon"
-                  >
-                    <SquarePen className="w-4 h-4" />
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCardPosition({ x: 0, y: 40 })
-                    setSelectedMessageId(null)
-                  }}
-                  className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
-                  aria-label="Close Icon"
-                >
-                  <XIcon className="w-4 h-4" />
-                </button>
+                </div>
+              </div>
+              <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
+                {selectedMessage.geoNote}
+              </p>
+              <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                    Coordinates
+                  </span>
+                  <span className="mt-0.5 text-xs font-mono text-zinc-400">
+                    {formattedSelectedMessageCoordinates
+                      ? `${formattedSelectedMessageCoordinates.latitude.deg}°${formattedSelectedMessageCoordinates.latitude.mins}'${formattedSelectedMessageCoordinates.latitude.secs}"${formattedSelectedMessageCoordinates.latitude.bearing},${formattedSelectedMessageCoordinates.longitude.deg}°${formattedSelectedMessageCoordinates.longitude.mins}'${formattedSelectedMessageCoordinates.longitude.secs}"${formattedSelectedMessageCoordinates.longitude.bearing}`
+                      : ''}
+                  </span>
+                </div>
+                <div className="ml-auto flex flex-col items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+                    Timestamp
+                  </span>
+                  <span className="mt-0.5 text-xs text-zinc-400">
+                    {selectedMessage.createdAt
+                      ? new Date(selectedMessage.createdAt).toLocaleString()
+                      : 'Unknown'}
+                  </span>
+                </div>
               </div>
             </div>
-            <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
-              {selectedMessage.geoNote}
-            </p>
-            <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                  Coordinates
-                </span>
-                <span className="mt-0.5 text-xs font-mono text-zinc-400">
-                  {formattedSelectedMessageCoordinates
-                    ? `${formattedSelectedMessageCoordinates.latitude.deg}°${formattedSelectedMessageCoordinates.latitude.mins}'${formattedSelectedMessageCoordinates.latitude.secs}"${formattedSelectedMessageCoordinates.latitude.bearing},${formattedSelectedMessageCoordinates.longitude.deg}°${formattedSelectedMessageCoordinates.longitude.mins}'${formattedSelectedMessageCoordinates.longitude.secs}"${formattedSelectedMessageCoordinates.longitude.bearing}`
-                    : ''}
-                </span>
-              </div>
-              <div className="ml-auto flex flex-col items-end">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
-                  Timestamp
-                </span>
-                <span className="mt-0.5 text-xs text-zinc-400">
-                  {selectedMessage.createdAt
-                    ? new Date(selectedMessage.createdAt).toLocaleString()
-                    : 'Unknown'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <style>{`
+            <style>{`
             @keyframes slideIn {
               from { opacity: 0; transform: translateY(16px) scale(0.98); }
               to { opacity: 1; transform: translateY(0) scale(1); }
             }
 
           `}</style>
-        </div>
-      ) : null}
+          </div>
+        )
+      })}
 
       {/* {isPinning && selectedPosition ? (
         <div
