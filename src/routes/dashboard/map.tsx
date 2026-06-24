@@ -323,7 +323,7 @@ function RouteComponent() {
   const { data: session } = useSession()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
-  const selectedCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
@@ -359,14 +359,24 @@ function RouteComponent() {
     x: 197,
     y: 140,
   })
-  const [selectedCardPosition, setSelectedCardPosition] = useState({
-    x: 0,
-    y: 0,
-  })
+  const [cardPositions, setCardPositions] = useState<
+    Record<string, { x: number; y: number }>
+  >({})
   const isDraggingUpdateCard = useRef(false)
-  const isDraggingSelectedCard = useRef(false)
   const offsetDragUpdateCard = useRef({ x: 0, y: 0 })
-  const offsetDragSelectedCard = useRef({ x: 0, y: 0 })
+  const dragStateRef = useRef<{
+    id: string | null
+    offset: { x: number; y: number }
+  }>({ id: null, offset: { x: 0, y: 0 } })
+
+  function removeCardState(messageId: string) {
+    setCardPositions((currentPositions) => {
+      const nextPositions = { ...currentPositions }
+      delete nextPositions[messageId]
+      return nextPositions
+    })
+    delete cardRefs.current[messageId]
+  }
 
   const viewportQueryState = useMemo(() => {
     if (!viewport) return null
@@ -614,9 +624,10 @@ function RouteComponent() {
     geoNote: string
     videoUrl?: string | null
   }) => {
-    setSelectedCardPosition({ x: 0, y: 40 })
+    const messageId = `message-${data.id}`
+    removeCardState(messageId)
     setOpenMessageIds((currentIds) =>
-      currentIds.filter((id) => id !== `message-${data.id}`),
+      currentIds.filter((id) => id !== messageId),
     )
     setUpdateId(data.id)
     setUpdateTitle(data.title)
@@ -652,8 +663,10 @@ function RouteComponent() {
                 }[]
               }
               console.log('🚀 ~ handleDeleteMessage ~ result:', result.message)
+              const messageId = `message-${data.id}`
+              removeCardState(messageId)
               setOpenMessageIds((currentIds) =>
-                currentIds.filter((id) => id !== `message-${data.id}`),
+                currentIds.filter((id) => id !== messageId),
               )
             }
           },
@@ -695,31 +708,42 @@ function RouteComponent() {
   }
 
   const handleSelectedCardPointerDown = (
+    messageId: string,
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
-    isDraggingSelectedCard.current = true
-    offsetDragSelectedCard.current = {
-      x: e.clientX - selectedCardPosition.x,
-      y: e.clientY - selectedCardPosition.y,
+    const position = cardPositions[messageId] ?? { x: 0, y: 0 }
+    dragStateRef.current = {
+      id: messageId,
+      offset: {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      },
     }
-    // e.currentTarget.setPointerCapture(e.pointerId)
+    e.currentTarget.setPointerCapture(e.pointerId)
   }
 
   const handleSelectedCardPointerMove = (
+    messageId: string,
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
-    if (!isDraggingSelectedCard.current) return
+    if (dragStateRef.current.id !== messageId) return
 
-    setSelectedCardPosition({
-      x: e.clientX - offsetDragSelectedCard.current.x,
-      y: e.clientY - offsetDragSelectedCard.current.y,
-    })
+    setCardPositions((currentPositions) => ({
+      ...currentPositions,
+      [messageId]: {
+        x: e.clientX - dragStateRef.current.offset.x,
+        y: e.clientY - dragStateRef.current.offset.y,
+      },
+    }))
   }
 
   const handleSelectedCardPointerUp = (
+    messageId: string,
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
-    isDraggingSelectedCard.current = false
+    if (dragStateRef.current.id === messageId) {
+      dragStateRef.current = { id: null, offset: { x: 0, y: 0 } }
+    }
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
@@ -882,7 +906,8 @@ function RouteComponent() {
                 : [...currentIds, pickedMessageId],
             )
           } else {
-            setSelectedCardPosition({ x: 0, y: 40 })
+            setCardPositions({})
+            cardRefs.current = {}
             setOpenMessageIds([])
           }
           return
@@ -1404,7 +1429,7 @@ function RouteComponent() {
       if (!viewer.scene) return
 
       openMessages.forEach((message, index) => {
-        const card = selectedCardRefs.current[message.id]
+        const card = cardRefs.current[`message-${message.id}`]
         if (!card) return
 
         const position = Cartesian3.fromDegrees(
@@ -1670,7 +1695,8 @@ function RouteComponent() {
               type="button"
               onClick={() => {
                 setIsPinning(true)
-                setSelectedCardPosition({ x: 0, y: 40 })
+                setCardPositions({})
+                cardRefs.current = {}
                 setSelectedPosition(null)
                 setOpenMessageIds([])
               }}
@@ -1858,14 +1884,29 @@ function RouteComponent() {
           <div
             key={selectedMessage.id}
             ref={(element) => {
-              selectedCardRefs.current[selectedMessage.id] = element
+              cardRefs.current[`message-${selectedMessage.id}`] = element
             }}
-            onPointerDown={handleSelectedCardPointerDown}
-            onPointerMove={handleSelectedCardPointerMove}
-            onPointerUp={handleSelectedCardPointerUp}
+            onPointerDown={(event) =>
+              handleSelectedCardPointerDown(
+                `message-${selectedMessage.id}`,
+                event,
+              )
+            }
+            onPointerMove={(event) =>
+              handleSelectedCardPointerMove(
+                `message-${selectedMessage.id}`,
+                event,
+              )
+            }
+            onPointerUp={(event) =>
+              handleSelectedCardPointerUp(
+                `message-${selectedMessage.id}`,
+                event,
+              )
+            }
             style={{
-              left: `${selectedCardPosition.x}px`,
-              top: `${selectedCardPosition.y}px`,
+              left: `${cardPositions[`message-${selectedMessage.id}`]?.x ?? 0}px`,
+              top: `${cardPositions[`message-${selectedMessage.id}`]?.y ?? 0}px`,
               cursor: 'grab',
               userSelect: 'none',
               touchAction: 'none',
@@ -1945,11 +1986,10 @@ function RouteComponent() {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedCardPosition({ x: 0, y: 40 })
+                      const messageId = `message-${selectedMessage.id}`
+                      removeCardState(messageId)
                       setOpenMessageIds((currentIds) =>
-                        currentIds.filter(
-                          (id) => id !== `message-${selectedMessage.id}`,
-                        ),
+                        currentIds.filter((id) => id !== messageId),
                       )
                     }}
                     className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
