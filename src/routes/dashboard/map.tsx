@@ -119,6 +119,49 @@ interface GeoNotesNodes {
   videoUrl?: string | null
 }
 
+interface SelectedMessage {
+  id: string
+  title: string
+  geoNote: string
+  latitude: number
+  longitude: number
+  createdAt: string | null
+  updatedAt: string
+  userId: string | null
+  videoUrl: string | null | undefined
+}
+
+type DeleteGeoMessage = {
+  id: string
+  pageSize: number
+  orderBy: 'asc' | 'desc'
+  updatedAt?: string
+  bbox?: string
+  west?: number
+  south?: number
+  east?: number
+  north?: number
+  limit?: number
+  zoomBucket?: 'broad' | 'medium' | 'close'
+}
+
+type UpdateGeoNotesMessage = {
+  id: string
+  title: string
+  geoNote: string
+  videoUrl?: string
+  pageSize: number
+  orderBy: 'asc' | 'desc'
+  updatedAt?: string
+  bbox?: string
+  west?: number
+  south?: number
+  east?: number
+  north?: number
+  limit?: number
+  zoomBucket?: 'broad' | 'medium' | 'close'
+}
+
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_ION_TOKEN
 const GEO_NOTES_API_BASE_URL =
   import.meta.env.VITE_FASTIFY_API_URL ?? 'http://localhost:3006/api/v1'
@@ -192,9 +235,7 @@ function applyPulseWaveToCylinder(
 
   entity.cylinder.topRadius = animatedRadius
   entity.cylinder.bottomRadius = animatedRadius
-
   entity.cylinder.material = material
-
   entity.cylinder.outlineColor = outlineColor
 }
 
@@ -333,17 +374,16 @@ function RouteComponent() {
   const [draftTitle, setDraftTitle] = useState('')
   const [draftMessage, setDraftMessage] = useState('')
   const [draftVideoUrl, setDraftVideoUrl] = useState('')
-  const [updateId, setUpdateId] = useState('')
-  const [updateTitle, setUpdateTitle] = useState('')
-  const [updateMessage, setUpdateMessage] = useState('')
-  const [updateVideoUrl, setUpdateVideoUrl] = useState('')
   const [isPinning, setIsPinning] = useState(false)
-  const [isUpdating, setIsUpdating] = useState(false)
   const [isSubmitUpdating, setIsSubmitUpdating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
   const [openMessageIds, setOpenMessageIds] = useState<string[]>([])
+  const [updateMessageIds, setUpdateMessageIds] = useState<string[]>([])
+  const [toUpdateMessages, setToUpdateMessages] = useState<
+    UpdateGeoNotesMessage[]
+  >([])
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<{
     lng: number
@@ -355,15 +395,16 @@ function RouteComponent() {
     x: number
     y: number
   } | null>(null)
-  const [updateCardPosition, setUpdateCardPosition] = useState({
-    x: 197,
-    y: 140,
-  })
+  const [updateCardPosition, setUpdateCardPosition] = useState<
+    Record<string, { x: number; y: number }>
+  >({})
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({})
-  const isDraggingUpdateCard = useRef(false)
-  const offsetDragUpdateCard = useRef({ x: 0, y: 0 })
+  const dragUpdateStateRef = useRef<{
+    id: string | null
+    offset: { x: number; y: number }
+  }>({ id: null, offset: { x: 0, y: 0 } })
   const dragStateRef = useRef<{
     id: string | null
     offset: { x: number; y: number }
@@ -442,19 +483,7 @@ function RouteComponent() {
       body,
     }: {
       body: {
-        data: {
-          id: string
-          pageSize: number
-          orderBy: 'asc' | 'desc'
-          updatedAt?: string
-          bbox?: string
-          west?: number
-          south?: number
-          east?: number
-          north?: number
-          limit?: number
-          zoomBucket?: 'broad' | 'medium' | 'close'
-        }[]
+        data: DeleteGeoMessage[]
       }
     }) => {
       return await fetch('http://localhost:3006/api/v1/geo-notes', {
@@ -584,22 +613,7 @@ function RouteComponent() {
       body,
     }: {
       body: {
-        data: {
-          id: string
-          title: string
-          geoNote: string
-          videoUrl?: string
-          pageSize: number
-          orderBy: 'asc' | 'desc'
-          updatedAt?: string
-          bbox?: string
-          west?: number
-          south?: number
-          east?: number
-          north?: number
-          limit?: number
-          zoomBucket?: 'broad' | 'medium' | 'close'
-        }[]
+        data: UpdateGeoNotesMessage[]
       }
     }) =>
       fetch(`${GEO_NOTES_API_URL}/update`, {
@@ -618,22 +632,34 @@ function RouteComponent() {
     },
   })
 
-  const handleUpdateMessage = async (data: {
-    id: string
-    title: string
-    geoNote: string
-    videoUrl?: string | null
-  }) => {
-    const messageId = `message-${data.id}`
+  const handleUpdateMessage = async (message: SelectedMessage) => {
+    const messageId = `message-${message.id}`
     removeCardState(messageId)
     setOpenMessageIds((currentIds) =>
       currentIds.filter((id) => id !== messageId),
     )
-    setUpdateId(data.id)
-    setUpdateTitle(data.title)
-    setUpdateMessage(data.geoNote)
-    setUpdateVideoUrl(data.videoUrl ?? '')
-    setIsUpdating(true)
+    setUpdateMessageIds((currentIds) =>
+      currentIds.includes(messageId) ? currentIds : [...currentIds, messageId],
+    )
+    setToUpdateMessages((previous) => [
+      ...previous,
+      {
+        id: message.id,
+        title: message.title.trim(),
+        geoNote: message.geoNote.trim(),
+        ...(message?.videoUrl?.trim()
+          ? { videoUrl: message.videoUrl.trim() }
+          : {}),
+        orderBy: debouncedViewportQueryState?.input.orderBy ?? 'desc',
+        pageSize: debouncedViewportQueryState?.input.pageSize ?? 500,
+        bbox: debouncedViewportQueryState?.input.bbox,
+        east: viewport?.east,
+        north: viewport?.north,
+        south: viewport?.south,
+        west: viewport?.west,
+        zoomBucket: debouncedViewportQueryState?.zoomBucket,
+      },
+    ])
   }
 
   const handleDeleteMessage = async (data: {
@@ -681,29 +707,42 @@ function RouteComponent() {
   }
 
   const handleUpdateCardPointerDown = (
+    messageId: string,
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
-    isDraggingUpdateCard.current = true
-    offsetDragUpdateCard.current = {
-      x: e.clientX - updateCardPosition.x,
-      y: e.clientY - updateCardPosition.y,
+    const position = updateCardPosition[messageId] ?? { x: 0, y: 0 }
+    dragUpdateStateRef.current = {
+      id: messageId,
+      offset: {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      },
     }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
 
   const handleUpdateCardPointerMove = (
+    messageId: string,
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
-    if (!isDraggingUpdateCard.current) return
+    if (dragUpdateStateRef.current.id !== messageId) return
 
-    setUpdateCardPosition({
-      x: e.clientX - offsetDragUpdateCard.current.x,
-      y: e.clientY - offsetDragUpdateCard.current.y,
-    })
+    setUpdateCardPosition((currentPositions) => ({
+      ...currentPositions,
+      [messageId]: {
+        x: e.clientX - dragUpdateStateRef.current.offset.x,
+        y: e.clientY - dragUpdateStateRef.current.offset.y,
+      },
+    }))
   }
 
-  const handleUpdateCardPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDraggingUpdateCard.current = false
+  const handleUpdateCardPointerUp = (
+    messageId: string,
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (dragUpdateStateRef.current.id === messageId) {
+      dragUpdateStateRef.current = { id: null, offset: { x: 0, y: 0 } }
+    }
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
@@ -753,10 +792,7 @@ function RouteComponent() {
     !!selectedPosition &&
     !isSubmitting
 
-  const canUpdate =
-    updateTitle.trim().length > 0 &&
-    updateMessage.trim().length > 0 &&
-    !isSubmitUpdating
+  const canUpdate = toUpdateMessages.length > 0 && !isSubmitUpdating
 
   useEffect(() => {
     isPinningRef.current = isPinning
@@ -772,6 +808,19 @@ function RouteComponent() {
     if (!selectedPosition) return null
     return `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`
   }, [selectedPosition])
+
+  const updateMessages = useMemo(() => {
+    if (updateMessageIds.length === 0) return []
+
+    const messagesByEntityId = new Map(
+      messages.map((message) => [`message-${message.id}`, message]),
+    )
+
+    return updateMessageIds.flatMap((messageId) => {
+      const message = messagesByEntityId.get(messageId)
+      return message ? [message] : []
+    })
+  }, [messages, updateMessageIds])
 
   const openMessages = useMemo(() => {
     if (openMessageIds.length === 0) return []
@@ -1425,7 +1474,7 @@ function RouteComponent() {
     const viewer = viewerRef.current
     if (!viewer || openMessages.length === 0 || viewer.isDestroyed()) return
 
-    const updateCardPositions = () => {
+    const openMessagesCardPositions = () => {
       if (!viewer.scene) return
 
       openMessages.forEach((message, index) => {
@@ -1458,15 +1507,62 @@ function RouteComponent() {
       })
     }
 
-    viewer.scene.preRender.addEventListener(updateCardPositions)
-    updateCardPositions()
+    viewer.scene.preRender.addEventListener(openMessagesCardPositions)
+    openMessagesCardPositions()
 
     return () => {
       if (!viewer.isDestroyed()) {
-        viewer.scene.preRender.removeEventListener(updateCardPositions)
+        viewer.scene.preRender.removeEventListener(openMessagesCardPositions)
       }
     }
   }, [openMessages])
+
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || updateMessages.length === 0 || viewer.isDestroyed()) return
+
+    const updateMessagesCardPositions = () => {
+      if (!viewer.scene) return
+
+      updateMessages.forEach((message, index) => {
+        const card = cardRefs.current[`message-${message.id}`]
+        if (!card) return
+
+        const position = Cartesian3.fromDegrees(
+          message.longitude,
+          message.latitude,
+          24,
+        )
+        const windowPosition = SceneTransforms.worldToWindowCoordinates(
+          viewer.scene,
+          position,
+        )
+
+        if (
+          windowPosition &&
+          isPointVisibleFromCamera(viewer.scene, position)
+        ) {
+          card.style.transform = `translate(${windowPosition.x + 240 + index * 20}px, ${windowPosition.y - 30 + index * 20}px) translate(-50%, 20px)`
+          card.style.opacity = '1'
+          card.style.pointerEvents = 'auto'
+          card.style.visibility = 'visible'
+        } else {
+          card.style.opacity = '0'
+          card.style.pointerEvents = 'none'
+          card.style.visibility = 'hidden'
+        }
+      })
+    }
+
+    viewer.scene.preRender.addEventListener(updateMessagesCardPositions)
+    updateMessagesCardPositions()
+
+    return () => {
+      if (!viewer.isDestroyed()) {
+        viewer.scene.preRender.removeEventListener(updateMessagesCardPositions)
+      }
+    }
+  }, [updateMessages])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -1512,7 +1608,7 @@ function RouteComponent() {
     }
   }, [isPinning, selectedPosition])
 
-  async function handleUpdate() {
+  async function handleUpdate(index: number) {
     if (!canUpdate) return
 
     setIsSubmitUpdating(true)
@@ -1522,24 +1618,7 @@ function RouteComponent() {
       updateGeoNotesMutation.mutateAsync(
         {
           body: {
-            data: [
-              {
-                id: updateId,
-                title: updateTitle.trim(),
-                geoNote: updateMessage.trim(),
-                ...(updateVideoUrl.trim()
-                  ? { videoUrl: updateVideoUrl.trim() }
-                  : {}),
-                orderBy: debouncedViewportQueryState?.input.orderBy ?? 'desc',
-                pageSize: debouncedViewportQueryState?.input.pageSize ?? 500,
-                bbox: debouncedViewportQueryState?.input.bbox,
-                east: viewport?.east,
-                north: viewport?.north,
-                south: viewport?.south,
-                west: viewport?.west,
-                zoomBucket: debouncedViewportQueryState?.zoomBucket,
-              },
-            ],
+            data: [toUpdateMessages[index]],
           },
         },
         {
@@ -1550,23 +1629,29 @@ function RouteComponent() {
               } | null
               throw new Error(payload?.error ?? 'Unable to update map message.')
             }
-
-            setUpdateId('')
-            setUpdateTitle('')
-            setUpdateMessage('')
-            setUpdateVideoUrl('')
-            setUpdateCardPosition({ x: 197, y: 140 })
-            setIsUpdating(false)
+            setUpdateMessageIds((prevItems) =>
+              prevItems.filter(
+                (item) => item !== `message-${toUpdateMessages[index].id}`,
+              ),
+            )
+            setToUpdateMessages((prevItems) =>
+              prevItems.filter(
+                (item) => item.id !== toUpdateMessages[index].id,
+              ),
+            )
+            setUpdateCardPosition({})
           },
         },
       )
-
-      setUpdateId('')
-      setUpdateTitle('')
-      setUpdateMessage('')
-      setUpdateVideoUrl('')
-      setUpdateCardPosition({ x: 197, y: 140 })
-      setIsUpdating(false)
+      setUpdateMessageIds((prevItems) =>
+        prevItems.filter(
+          (item) => item !== `message-${toUpdateMessages[index].id}`,
+        ),
+      )
+      setToUpdateMessages((prevItems) =>
+        prevItems.filter((item) => item.id !== toUpdateMessages[index].id),
+      )
+      setUpdateCardPosition({})
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -1642,13 +1727,16 @@ function RouteComponent() {
     setCursorPosition(null)
   }
 
-  function handleUpdateCancel() {
-    setUpdateId('')
-    setUpdateTitle('')
-    setUpdateMessage('')
-    setUpdateVideoUrl('')
-    setUpdateCardPosition({ x: 197, y: 140 })
-    setIsUpdating(false)
+  function handleUpdateCancel(message: SelectedMessage) {
+    const messageId = `message-${message.id}`
+    removeCardState(messageId)
+    setUpdateMessageIds((currentIds) =>
+      currentIds.filter((id) => id !== messageId),
+    )
+    setToUpdateMessages((prevItems) =>
+      prevItems.filter((item) => item.id !== message.id),
+    )
+    setUpdateCardPosition({})
   }
 
   if (!CESIUM_TOKEN) {
@@ -1790,95 +1878,131 @@ function RouteComponent() {
         </div>
       )}
 
-      {isUpdating && (
-        <div
-          onPointerDown={handleUpdateCardPointerDown}
-          onPointerMove={handleUpdateCardPointerMove}
-          onPointerUp={handleUpdateCardPointerUp}
-          style={{
-            left: `${updateCardPosition.x}px`,
-            top: `${updateCardPosition.y}px`,
-            cursor: 'grab',
-            userSelect: 'none',
-            touchAction: 'none',
-          }}
-          className="pointer-events-none absolute left-1/2 top-1.5 z-50 flex flex-col gap-3 transform -translate-x-1/2 w-full max-w-sm sm:left-1.5 sm:w-104 sm:transform-none"
-        >
-          <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
-            <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
-              <p className="text-sm font-semibold text-cyan-100">
-                Update message
-              </p>
-              <input
-                type="text"
-                value={updateTitle}
-                onChange={(event) => setUpdateTitle(event.target.value)}
-                placeholder="Title"
-                className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
-                maxLength={32}
-              />
-              <input
-                type="text"
-                value={updateMessage}
-                onChange={(event) => setUpdateMessage(event.target.value)}
-                placeholder="Share a quick note for this location..."
-                className="mt-3 h-auto w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
-                maxLength={140}
-                height="auto"
-              />
-              <input
-                type="url"
-                value={updateVideoUrl}
-                onChange={(event) => setUpdateVideoUrl(event.target.value)}
-                placeholder="Optional video URL (e.g. YouTube)..."
-                className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
-              />
-              {updateVideoUrl.trim() ? (
-                <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
-                  <ReactPlayer
-                    src={updateVideoUrl.trim()}
-                    width="100%"
-                    height="100%"
-                    controls
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                  />
-                  <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
-                    Preview
+      {updateMessages.map((updateMessage, index) => {
+        return (
+          <div
+            key={updateMessage.id}
+            ref={(element) => {
+              cardRefs.current[`message-${updateMessage.id}`] = element
+            }}
+            onPointerDown={(event) =>
+              handleUpdateCardPointerDown(`message-${updateMessage.id}`, event)
+            }
+            onPointerMove={(event) =>
+              handleUpdateCardPointerMove(`message-${updateMessage.id}`, event)
+            }
+            onPointerUp={(event) =>
+              handleUpdateCardPointerUp(`message-${updateMessage.id}`, event)
+            }
+            style={{
+              left: `${updateCardPosition[`message-${updateMessage.id}`]?.x ?? 0}px`,
+              top: `${updateCardPosition[`message-${updateMessage.id}`]?.y ?? 0}px`,
+              cursor: 'grab',
+              userSelect: 'none',
+              touchAction: 'none',
+            }}
+            className="absolute left-0 top-0 z-20 flex flex-col gap-3 transform -translate-x-1/2 w-full max-w-sm sm:left-1.5 sm:w-104 sm:transform-none"
+          >
+            <div className="rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+              <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+                <p className="text-sm font-semibold text-cyan-100">
+                  Update message
+                </p>
+                <input
+                  type="text"
+                  value={toUpdateMessages[index].title}
+                  onChange={(event) => {
+                    setToUpdateMessages((prevItems) =>
+                      prevItems.map((item) =>
+                        item.id === updateMessage.id
+                          ? { ...item, title: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }}
+                  placeholder="Title"
+                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  maxLength={32}
+                />
+                <input
+                  type="text"
+                  value={toUpdateMessages[index].geoNote}
+                  onChange={(event) => {
+                    setToUpdateMessages((prevItems) =>
+                      prevItems.map((item) =>
+                        item.id === updateMessage.id
+                          ? { ...item, geoNote: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }}
+                  placeholder="Share a quick note for this location..."
+                  className="mt-3 h-auto w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  maxLength={140}
+                  height="auto"
+                />
+                <input
+                  type="url"
+                  value={toUpdateMessages[index]?.videoUrl ?? ''}
+                  onChange={(event) => {
+                    setToUpdateMessages((prevItems) =>
+                      prevItems.map((item) =>
+                        item.id === updateMessage.id
+                          ? { ...item, videoUrl: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }}
+                  placeholder="Optional video URL (e.g. YouTube)..."
+                  className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                />
+                {toUpdateMessages[index]?.videoUrl?.trim() ? (
+                  <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                    <ReactPlayer
+                      src={toUpdateMessages[index].videoUrl.trim()}
+                      width="100%"
+                      height="100%"
+                      controls
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                    />
+                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                      Preview
+                    </div>
                   </div>
-                </div>
-              ) : null}
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-xs text-zinc-400">
-                  {updateMessage.trim().length}/140
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onPointerDown={(e) => {
-                      e.stopPropagation()
-                    }}
-                    onClick={handleUpdateCancel}
-                    className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onPointerDown={(e) => {
-                      e.stopPropagation()
-                    }}
-                    onClick={handleUpdate}
-                    disabled={!canUpdate}
-                    className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
-                  >
-                    {isSubmitUpdating ? 'Updating...' : 'Update'}
-                  </button>
+                ) : null}
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-xs text-zinc-400">
+                    {updateMessage.geoNote.trim().length}/140
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                      }}
+                      onClick={() => handleUpdateCancel(updateMessage)}
+                      className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.stopPropagation()
+                      }}
+                      onClick={() => handleUpdate(index)}
+                      disabled={!canUpdate}
+                      className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                    >
+                      {isSubmitUpdating ? 'Updating...' : 'Update'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })}
 
       {openMessages.map((selectedMessage) => {
         const formattedSelectedMessageCoordinates = dmsCoordinates(
@@ -1981,14 +2105,7 @@ function RouteComponent() {
                       onPointerDown={(e) => {
                         e.stopPropagation()
                       }}
-                      onClick={() =>
-                        handleUpdateMessage({
-                          id: selectedMessage.id,
-                          title: selectedMessage.title,
-                          geoNote: selectedMessage.geoNote,
-                          videoUrl: selectedMessage.videoUrl,
-                        })
-                      }
+                      onClick={() => handleUpdateMessage(selectedMessage)}
                       className="right-12 z-30 rounded-full border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
                       aria-label="Modify Icon"
                     >
