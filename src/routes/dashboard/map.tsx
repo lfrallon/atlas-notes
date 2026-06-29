@@ -1771,7 +1771,7 @@ function RouteComponent() {
             </button>
           )}
           <div
-            className={`${isPinning ? '' : 'hidden sm:block'} pointer-events-auto rounded-2xl border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}
+            className={`${isPinning ? '' : 'hidden sm:block'} pointer-events-auto border border-zinc-700/70 bg-gray-900/80 p-4 text-zinc-100 shadow-xl backdrop-blur-md"`}
           >
             <p className="text-sm font-medium text-zinc-200">Community pins</p>
             <p className="mt-1 text-xs text-zinc-400">
@@ -1788,7 +1788,7 @@ function RouteComponent() {
                 setSelectedPosition(null)
                 setOpenMessageIds([])
               }}
-              className="mt-3 w-full rounded-lg bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
+              className="mt-3 w-full bg-cyan-500 px-4 py-2.5 text-base font-medium text-zinc-950 transition hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
             >
               {isPinning ? 'Choose location on globe…' : 'Add map message'}
             </button>
@@ -1798,16 +1798,16 @@ function RouteComponent() {
           </div>
 
           {isPinning && (
-            <div className="pointer-events-auto rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
-              <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+            <div className="pointer-events-auto bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
+              <div className="border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
                 <p className="text-sm font-semibold text-cyan-100">
                   Compose message
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-full border border-cyan-300/45 bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-100 shadow-sm shadow-cyan-700/20">
+                  <span className="border border-cyan-300/45 bg-cyan-500/20 px-2 py-0.5 text-[11px] font-medium text-cyan-100 shadow-sm shadow-cyan-700/20">
                     Drop mode
                   </span>
-                  <span className="rounded-full border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
+                  <span className="border border-violet-300/35 bg-violet-500/20 px-2 py-0.5 text-[11px] font-medium text-violet-100 shadow-sm shadow-violet-700/20">
                     {selectedLabel
                       ? `${latitude.deg}°${latitude.mins}'${latitude.secs}"${latitude.bearing}, ${longitude.deg}°${longitude.mins}'${longitude.secs}"${longitude.bearing}`
                       : 'Waiting for location'}
@@ -1818,7 +1818,7 @@ function RouteComponent() {
                   value={draftTitle}
                   onChange={(event) => setDraftTitle(event.target.value)}
                   placeholder="Title"
-                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-3 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                   maxLength={32}
                 />
                 <input
@@ -1826,7 +1826,7 @@ function RouteComponent() {
                   value={draftMessage}
                   onChange={(event) => setDraftMessage(event.target.value)}
                   placeholder="Share a quick note for this location..."
-                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-3 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                   maxLength={140}
                 />
                 <input
@@ -1834,7 +1834,7 @@ function RouteComponent() {
                   value={draftVideoUrl}
                   onChange={(event) => setDraftVideoUrl(event.target.value)}
                   placeholder="Optional video URL (e.g. YouTube)..."
-                  className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-2 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                 />
                 {draftVideoUrl.trim() ? (
                   <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
@@ -1845,7 +1845,7 @@ function RouteComponent() {
                       controls
                       style={{ position: 'absolute', top: 0, left: 0 }}
                     />
-                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
                       Preview
                     </div>
                   </div>
@@ -1858,7 +1858,7 @@ function RouteComponent() {
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      className="border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
                     >
                       Cancel
                     </button>
@@ -1866,7 +1866,7 @@ function RouteComponent() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={!canSubmit}
-                      className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      className="border bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
                     >
                       {isSubmitting ? 'Publishing…' : 'Publish'}
                     </button>
@@ -1903,8 +1903,8 @@ function RouteComponent() {
             }}
             className="absolute left-0 top-0 z-20 flex flex-col gap-3 transform -translate-x-1/2 w-full max-w-sm sm:left-1.5 sm:w-104 sm:transform-none"
           >
-            <div className="rounded-2xl bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 p-px shadow-2xl shadow-black/35">
-              <div className="rounded-[calc(1rem-1px)] border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
+            <div className="bg-linear-to-br from-cyan-300/35 via-violet-300/15 to-fuchsia-300/30 shadow-2xl shadow-black/35">
+              <div className="border border-white/15 bg-zinc-950/65 p-3 text-zinc-100 backdrop-blur-xl">
                 <p className="text-sm font-semibold text-cyan-100">
                   Update message
                 </p>
@@ -1921,7 +1921,7 @@ function RouteComponent() {
                     )
                   }}
                   placeholder="Title"
-                  className="mt-3 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-3 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                   maxLength={32}
                 />
                 <input
@@ -1937,7 +1937,7 @@ function RouteComponent() {
                     )
                   }}
                   placeholder="Share a quick note for this location..."
-                  className="mt-3 h-auto w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-3 h-auto w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                   maxLength={140}
                   height="auto"
                 />
@@ -1954,10 +1954,10 @@ function RouteComponent() {
                     )
                   }}
                   placeholder="Optional video URL (e.g. YouTube)..."
-                  className="mt-2 h-11 w-full rounded-lg border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
+                  className="mt-2 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                 />
                 {toUpdateMessages[index]?.videoUrl?.trim() ? (
-                  <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                  <div className="mt-2 relative aspect-video w-full overflow-hidden bg-black/80 shadow-inner border border-zinc-700/50">
                     <ReactPlayer
                       src={toUpdateMessages[index].videoUrl.trim()}
                       width="100%"
@@ -1981,7 +1981,7 @@ function RouteComponent() {
                         e.stopPropagation()
                       }}
                       onClick={() => handleUpdateCancel(updateMessage)}
-                      className="rounded-lg border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      className="border border-zinc-600 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 sm:px-2.5 sm:py-1.5 sm:text-xs"
                     >
                       Cancel
                     </button>
@@ -1992,7 +1992,7 @@ function RouteComponent() {
                       }}
                       onClick={() => handleUpdate(index)}
                       disabled={!canUpdate}
-                      className="rounded-lg bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
+                      className="bg-cyan-300 px-3 py-2 text-sm font-semibold text-zinc-950 transition enabled:hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 sm:px-2.5 sm:py-1.5 sm:text-xs"
                     >
                       {isSubmitUpdating ? 'Updating...' : 'Update'}
                     </button>
@@ -2041,7 +2041,7 @@ function RouteComponent() {
               userSelect: 'none',
               touchAction: 'none',
             }}
-            className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden rounded-2xl border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
+            className="absolute left-0 top-0 z-10 flex flex-col overflow-hidden border border-zinc-700/60 bg-zinc-900/80 shadow-2xl backdrop-blur-xl w-[min(24rem,calc(100%-2rem))] sm:w-[24rem] origin-top opacity-0 transition-opacity duration-200"
           >
             {selectedMessage.videoUrl ? (
               <div className="relative aspect-video w-full bg-black/80">
@@ -2050,16 +2050,17 @@ function RouteComponent() {
                   width="100%"
                   height="100%"
                   playing
+                  muted
                   controls
                   loop
                   style={{ position: 'absolute', top: 0, left: 0 }}
                 />
-                <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
+                <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
                   Focus View
                 </div>
               </div>
             ) : null}
-            <div className="p-5">
+            <div className="p-3">
               <div className="flex justify-evenly items-center">
                 <h3 className="text-sm font-semibold text-zinc-100">
                   {selectedMessage.title}
@@ -2090,7 +2091,7 @@ function RouteComponent() {
                           zoomBucket: debouncedViewportQueryState?.zoomBucket,
                         })
                       }
-                      className="right-12 z-30 rounded-full border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
+                      className="right-12 z-30 border border-red-300/45 bg-red-500/20 p-1 hover:bg-red-950 text-[10px] font-bold uppercase text-red-300 transition-colors"
                       aria-label="Remove note"
                     >
                       Delete
@@ -2106,7 +2107,7 @@ function RouteComponent() {
                         e.stopPropagation()
                       }}
                       onClick={() => handleUpdateMessage(selectedMessage)}
-                      className="right-12 z-30 rounded-full border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
+                      className="right-12 z-30 border border-amber-300/45 bg-amber-500/20 p-1 hover:bg-amber-950 font-bold uppercase text-amber-300 transition-colors"
                       aria-label="Modify Icon"
                     >
                       <SquarePen className="w-4 h-4" />
@@ -2124,7 +2125,7 @@ function RouteComponent() {
                         currentIds.filter((id) => id !== messageId),
                       )
                     }}
-                    className="right-3 z-30 rounded-full bg-black/60 p-1 text-zinc-300 transition-colors hover:bg-black hover:text-white border border-white/10"
+                    className="right-3 z-30 border border-gray-300/45 bg-gray-500/20 p-1 hover:bg-gray-950 font-bold uppercase text-gray-300 transition-colors"
                     aria-label="Close Icon"
                   >
                     <XIcon className="w-4 h-4" />
@@ -2185,7 +2186,7 @@ function RouteComponent() {
 
       {isPinning && cursorPosition ? (
         <div
-          className="pointer-events-none absolute z-20 rounded-lg border border-zinc-700/70 bg-zinc-900/80 px-2.5 py-1.5 text-xs text-zinc-100 shadow-xl backdrop-blur-md"
+          className="pointer-events-none absolute z-20 border border-zinc-700/70 bg-zinc-900/80 px-2.5 py-1.5 text-xs text-zinc-100 shadow-xl backdrop-blur-md"
           style={{
             left: 0,
             top: 0,
