@@ -78,7 +78,7 @@ function App() {
           <div className="flex flex-col items-center gap-4">
             <a
               href="/dashboard/map"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
+              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold transition-colors shadow-lg shadow-cyan-500/50"
             >
               Open Map
             </a>
@@ -91,7 +91,7 @@ function App() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
+              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
             >
               <div className="mb-4">{feature.icon}</div>
               <h3 className="text-xl font-semibold text-white mb-3">

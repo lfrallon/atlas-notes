@@ -114,7 +114,7 @@ function BetterAuthDemo() {
             'linear-gradient(135deg, #0c1a2b 0%, #1a2332 50%, #16202e 100%)',
         }}
       >
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900 dark:border-neutral-800 dark:border-t-neutral-100" />
+        <div className="h-5 w-5 animate-spin border-2 border-neutral-200 border-t-neutral-900 dark:border-neutral-800 dark:border-t-neutral-100" />
       </div>
     )
   }
@@ -470,7 +470,7 @@ function BetterAuthDemo() {
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-400 border-t-white dark:border-neutral-600 dark:border-t-neutral-900" />
+                <span className="h-4 w-4 animate-spin border-2 border-neutral-400 border-t-white dark:border-neutral-600 dark:border-t-neutral-900" />
                 <span>Please wait</span>
               </span>
             ) : isSignUp ? (

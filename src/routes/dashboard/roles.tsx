@@ -609,7 +609,7 @@ function RouteComponent() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
@@ -631,7 +631,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
+        <div className="mt-6 border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-lg font-semibold">Create user</h2>
@@ -653,14 +653,14 @@ function RouteComponent() {
               {...register('roleName')}
               placeholder="Role name"
               disabled={createRoleMutation.isPending}
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+              className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
             <FormError message={createRoleErrors.roleName?.message} />
             <textarea
               {...register('description')}
               placeholder="Role description"
               disabled={createRoleMutation.isPending}
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+              className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
             <FormError message={createRoleErrors.description?.message} />
             <div>
@@ -698,7 +698,7 @@ function RouteComponent() {
               type="reset"
               onClick={() => reset()}
               disabled={createRoleMutation.isPending}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Clear
             </button>
@@ -706,14 +706,14 @@ function RouteComponent() {
               type="button"
               disabled={createRoleMutation.isPending}
               onClick={handleSubmit(onCreateRole)}
-              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {createRoleMutation.isPending ? 'Creating role…' : 'Create role'}
             </button>
           </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900/60 p-4">
+        <div className="mt-6 border border-gray-700 bg-gray-900/60 p-4">
           <label
             htmlFor="search-roles"
             className="mb-2 block text-sm font-medium"
@@ -725,7 +725,7 @@ function RouteComponent() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Filter by name, description, or permission"
-            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500"
+            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500"
           />
         </div>
 
@@ -743,7 +743,7 @@ function RouteComponent() {
 
         {isSuccess && (
           <div className="mt-6">
-            <div className="hidden md:block overflow-hidden rounded-lg border border-gray-700">
+            <div className="hidden md:block overflow-hidden border border-gray-700">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
@@ -771,7 +771,7 @@ function RouteComponent() {
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                              className={`inline-flex px-2 py-1 text-xs font-semibold ${
                                 role.isSystem
                                   ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
                                   : 'bg-gray-700/60 text-gray-200 border border-gray-600'
@@ -806,7 +806,7 @@ function RouteComponent() {
                                 }
                               }}
                               disabled={isUpdatingThisRole}
-                              className="cursor-pointer rounded-md border border-gray-400/40 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-500/10 hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer border border-gray-400/40 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-500/10 hover:text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {
                                 // editingBlocked ? (
@@ -831,12 +831,12 @@ function RouteComponent() {
                                 <input
                                   {...registerUpdateRole('roleName')}
                                   disabled={updateRoleMutation.isPending}
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                  className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                 />
                                 <textarea
                                   {...registerUpdateRole('description')}
                                   disabled={updateRoleMutation.isPending}
-                                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                  className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                 />
                                 <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
                                   {permissionOptions.map((permission) => (
@@ -872,7 +872,7 @@ function RouteComponent() {
                                     type="button"
                                     onClick={() => resetUpdateRole()}
                                     disabled={updateRoleMutation.isPending}
-                                    className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     Cancel
                                   </button>
@@ -882,7 +882,7 @@ function RouteComponent() {
                                       e.stopPropagation()
                                       handleDeleteRole(role)
                                     }}
-                                    className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     Delete
                                   </button>
@@ -892,7 +892,7 @@ function RouteComponent() {
                                       onUpdateRole,
                                     )}
                                     disabled={updateRoleMutation.isPending}
-                                    className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     {updateRoleMutation.isPending
                                       ? 'Saving…'
@@ -917,7 +917,7 @@ function RouteComponent() {
                 return (
                   <article
                     key={role.id}
-                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
+                    className="border border-gray-700 bg-gray-900/60 overflow-hidden"
                   >
                     <button
                       type="button"
@@ -938,7 +938,7 @@ function RouteComponent() {
                         </h2>
                         <div>
                           <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                            className={`inline-flex px-2 py-1 text-xs font-semibold ${
                               role.isSystem
                                 ? 'bg-violet-500/20 text-violet-200 border border-violet-400/40'
                                 : 'bg-gray-700/60 text-gray-200 border border-gray-600'
@@ -986,7 +986,7 @@ function RouteComponent() {
                             {...registerUpdateRole('roleName')}
                             placeholder="Role name"
                             disabled={updateRoleMutation.isPending}
-                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
                           <FormError
                             message={updateRoleErrors.roleName?.message}
@@ -995,7 +995,7 @@ function RouteComponent() {
                             {...registerUpdateRole('description')}
                             placeholder="Role description"
                             disabled={updateRoleMutation.isPending}
-                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
                           <FormError
                             message={updateRoleErrors.description?.message}
@@ -1038,7 +1038,7 @@ function RouteComponent() {
                               type="button"
                               onClick={() => resetUpdateRole()}
                               disabled={updateRoleMutation.isPending}
-                              className="flex-1 rounded-md border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="flex-1 border border-gray-500/60 bg-gray-500/10 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -1048,7 +1048,7 @@ function RouteComponent() {
                                 e.stopPropagation()
                                 handleDeleteRole(role)
                               }}
-                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Delete
                             </button>
@@ -1056,7 +1056,7 @@ function RouteComponent() {
                               type="button"
                               onClick={handleSubmitUpdateRole(onUpdateRole)}
                               disabled={updateRoleMutation.isPending}
-                              className="flex-1 rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="flex-1 border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {updateRoleMutation.isPending
                                 ? 'Saving…'
@@ -1082,7 +1082,7 @@ function RouteComponent() {
                 type="button"
                 onClick={fetchMoreRoles}
                 disabled={!hasNextPage || isFetchingNextPage}
-                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingNextPage
                   ? 'Loading more...'
@@ -1097,7 +1097,7 @@ function RouteComponent() {
 
       {deleteRole.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+          <div className="w-full max-w-sm border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">
@@ -1118,7 +1118,7 @@ function RouteComponent() {
             </div>
 
             {deleteRoleMutation.isError && (
-              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <div className="mb-4 border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                 {deleteRoleMutation.error?.message || 'Failed to delete role'}
               </div>
             )}
@@ -1131,7 +1131,7 @@ function RouteComponent() {
                 type="password"
                 {...deleteRoleRegister('password')}
                 placeholder="Enter your password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
               <FormError message={deleteRoleErrors.password?.message} />
             </div>
@@ -1143,7 +1143,7 @@ function RouteComponent() {
                 type="text"
                 disabled
                 value={`${deleteRole.role?.name} - ${deleteRole.role?.description}`}
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
               />
               <FormError message={deleteRoleErrors.ids?.message} />
               <p className="mt-2 text-xs text-gray-400">
@@ -1157,7 +1157,7 @@ function RouteComponent() {
                 type="button"
                 onClick={onDeleteRoleCancel}
                 disabled={deleteRoleMutation.isPending}
-                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -1165,7 +1165,7 @@ function RouteComponent() {
                 type="submit"
                 onClick={deleteRoleHandleSubmit(onDeleteRole)}
                 disabled={deleteRoleMutation.isPending}
-                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deleteRoleMutation.isPending ? 'Removing' : 'Remove'}
               </button>

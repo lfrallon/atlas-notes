@@ -37,7 +37,7 @@ export default function Header() {
       <header className="sticky top-0 z-40 flex h-16 items-center bg-gray-800 px-4 text-white shadow-lg">
         <button
           onClick={handleOpenDrawer}
-          className="z-50 p-2 hover:bg-gray-700 rounded-lg transition-colors cursor-pointer"
+          className="z-50 p-2 hover:bg-gray-700 transition-colors cursor-pointer"
           aria-label="Open menu"
         >
           <Menu size={24} />
@@ -56,7 +56,7 @@ export default function Header() {
           <h2 className="text-xl font-bold">Navigation</h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-800 transition-colors"
             aria-label="Close menu"
           >
             <X size={24} />
@@ -67,10 +67,10 @@ export default function Header() {
           <Link
             to="/"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
             activeProps={{
               className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                'flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
             }}
           >
             <Home size={20} />
@@ -81,10 +81,10 @@ export default function Header() {
             <Link
               to="/dashboard/todos"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+              className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
               activeProps={{
                 className:
-                  'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                  'flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
               }}
             >
               <ListTodo size={20} />
@@ -98,17 +98,17 @@ export default function Header() {
                 <Link
                   to="/dashboard/users"
                   onClick={() => setIsOpen(false)}
-                  className="flex-1 flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+                  className="flex-1 flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
                   activeProps={{
                     className:
-                      'flex-1 flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                      'flex-1 flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
                   }}
                 >
                   <Users size={20} />
                   <span className="font-medium">Users</span>
                 </Link>
                 <button
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors mb-2"
+                  className="p-2 hover:bg-gray-800 transition-colors mb-2"
                   onClick={() =>
                     setGroupedExpanded((prev) => ({
                       ...prev,
@@ -128,10 +128,10 @@ export default function Header() {
                   <Link
                     to="/dashboard/permissions"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+                    className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
                     activeProps={{
                       className:
-                        'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                        'flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
                     }}
                   >
                     <KeyRoundIcon size={20} />
@@ -140,10 +140,10 @@ export default function Header() {
                   <Link
                     to="/dashboard/roles"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+                    className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
                     activeProps={{
                       className:
-                        'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                        'flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
                     }}
                   >
                     <UserLockIcon size={20} />
@@ -157,10 +157,10 @@ export default function Header() {
           <Link
             to="/dashboard/map"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+            className="flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors mb-2"
             activeProps={{
               className:
-                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+                'flex items-center gap-3 p-3 bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
             }}
           >
             <Map size={20} />

@@ -354,6 +354,20 @@ function toMessageNodes(data?: GeoNotesPage) {
   }))
 }
 
+const getUserColor = (userId: string) => {
+  const colors = [
+    Color.RED,
+    Color.BLUE,
+    Color.GREEN,
+    Color.YELLOW,
+    Color.PURPLE,
+  ]
+  const hash = userId
+    .split('')
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return colors[hash % colors.length]
+}
+
 export const Route = createFileRoute('/dashboard/map')({
   ssr: false,
   component: RouteComponent,
@@ -1265,7 +1279,7 @@ function RouteComponent() {
         },
         point: {
           pixelSize: 12,
-          color: Color.fromCssColorString('#38bdf8').withAlpha(0.98),
+          color: Color.fromCssColorString('#38bdf8').withAlpha(1),
           outlineColor: Color.fromCssColorString('#e0f2fe').withAlpha(0.95),
           outlineWidth: 3,
           heightReference: 0,
@@ -1276,12 +1290,12 @@ function RouteComponent() {
         label: {
           text: `● ${shortMessage}`,
           font: '600 13px Inter, system-ui, sans-serif',
-          fillColor: Color.fromCssColorString('#e2e8f0'),
+          fillColor: Color.fromCssColorString('#ffffff'),
           style: 2,
-          outlineColor: Color.fromCssColorString('#020617').withAlpha(0.85),
+          outlineColor: Color.fromCssColorString('#020617').withAlpha(1),
           outlineWidth: 3,
           showBackground: true,
-          backgroundColor: Color.fromCssColorString('#0f172a').withAlpha(0.88),
+          backgroundColor: Color.fromCssColorString('#101828').withAlpha(1),
           backgroundPadding: new Cartesian2(16, 10),
           horizontalOrigin: HorizontalOrigin.CENTER,
           verticalOrigin: VerticalOrigin.BOTTOM,
@@ -1608,6 +1622,68 @@ function RouteComponent() {
     }
   }, [isPinning, selectedPosition])
 
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer || viewer.isDestroyed()) return
+
+    const applyTrajectoryVisibility = () => {
+      if (!viewer.scene) return
+
+      const groups: Record<string, GeoNotesNodes[]> = {}
+      messages.forEach((pin) => {
+        if (pin.userId) {
+          if (!groups[pin.userId]) groups[pin.userId] = []
+          groups[pin.userId].push(pin)
+        }
+      })
+
+      Object.keys(groups).forEach((userId) => {
+        const sortedPins = groups[userId].sort(
+          (a, b) =>
+            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+        )
+        const color = getUserColor(userId)
+
+        const positions = sortedPins.map((pin) =>
+          Cartesian3.fromDegrees(pin.longitude, pin.latitude),
+        )
+
+        if (positions.length > 1) {
+          viewer.entities.add({
+            name: `${userId}'s Trajectory`,
+            polyline: {
+              positions: positions,
+              width: 1.5,
+              material: color,
+            },
+          })
+        }
+
+        // sortedPins.forEach((pin) => {
+        //   viewer.entities.add({
+        //     name: pin.title,
+        //     position: Cartesian3.fromDegrees(pin.longitude, pin.latitude),
+        //     description: `Pinned by: ${pin.userId}<br>Time: ${new Date(pin.updatedAt).toLocaleTimeString()}`,
+        //     point: {
+        //       pixelSize: 10,
+        //       color: color,
+        //       outlineColor: Color.WHITE,
+        //       outlineWidth: 2,
+        //     },
+        //   })
+        // })
+      })
+    }
+
+    applyTrajectoryVisibility()
+    viewer.camera.changed.addEventListener(applyTrajectoryVisibility)
+
+    return () => {
+      if (viewer.isDestroyed()) return
+      viewer.camera.changed.removeEventListener(applyTrajectoryVisibility)
+    }
+  }, [messages])
+
   async function handleUpdate(index: number) {
     if (!canUpdate) return
 
@@ -1837,7 +1913,7 @@ function RouteComponent() {
                   className="mt-2 h-11 w-full border border-zinc-600/90 bg-zinc-950/85 px-3 text-base text-zinc-100 outline-none ring-cyan-300/70 placeholder:text-zinc-400 focus:ring sm:h-10 sm:text-sm"
                 />
                 {draftVideoUrl.trim() ? (
-                  <div className="mt-2 relative aspect-video w-full overflow-hidden rounded-lg bg-black/80 shadow-inner border border-zinc-700/50">
+                  <div className="mt-2 relative aspect-video w-full overflow-hidden bg-black/80 shadow-inner border border-zinc-700/50">
                     <ReactPlayer
                       src={draftVideoUrl.trim()}
                       width="100%"
@@ -1845,7 +1921,7 @@ function RouteComponent() {
                       controls
                       style={{ position: 'absolute', top: 0, left: 0 }}
                     />
-                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center bg-black/70 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
                       Preview
                     </div>
                   </div>
@@ -1965,7 +2041,7 @@ function RouteComponent() {
                       controls
                       style={{ position: 'absolute', top: 0, left: 0 }}
                     />
-                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
+                    <div className="pointer-events-none absolute top-1.5 left-1.5 flex items-center bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur-md">
                       Preview
                     </div>
                   </div>
@@ -2055,9 +2131,6 @@ function RouteComponent() {
                   loop
                   style={{ position: 'absolute', top: 0, left: 0 }}
                 />
-                <div className="absolute top-3 left-3 flex items-center rounded-md border border-white/10 bg-black/70 text-[10px] font-bold uppercase tracking-wider text-cyan-300 backdrop-blur-md">
-                  Focus View
-                </div>
               </div>
             ) : null}
             <div className="p-3">
@@ -2135,7 +2208,7 @@ function RouteComponent() {
               <p className="mt-2.5 text-sm leading-relaxed text-zinc-300 wrap-break-word">
                 {selectedMessage.geoNote}
               </p>
-              <div className="mt-5 flex items-center gap-4 border-t border-zinc-800/60 pt-4">
+              <div className="mt-5 flex items-center gap-3 border-t border-zinc-800/60 pt-3">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">
                     Coordinates
@@ -2177,8 +2250,8 @@ function RouteComponent() {
           aria-hidden="true"
         >
           <div className="relative flex h-8 w-8 items-center justify-center text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.75)]">
-            <span className="map-pin-wave map-pin-wave-delay-1 absolute top-4 h-8 w-8 rounded-full border border-rose-300/70" />
-            <span className="map-pin-wave map-pin-wave-delay-2 absolute top-4 h-8 w-8 rounded-full border border-rose-300/50" />
+            <span className="map-pin-wave map-pin-wave-delay-1 absolute top-4 h-8 w-8 border border-rose-300/70" />
+            <span className="map-pin-wave map-pin-wave-delay-2 absolute top-4 h-8 w-8 border border-rose-300/50" />
             <MapPin className="relative h-8 w-8 fill-rose-500/40" />
           </div>
         </div>

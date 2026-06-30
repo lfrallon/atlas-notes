@@ -416,7 +416,7 @@ function RouteComponent() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
@@ -445,7 +445,7 @@ function RouteComponent() {
 
         <form
           onSubmit={() => createPermissionMutation.mutate(createForm)}
-          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
+          className="mt-6 border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
         >
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <div>
@@ -474,7 +474,7 @@ function RouteComponent() {
               }
               placeholder="Resource (for example, todos)"
               disabled={createPermissionMutation.isPending}
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+              className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
             <select
               value={createForm.action}
@@ -484,7 +484,7 @@ function RouteComponent() {
                   action: event.target.value,
                 }))
               }
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+              className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             >
               <option value="">Action</option>
               {['create', 'read', 'update', 'delete'].map((action) => (
@@ -497,7 +497,7 @@ function RouteComponent() {
               value={createForm.key}
               placeholder="Permission key (for example, todos:read)"
               disabled
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+              className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
             />
           </div>
           <div className="mt-4 flex justify-end gap-2">
@@ -505,7 +505,7 @@ function RouteComponent() {
               type="reset"
               onClick={() => setCreateForm(emptyPermissionForm)}
               disabled={createPermissionMutation.isPending}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Clear
             </button>
@@ -517,7 +517,7 @@ function RouteComponent() {
                 createForm.key.trim().length === 0 ||
                 createForm.resource.trim().length === 0
               }
-              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {createPermissionMutation.isPending
                 ? 'Creating permission…'
@@ -526,7 +526,7 @@ function RouteComponent() {
           </div>
         </form>
 
-        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
+        <div className="mt-6 border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <label
               htmlFor="search-permissions"
@@ -538,7 +538,7 @@ function RouteComponent() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Filter by name, email, role, or permission"
-                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-2 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
               />
             </label>
             <p className="text-sm text-gray-400">
@@ -566,7 +566,7 @@ function RouteComponent() {
 
         {isSuccess && (
           <div className="mt-6">
-            <div className="hidden overflow-hidden rounded-lg border border-gray-700 md:block">
+            <div className="hidden overflow-hidden border border-gray-700 md:block">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
@@ -622,7 +622,7 @@ function RouteComponent() {
                                 e.stopPropagation()
                                 handleDeletePermission(permission)
                               }}
-                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <X size={14} />
                             </button>
@@ -647,7 +647,7 @@ function RouteComponent() {
                                     disabled={
                                       updatePermissionMutation.isPending
                                     }
-                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                    className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   />
                                   <select
                                     value={editForm.action}
@@ -660,7 +660,7 @@ function RouteComponent() {
                                     disabled={
                                       updatePermissionMutation.isPending
                                     }
-                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                    className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   >
                                     <option value="">Action</option>
                                     {['create', 'read', 'update', 'delete'].map(
@@ -674,7 +674,7 @@ function RouteComponent() {
                                   <input
                                     value={editForm.key}
                                     disabled
-                                    className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                                    className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                                   />
                                   <div className="flex justify-end gap-2 sm:col-span-3">
                                     <button
@@ -685,7 +685,7 @@ function RouteComponent() {
                                       disabled={
                                         updatePermissionMutation.isPending
                                       }
-                                      className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       Cancel
                                     </button>
@@ -704,7 +704,7 @@ function RouteComponent() {
                                         !editForm.action.trim() ||
                                         !editForm.key.trim()
                                       }
-                                      className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {updatePermissionMutation.isPending
                                         ? 'Saving…'
@@ -730,7 +730,7 @@ function RouteComponent() {
                 return (
                   <article
                     key={permission.id.toString()}
-                    className="rounded-lg border border-gray-700 bg-gray-900/60 overflow-hidden"
+                    className="border border-gray-700 bg-gray-900/60 overflow-hidden"
                   >
                     <button
                       type="button"
@@ -793,7 +793,7 @@ function RouteComponent() {
                               }))
                             }
                             disabled={updatePermissionMutation.isPending}
-                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
                           <select
                             value={editForm.action}
@@ -804,7 +804,7 @@ function RouteComponent() {
                               }))
                             }
                             disabled={updatePermissionMutation.isPending}
-                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           >
                             <option value="">Action</option>
                             {['create', 'read', 'update', 'delete'].map(
@@ -818,7 +818,7 @@ function RouteComponent() {
                           <input
                             value={editForm.key}
                             disabled
-                            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
+                            className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none focus:border-cyan-500 disabled:opacity-60"
                           />
                         </div>
                         <div className="mt-2 flex sm:col-span-2">
@@ -829,7 +829,7 @@ function RouteComponent() {
                                 e.stopPropagation()
                                 handleDeletePermission(permission)
                               }}
-                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <X size={14} />
                             </button>
@@ -839,7 +839,7 @@ function RouteComponent() {
                               type="button"
                               onClick={() => setEditingPermissionId(null)}
                               disabled={updatePermissionMutation.isPending}
-                              className="rounded-md border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="border border-gray-500/60 bg-gray-800/40 px-4 py-2 text-sm font-medium text-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -858,7 +858,7 @@ function RouteComponent() {
                                 !editForm.action.trim() ||
                                 !editForm.key.trim()
                               }
-                              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {updatePermissionMutation.isPending
                                 ? 'Saving…'
@@ -884,7 +884,7 @@ function RouteComponent() {
                 type="button"
                 onClick={fetchMorePermissions}
                 disabled={!hasNextPage || isFetchingNextPage}
-                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingNextPage
                   ? 'Loading more...'
@@ -899,7 +899,7 @@ function RouteComponent() {
 
       {deletePermission.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+          <div className="w-full max-w-sm border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">
@@ -920,7 +920,7 @@ function RouteComponent() {
             </div>
 
             {deletePermissionMutation.isError && (
-              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <div className="mb-4 border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                 {deletePermissionMutation.error?.message ||
                   'Failed to delete permission'}
               </div>
@@ -934,7 +934,7 @@ function RouteComponent() {
                 type="password"
                 {...deletePermissionRegister('password')}
                 placeholder="Enter your password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
               <FormError message={deletePermissionErrors.password?.message} />
             </div>
@@ -947,7 +947,7 @@ function RouteComponent() {
                 disabled
                 value={`${deletePermission.permission?.resource} - ${deletePermission.permission?.permission}`}
                 placeholder="Permission"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
               />
               <FormError message={deletePermissionErrors.ids?.message} />
               <p className="mt-2 text-xs text-gray-400">
@@ -961,7 +961,7 @@ function RouteComponent() {
                 type="button"
                 onClick={onDeletePermissionCancel}
                 disabled={deletePermissionMutation.isPending}
-                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -969,7 +969,7 @@ function RouteComponent() {
                 type="submit"
                 onClick={deletePermissionHandleSubmit(onDeletePermission)}
                 disabled={deletePermissionMutation.isPending}
-                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deletePermissionMutation.isPending ? 'Removing' : 'Remove'}
               </button>

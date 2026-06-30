@@ -312,14 +312,14 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
             <button
               type="button"
               onClick={() => onResetPassword(account.user.id)}
-              className="rounded-md border border-orange-400/40 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/10 hover:text-orange-200"
+              className="border border-orange-400/40 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:bg-orange-500/10 hover:text-orange-200"
             >
               Reset Password
             </button>
             <button
               type="button"
               onClick={() => onEdit(account)}
-              className="rounded-md border border-cyan-400/40 px-3 py-1.5 text-xs font-medium text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
+              className="border border-cyan-400/40 px-3 py-1.5 text-xs font-medium text-cyan-300 transition-colors hover:bg-cyan-500/10 hover:text-cyan-200"
             >
               Edit
             </button>
@@ -330,7 +330,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 e.stopPropagation()
                 onDeleteUser(account.user)
               }}
-              className="block md:hidden cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+              className="block md:hidden cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UserX size={14} />
             </button>
@@ -346,7 +346,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
               <img
                 src={`${USER_PROFILE_URL}${account.user.image}`}
                 alt="Profile preview"
-                className="h-16 w-16 rounded-lg border border-white/10 object-cover"
+                className="h-16 w-16 border border-white/10 object-cover"
               />
             </div>
           )}
@@ -372,7 +372,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                   {account.permissions.map((permission) => (
                     <span
                       key={permission}
-                      className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
+                      className="border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-100"
                     >
                       {permission}
                     </span>
@@ -395,7 +395,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 onChange={(event) =>
                   onEditFieldChange('firstName', event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
             </label>
             <label className="block text-xs text-gray-400">
@@ -406,7 +406,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 onChange={(event) =>
                   onEditFieldChange('lastName', event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
             </label>
             <label className="block text-xs text-gray-400">
@@ -417,7 +417,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 onChange={(event) =>
                   onEditFieldChange('email', event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
             </label>
             <label className="block text-xs text-gray-400">
@@ -427,7 +427,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 onChange={(event) =>
                   onEditFieldChange('roleId', event.target.value)
                 }
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               >
                 <option value="">Select role</option>
                 {roleOptions.map((role) => (
@@ -449,7 +449,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                           : editFormData.image
                       }
                       alt="Profile preview"
-                      className="h-16 w-16 rounded-lg border border-white/10 object-cover"
+                      className="h-16 w-16 border border-white/10 object-cover"
                     />
                     <span className="text-xs text-gray-400">
                       Preview updates before saving.
@@ -457,7 +457,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                   </div>
                   <div className="flex justify-center items-center">
                     <button
-                      className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={clearImageInput}
                     >
                       <CircleX size={14} />
@@ -472,7 +472,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
                 type="file"
                 accept="image/*"
                 onChange={onEditFileChange}
-                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-2 file:py-1 file:text-gray-100"
+                className="mt-2 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 file:mr-2 file:cursor-pointer file:border-0 file:bg-gray-700 file:px-2 file:py-1 file:text-gray-100"
               />
             </label>
           </div>
@@ -480,7 +480,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40"
+              className="border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40"
             >
               Cancel
             </button>
@@ -488,7 +488,7 @@ const UserDetailsPanel = memo(function UserDetailsPanel({
               type="button"
               onClick={onSave}
               disabled={isSaving}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? 'Saving…' : 'Save'}
             </button>
@@ -1015,7 +1015,7 @@ function UsersPage() {
       }}
     >
       <div className="w-full p-3 sm:p-6">
-        <div className="rounded-2xl border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
+        <div className="border border-white/10 bg-white/3] p-5 shadow-2xl shadow-black/20 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">
@@ -1040,7 +1040,7 @@ function UsersPage() {
 
         <form
           onSubmit={handleSubmit(onCreateUser)}
-          className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
+          className="mt-6 border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10"
         >
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <div>
@@ -1064,7 +1064,7 @@ function UsersPage() {
               <input
                 {...register('firstName')}
                 placeholder="John"
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
               <FormError message={createUserErrors.firstName?.message} />
@@ -1074,7 +1074,7 @@ function UsersPage() {
               <input
                 {...register('lastName')}
                 placeholder="Doe"
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
               <FormError message={createUserErrors.lastName?.message} />
@@ -1085,7 +1085,7 @@ function UsersPage() {
                 type="email"
                 {...register('email')}
                 placeholder="john.doe@example.com"
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
               <FormError message={createUserErrors.email?.message} />
@@ -1097,7 +1097,7 @@ function UsersPage() {
                 minLength={8}
                 {...register('password')}
                 placeholder="Include letters, numbers, symbols"
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               />
               <FormError message={createUserErrors.password?.message} />
@@ -1114,7 +1114,7 @@ function UsersPage() {
                   },
                 })}
                 ref={inputRef}
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-gray-700 file:px-1.5 file:text-gray-100"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm file:mr-2 file:cursor-pointer file:border-0 file:bg-gray-700 file:px-1.5 file:text-gray-100"
                 autoComplete="off"
               />
               <FormError message={createUserErrors.image?.message} />
@@ -1123,7 +1123,7 @@ function UsersPage() {
               Role
               <select
                 {...register('roleId')}
-                className="mt-1 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-1 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
                 required
               >
                 <option value="">Select role</option>
@@ -1141,21 +1141,21 @@ function UsersPage() {
               type="reset"
               onClick={() => reset()}
               disabled={createUserMutation.isPending}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+              className="border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Clear
             </button>
             <button
               type="submit"
               disabled={createUserMutation.isPending}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {createUserMutation.isPending ? 'Creating…' : 'Create user'}
             </button>
           </div>
         </form>
 
-        <div className="mt-6 rounded-xl border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
+        <div className="mt-6 border border-gray-700 bg-gray-900/60 p-4 shadow-xl shadow-black/10">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <label
               htmlFor="search-users"
@@ -1167,7 +1167,7 @@ function UsersPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Filter by name, email, role, or permission"
-                className="mt-2 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
+                className="mt-2 w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm outline-none transition-colors focus:border-cyan-500"
               />
             </label>
             <p className="text-sm text-gray-400">
@@ -1194,7 +1194,7 @@ function UsersPage() {
 
         {isSuccess && (
           <div className="mt-6">
-            <div className="hidden md:block overflow-hidden rounded-lg border border-gray-700">
+            <div className="hidden md:block overflow-hidden border border-gray-700">
               <table className="w-full table-auto border-collapse text-left text-sm">
                 <thead className="bg-gray-800/80 text-gray-200">
                   <tr>
@@ -1238,7 +1238,7 @@ function UsersPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`rounded-full px-2 py-1 text-xs ${
+                              className={`px-2 py-1 text-xs ${
                                 account.user.emailVerified
                                   ? 'bg-emerald-500/10 text-emerald-300'
                                   : 'bg-amber-500/10 text-amber-300'
@@ -1266,7 +1266,7 @@ function UsersPage() {
                                 e.stopPropagation()
                                 onDeleteUserClick(account.user)
                               }}
-                              className="cursor-pointer rounded-md border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="cursor-pointer border border-red-400/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <UserX size={14} />
                             </button>
@@ -1308,7 +1308,7 @@ function UsersPage() {
                 return (
                   <article
                     key={account.user.id}
-                    className="overflow-hidden rounded-xl border border-gray-700 bg-gray-900/60 shadow-xl shadow-black/10"
+                    className="overflow-hidden border border-gray-700 bg-gray-900/60 shadow-xl shadow-black/10"
                   >
                     <button
                       type="button"
@@ -1388,7 +1388,7 @@ function UsersPage() {
                 type="button"
                 onClick={fetchMoreUsers}
                 disabled={!hasNextPage || isFetchingNextPage}
-                className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 transition-colors hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-200 transition-colors hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingNextPage
                   ? 'Loading more…'
@@ -1403,7 +1403,7 @@ function UsersPage() {
 
       {passwordReset.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+          <div className="w-full max-w-sm border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">
@@ -1424,7 +1424,7 @@ function UsersPage() {
             </div>
 
             {resetPasswordMutation.isError && (
-              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <div className="mb-4 border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                 {resetPasswordMutation.error?.message ||
                   'Failed to reset password'}
               </div>
@@ -1438,7 +1438,7 @@ function UsersPage() {
                 type="password"
                 {...resetPasswordRegister('password')}
                 placeholder="Enter new password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
               <FormError message={resetPasswordErrors.password?.message} />
             </div>
@@ -1450,7 +1450,7 @@ function UsersPage() {
                 type="password"
                 {...resetPasswordRegister('confirmPassword')}
                 placeholder="Enter confirm password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
               <FormError
                 message={resetPasswordErrors.confirmPassword?.message}
@@ -1466,7 +1466,7 @@ function UsersPage() {
                 type="button"
                 onClick={onPasswordResetCancel}
                 disabled={resetPasswordMutation.isPending}
-                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -1474,7 +1474,7 @@ function UsersPage() {
                 type="submit"
                 onClick={resetPasswordHandleSubmit(onPasswordResetSubmit)}
                 disabled={resetPasswordMutation.isPending}
-                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {resetPasswordMutation.isPending ? 'Resetting…' : 'Reset'}
               </button>
@@ -1485,7 +1485,7 @@ function UsersPage() {
 
       {deleteUser.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
+          <div className="w-full max-w-sm border border-gray-700 bg-gray-900 p-6 shadow-2xl shadow-black/30">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">
@@ -1506,7 +1506,7 @@ function UsersPage() {
             </div>
 
             {deleteUserMutation.isError && (
-              <div className="mb-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <div className="mb-4 border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                 {deleteUserMutation.error?.message ||
                   'Failed to delete user account'}
               </div>
@@ -1520,7 +1520,7 @@ function UsersPage() {
                 type="password"
                 {...deleteUserRegister('password')}
                 placeholder="Enter your password"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500"
               />
               <FormError message={deleteUserErrors.password?.message} />
             </div>
@@ -1534,7 +1534,7 @@ function UsersPage() {
                 value={deleteUser.user?.email ?? ''}
                 {...deleteUserRegister('userId')}
                 placeholder="User account"
-                className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
+                className="w-full border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 outline-none transition-colors focus:border-cyan-500 disabled:opacity-60"
               />
               <FormError message={deleteUserErrors.userId?.message} />
               <p className="mt-2 text-xs text-gray-400">
@@ -1548,7 +1548,7 @@ function UsersPage() {
                 type="button"
                 onClick={onDeleteUserCancel}
                 disabled={deleteUserMutation.isPending}
-                className="flex-1 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -1556,7 +1556,7 @@ function UsersPage() {
                 type="submit"
                 onClick={deleteUserHandleSubmit(onDeleteUserSubmit)}
                 disabled={deleteUserMutation.isPending}
-                className="flex-1 rounded-md bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 bg-orange-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deleteUserMutation.isPending ? 'Removing' : 'Remove'}
               </button>

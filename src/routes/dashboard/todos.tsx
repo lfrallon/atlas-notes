@@ -437,7 +437,7 @@ function DemoDrizzle() {
               }
             }}
             placeholder="Enter a new todo..."
-            className="flex-1 px-4 py-3 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            className="flex-1 px-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           />
           {todo.id.trim().length !== 0 ? (
             <span className="flex gap-2 items-center">
@@ -446,7 +446,7 @@ function DemoDrizzle() {
                 onClick={() => {
                   handleUpdateTodo({ id: todo.id, title: todo.title })
                 }}
-                className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 transition-colors"
               >
                 Update
               </button>
@@ -454,7 +454,7 @@ function DemoDrizzle() {
                 onClick={() => {
                   setTodo({ id: '', title: '' })
                 }}
-                className="h-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                className="h-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 transition-colors"
               >
                 <X size={18} className="sm:w-5 sm:h-5" />
               </button>
@@ -463,7 +463,7 @@ function DemoDrizzle() {
             <button
               disabled={todo.title.trim().length === 0}
               onClick={submitTodo}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 transition-colors"
             >
               Add todo
             </button>
@@ -474,9 +474,9 @@ function DemoDrizzle() {
       {/* Selection Button/Indicator */}
       {selectedCount > 0 && (
         <div className="sticky top-12 sm:top-12.5 z-40 sm:px-6 pt-3 sm:pt-6 animate-in fade-in slide-in-from-top-2 duration-600">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 sm:border sm:border-indigo-400/50 sm:rounded-2xl p-4 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 sm:border sm:border-indigo-400/50 sm:p-4 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold">
+              <span className="inline-flex items-center justify-center w-8 h-8 bg-indigo-600 text-white text-sm font-bold">
                 {selectedCount}
               </span>
               <span className="text-xs sm:text-sm font-semibold text-indigo-100">
@@ -485,7 +485,7 @@ function DemoDrizzle() {
             </div>
             <div className="sm:ml-auto w-full sm:w-auto gap-4 shrink-0 flex">
               <button
-                className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                className="sm:ml-auto w-full sm:w-auto ring-1 ring-green-400 hover:ring-green-300 hover:text-green-300 text-green-400 bg-green-600/20 font-normal py-2 px-4 sm:px-6 transition-all duration-200 shadow-sm shadow-green-600/30 hover:shadow-green-600/50 active:scale-95 text-sm hover:cursor-pointer"
                 onClick={() => handleUpdateAllTodos(true)}
               >
                 <div className="flex items-center justify-center">
@@ -494,7 +494,7 @@ function DemoDrizzle() {
                 </div>
               </button>
               <button
-                className="sm:ml-auto w-full sm:w-auto ring-1 ring-orange-400 hover:ring-orange-300 hover:text-orange-300 text-orange-400 bg-orange-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-orange-600/30 hover:shadow-orange-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                className="sm:ml-auto w-full sm:w-auto ring-1 ring-orange-400 hover:ring-orange-300 hover:text-orange-300 text-orange-400 bg-orange-600/20 font-normal py-2 px-4 sm:px-6 transition-all duration-200 shadow-sm shadow-orange-600/30 hover:shadow-orange-600/50 active:scale-95 text-sm hover:cursor-pointer"
                 onClick={() => handleUpdateAllTodos(false)}
               >
                 <div className="flex items-center justify-center">
@@ -505,7 +505,7 @@ function DemoDrizzle() {
               {userAccess &&
                 userAccess.permissions.includes('todos:delete') && (
                   <button
-                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 rounded-lg transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
+                    className="sm:ml-auto w-full sm:w-auto ring-1 ring-red-400 hover:ring-red-300 hover:text-red-300 text-red-400 bg-red-600/20 font-normal py-2 px-4 sm:px-6 transition-all duration-200 shadow-sm shadow-red-600/30 hover:shadow-red-600/50 active:scale-95 text-sm hover:cursor-pointer"
                     onClick={handleDeleteTodos}
                   >
                     <div className="flex items-center justify-center">
@@ -521,7 +521,7 @@ function DemoDrizzle() {
 
       <div className="w-full p-3 sm:p-6">
         <div
-          className="rounded-xl sm:rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+          className="sm:shadow-2xl border border-white/10 overflow-hidden"
           style={{
             background:
               'linear-gradient(135deg, rgba(22, 32, 46, 0.95) 0%, rgba(12, 26, 43, 0.95) 100%)',
@@ -547,7 +547,7 @@ function DemoDrizzle() {
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={isAllSelected}
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
+                      className="w-4 h-4 sm:w-5 sm:h-5 border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
                       aria-label="Select all rows"
                     />
                   </th>
@@ -602,7 +602,7 @@ function DemoDrizzle() {
                           type="checkbox"
                           checked={item.checked}
                           onChange={() => handleCheckboxChange(item.id)}
-                          className="w-4 h-4 sm:w-5 sm:h-5 rounded border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
+                          className="w-4 h-4 sm:w-5 sm:h-5 border-indigo-500/50 bg-indigo-600/20 text-indigo-400 cursor-pointer accent-indigo-400 hover:bg-indigo-600/40 transition-colors"
                           aria-label={`Select item ${item.title}`}
                         />
                       </td>
@@ -638,7 +638,7 @@ function DemoDrizzle() {
                         <div className="flex justify-center items-center">
                           {item.completed ? (
                             <div className="inline-flex items-center gap-1 px-2 py-1">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-green-400 bg-green-600/20 text-xs">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 text-green-400 bg-green-600/20 text-xs">
                                 Completed
                               </span>
                               <span className="inline-flex justify-center items-center px-2 py-1 text-xs">
@@ -656,7 +656,7 @@ function DemoDrizzle() {
                               </span>
                             </div>
                           ) : (
-                            <span className="inline-flex justify-center items-center gap-1 px-2 py-1 rounded-full text-orange-400 bg-orange-600/20 text-xs">
+                            <span className="inline-flex justify-center items-center gap-1 px-2 py-1 text-orange-400 bg-orange-600/20 text-xs">
                               <button
                                 onClick={() =>
                                   handleUpdateTodo({
@@ -703,7 +703,7 @@ function DemoDrizzle() {
             {data?.pages &&
               data.pages[data.pages.length - 1]?.pageInfo?.hasNextPage && (
                 <div className="flex justify-center mt-6 sm:mt-8">
-                  <span className="inline-flex justify-center items-center gap-1 px-3 py-2 rounded-full text-orange-400 bg-orange-600/20 text-xs">
+                  <span className="inline-flex justify-center items-center gap-1 px-3 py-2 text-orange-400 bg-orange-600/20 text-xs">
                     <button
                       onClick={fetchMoreTodos}
                       className="text-orange-400 hover:text-orange-300 transition-colors hover:cursor-pointer"
