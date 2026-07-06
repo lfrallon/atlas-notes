@@ -354,19 +354,19 @@ function toMessageNodes(data?: GeoNotesPage) {
   }))
 }
 
-const getUserColor = (userId: string) => {
-  const colors = [
-    Color.RED,
-    Color.BLUE,
-    Color.GREEN,
-    Color.YELLOW,
-    Color.PURPLE,
-  ]
-  const hash = userId
-    .split('')
-    .reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return colors[hash % colors.length]
-}
+// const getUserColor = (userId: string) => {
+//   const colors = [
+//     Color.RED,
+//     Color.BLUE,
+//     Color.GREEN,
+//     Color.YELLOW,
+//     Color.PURPLE,
+//   ]
+//   const hash = userId
+//     .split('')
+//     .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+//   return colors[hash % colors.length]
+// }
 
 export const Route = createFileRoute('/dashboard/map')({
   ssr: false,
@@ -423,6 +423,7 @@ function RouteComponent() {
     id: string | null
     offset: { x: number; y: number }
   }>({ id: null, offset: { x: 0, y: 0 } })
+  const watchId = useRef<number | null>(null)
 
   function removeCardState(messageId: string) {
     setCardPositions((currentPositions) => {
@@ -1046,22 +1047,6 @@ function RouteComponent() {
       ScreenSpaceEventType.LEFT_DOWN,
     )
 
-    async function loadTiles() {
-      try {
-        viewer.scene.imageryLayers.addImageryProvider(
-          await IonImageryProvider.fromAssetId(3830185),
-        )
-
-        viewer.camera.flyTo({
-          destination: Cartesian3.fromDegrees(122, 10, 2000000),
-        })
-      } catch (error) {
-        console.log('Error loading tiles', error)
-      }
-    }
-
-    loadTiles()
-
     const syncViewport = () => {
       const nextViewport = getViewportFromViewer(viewer)
       if (nextViewport) {
@@ -1094,6 +1079,54 @@ function RouteComponent() {
       viewer.destroy()
     }
   }, [queryClient])
+
+  useEffect(() => {
+    ;(async () => {
+      const viewer = viewerRef.current
+      if (!viewer) {
+        return
+      }
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              viewer.scene.imageryLayers.addImageryProvider(
+                await IonImageryProvider.fromAssetId(3830185),
+              )
+
+              viewer.camera.flyTo({
+                destination: Cartesian3.fromDegrees(
+                  position.coords.longitude,
+                  position.coords.latitude,
+                  2000000,
+                ),
+              })
+            } catch (error) {
+              console.log('Error loading tiles', error)
+            }
+          },
+          (error) => {
+            console.log('Geolocation error:', error.message)
+          },
+          {
+            enableHighAccuracy: true,
+          },
+        )
+      } else {
+        console.log('Geolocation is not available')
+      }
+    })()
+
+    return () => {
+      if (watchId.current !== null) {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.clearWatch(watchId.current)
+        }
+        watchId.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const viewer = viewerRef.current
@@ -1622,67 +1655,67 @@ function RouteComponent() {
     }
   }, [isPinning, selectedPosition])
 
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer || viewer.isDestroyed()) return
+  // useEffect(() => {
+  //   const viewer = viewerRef.current
+  //   if (!viewer || viewer.isDestroyed()) return
 
-    const applyTrajectoryVisibility = () => {
-      if (!viewer.scene) return
+  //   const applyTrajectoryVisibility = () => {
+  //     if (!viewer.scene) return
 
-      const groups: Record<string, GeoNotesNodes[]> = {}
-      messages.forEach((pin) => {
-        if (pin.userId) {
-          if (!groups[pin.userId]) groups[pin.userId] = []
-          groups[pin.userId].push(pin)
-        }
-      })
+  //     const groups: Record<string, GeoNotesNodes[]> = {}
+  //     messages.forEach((pin) => {
+  //       if (pin.userId) {
+  //         if (!groups[pin.userId]) groups[pin.userId] = []
+  //         groups[pin.userId].push(pin)
+  //       }
+  //     })
 
-      Object.keys(groups).forEach((userId) => {
-        const sortedPins = groups[userId].sort(
-          (a, b) =>
-            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-        )
-        const color = getUserColor(userId)
+  //     Object.keys(groups).forEach((userId) => {
+  //       const sortedPins = groups[userId].sort(
+  //         (a, b) =>
+  //           new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+  //       )
+  //       const color = getUserColor(userId)
 
-        const positions = sortedPins.map((pin) =>
-          Cartesian3.fromDegrees(pin.longitude, pin.latitude),
-        )
+  //       const positions = sortedPins.map((pin) =>
+  //         Cartesian3.fromDegrees(pin.longitude, pin.latitude),
+  //       )
 
-        if (positions.length > 1) {
-          viewer.entities.add({
-            name: `${userId}'s Trajectory`,
-            polyline: {
-              positions: positions,
-              width: 1.5,
-              material: color,
-            },
-          })
-        }
+  //       if (positions.length > 1) {
+  //         viewer.entities.add({
+  //           name: `${userId}'s Trajectory`,
+  //           polyline: {
+  //             positions: positions,
+  //             width: 1.5,
+  //             material: color,
+  //           },
+  //         })
+  //       }
 
-        // sortedPins.forEach((pin) => {
-        //   viewer.entities.add({
-        //     name: pin.title,
-        //     position: Cartesian3.fromDegrees(pin.longitude, pin.latitude),
-        //     description: `Pinned by: ${pin.userId}<br>Time: ${new Date(pin.updatedAt).toLocaleTimeString()}`,
-        //     point: {
-        //       pixelSize: 10,
-        //       color: color,
-        //       outlineColor: Color.WHITE,
-        //       outlineWidth: 2,
-        //     },
-        //   })
-        // })
-      })
-    }
+  //       // sortedPins.forEach((pin) => {
+  //       //   viewer.entities.add({
+  //       //     name: pin.title,
+  //       //     position: Cartesian3.fromDegrees(pin.longitude, pin.latitude),
+  //       //     description: `Pinned by: ${pin.userId}<br>Time: ${new Date(pin.updatedAt).toLocaleTimeString()}`,
+  //       //     point: {
+  //       //       pixelSize: 10,
+  //       //       color: color,
+  //       //       outlineColor: Color.WHITE,
+  //       //       outlineWidth: 2,
+  //       //     },
+  //       //   })
+  //       // })
+  //     })
+  //   }
 
-    applyTrajectoryVisibility()
-    viewer.camera.changed.addEventListener(applyTrajectoryVisibility)
+  //   applyTrajectoryVisibility()
+  //   viewer.camera.changed.addEventListener(applyTrajectoryVisibility)
 
-    return () => {
-      if (viewer.isDestroyed()) return
-      viewer.camera.changed.removeEventListener(applyTrajectoryVisibility)
-    }
-  }, [messages])
+  //   return () => {
+  //     if (viewer.isDestroyed()) return
+  //     viewer.camera.changed.removeEventListener(applyTrajectoryVisibility)
+  //   }
+  // }, [messages])
 
   async function handleUpdate(index: number) {
     if (!canUpdate) return
