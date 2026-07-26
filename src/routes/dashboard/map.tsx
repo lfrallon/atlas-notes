@@ -131,6 +131,18 @@ interface SelectedMessage {
   videoUrl: string | null | undefined
 }
 
+type CardPosition = {
+  x: number
+  y: number
+}
+
+type CardSize = {
+  width: number
+  height: number
+}
+
+type CardRect = CardPosition & CardSize
+
 type DeleteGeoMessage = {
   id: string
   pageSize: number
@@ -187,6 +199,128 @@ const wavePhaseOffsets = [0, 1 / 3, 2 / 3] as const
 const targetScreenRadiusPixels = 24
 const minRadiusMeters = 120
 const maxRadiusMeters = 120_000
+const CARD_POSITION_MARGIN = 12
+const CARD_ANCHOR_GAP = 20
+
+function rectsIntersect(a: CardRect, b: CardRect) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  )
+}
+
+function rectIsWithinCanvas(
+  rect: CardRect,
+  canvas: HTMLCanvasElement,
+  margin = CARD_POSITION_MARGIN,
+) {
+  return (
+    rect.x >= margin &&
+    rect.y >= margin &&
+    rect.x + rect.width <= canvas.clientWidth - margin &&
+    rect.y + rect.height <= canvas.clientHeight - margin
+  )
+}
+
+function getCandidateCardPositions(
+  anchor: Cartesian2,
+  size: CardSize,
+): CardPosition[] {
+  const gap = CARD_ANCHOR_GAP
+  const centeredX = anchor.x - size.width / 2
+  const centeredY = anchor.y - size.height / 2
+
+  return [
+    { x: anchor.x + gap, y: centeredY },
+    { x: anchor.x - size.width - gap, y: centeredY },
+    { x: centeredX, y: anchor.y - size.height - gap },
+    { x: centeredX, y: anchor.y + gap },
+    { x: anchor.x + gap, y: anchor.y + gap },
+    { x: anchor.x - size.width - gap, y: anchor.y + gap },
+    { x: anchor.x + gap, y: anchor.y - size.height - gap },
+    { x: anchor.x - size.width - gap, y: anchor.y - size.height - gap },
+  ]
+}
+
+function clampCardPosition(
+  position: CardPosition,
+  size: CardSize,
+  canvas: HTMLCanvasElement,
+  margin = CARD_POSITION_MARGIN,
+): CardPosition {
+  return {
+    x: CesiumMath.clamp(
+      position.x,
+      margin,
+      Math.max(margin, canvas.clientWidth - size.width - margin),
+    ),
+    y: CesiumMath.clamp(
+      position.y,
+      margin,
+      Math.max(margin, canvas.clientHeight - size.height - margin),
+    ),
+  }
+}
+
+function computeNonOverlappingCardPositions(
+  openMessages: SelectedMessage[],
+  viewer: Viewer,
+  cardSizes: Record<string, CardSize>,
+  previousPositions: Record<string, CardPosition>,
+) {
+  const nextPositions: Record<string, CardPosition> = {}
+  const placedRects: CardRect[] = []
+  const visibleIds = new Set<string>()
+
+  for (const message of openMessages) {
+    const messageId = `message-${message.id}`
+    const size = cardSizes[messageId]
+    if (!size) continue
+
+    const worldPosition = Cartesian3.fromDegrees(
+      message.longitude,
+      message.latitude,
+      24,
+    )
+    const anchor = SceneTransforms.worldToWindowCoordinates(
+      viewer.scene,
+      worldPosition,
+    )
+
+    if (!anchor || !isPointVisibleFromCamera(viewer.scene, worldPosition)) {
+      continue
+    }
+
+    const previousPosition = previousPositions[messageId]
+    const candidatePositions = [
+      ...getCandidateCardPositions(anchor, size),
+      ...(previousPosition ? [previousPosition] : []),
+    ]
+
+    let chosenPosition = candidatePositions.find((position) => {
+      const rect = { ...position, ...size }
+      return (
+        rectIsWithinCanvas(rect, viewer.scene.canvas) &&
+        placedRects.every((placedRect) => !rectsIntersect(rect, placedRect))
+      )
+    })
+
+    chosenPosition ??= clampCardPosition(
+      candidatePositions[0] ?? { x: anchor.x, y: anchor.y },
+      size,
+      viewer.scene.canvas,
+    )
+
+    const chosenRect = { ...chosenPosition, ...size }
+    nextPositions[messageId] = chosenPosition
+    placedRects.push(chosenRect)
+    visibleIds.add(messageId)
+  }
+
+  return { positions: nextPositions, visibleIds }
+}
 
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3)
@@ -379,6 +513,7 @@ function RouteComponent() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<Viewer | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const manuallyPositionedCardIdsRef = useRef<Set<string>>(new Set())
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
@@ -415,6 +550,7 @@ function RouteComponent() {
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({})
+  const cardPositionsRef = useRef<Record<string, CardPosition>>({})
   const dragUpdateStateRef = useRef<{
     id: string | null
     offset: { x: number; y: number }
@@ -431,6 +567,7 @@ function RouteComponent() {
       delete nextPositions[messageId]
       return nextPositions
     })
+    manuallyPositionedCardIdsRef.current.delete(messageId)
     delete cardRefs.current[messageId]
   }
 
@@ -766,6 +903,7 @@ function RouteComponent() {
     e: React.PointerEvent<HTMLDivElement>,
   ) => {
     const position = cardPositions[messageId] ?? { x: 0, y: 0 }
+    manuallyPositionedCardIdsRef.current.add(messageId)
     dragStateRef.current = {
       id: messageId,
       offset: {
@@ -971,6 +1109,7 @@ function RouteComponent() {
             )
           } else {
             setCardPositions({})
+            manuallyPositionedCardIdsRef.current.clear()
             cardRefs.current = {}
             setOpenMessageIds([])
           }
@@ -1518,31 +1657,45 @@ function RouteComponent() {
   }, [messages, openMessageIds])
 
   useEffect(() => {
+    cardPositionsRef.current = cardPositions
+  }, [cardPositions])
+
+  useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || openMessages.length === 0 || viewer.isDestroyed()) return
 
     const openMessagesCardPositions = () => {
       if (!viewer.scene) return
 
-      openMessages.forEach((message, index) => {
-        const card = cardRefs.current[`message-${message.id}`]
+      const cardSizes = openMessages.reduce<Record<string, CardSize>>(
+        (sizes, message) => {
+          const messageId = `message-${message.id}`
+          const card = cardRefs.current[messageId]
+          if (!card) return sizes
+
+          const rect = card.getBoundingClientRect()
+          sizes[messageId] = {
+            width: rect.width,
+            height: rect.height,
+          }
+          return sizes
+        },
+        {},
+      )
+
+      const { positions, visibleIds } = computeNonOverlappingCardPositions(
+        openMessages,
+        viewer,
+        cardSizes,
+        cardPositionsRef.current,
+      )
+
+      openMessages.forEach((message) => {
+        const messageId = `message-${message.id}`
+        const card = cardRefs.current[messageId]
         if (!card) return
 
-        const position = Cartesian3.fromDegrees(
-          message.longitude,
-          message.latitude,
-          24,
-        )
-        const windowPosition = SceneTransforms.worldToWindowCoordinates(
-          viewer.scene,
-          position,
-        )
-
-        if (
-          windowPosition &&
-          isPointVisibleFromCamera(viewer.scene, position)
-        ) {
-          card.style.transform = `translate(${windowPosition.x + 240 + index * 20}px, ${windowPosition.y - 30 + index * 20}px) translate(-50%, 20px)`
+        if (visibleIds.has(messageId)) {
           card.style.opacity = '1'
           card.style.pointerEvents = 'auto'
           card.style.visibility = 'visible'
@@ -1551,6 +1704,40 @@ function RouteComponent() {
           card.style.pointerEvents = 'none'
           card.style.visibility = 'hidden'
         }
+      })
+
+      setCardPositions((currentPositions) => {
+        const openMessageEntityIds = new Set(
+          openMessages.map((message) => `message-${message.id}`),
+        )
+        const nextPositions = { ...currentPositions }
+        let hasChanged = false
+
+        for (const messageId of Object.keys(nextPositions)) {
+          if (!openMessageEntityIds.has(messageId)) {
+            delete nextPositions[messageId]
+            hasChanged = true
+          }
+        }
+
+        for (const [messageId, position] of Object.entries(positions)) {
+          if (manuallyPositionedCardIdsRef.current.has(messageId)) continue
+
+          const currentPosition = currentPositions[messageId]
+          if (
+            currentPosition?.x === position.x &&
+            currentPosition.y === position.y
+          ) {
+            continue
+          }
+
+          nextPositions[messageId] = position
+          hasChanged = true
+        }
+
+        if (!hasChanged) return currentPositions
+        cardPositionsRef.current = nextPositions
+        return nextPositions
       })
     }
 
@@ -1893,6 +2080,7 @@ function RouteComponent() {
               onClick={() => {
                 setIsPinning(true)
                 setCardPositions({})
+                manuallyPositionedCardIdsRef.current.clear()
                 cardRefs.current = {}
                 setSelectedPosition(null)
                 setOpenMessageIds([])
