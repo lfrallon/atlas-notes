@@ -517,7 +517,7 @@ function RouteComponent() {
   const selectedPinRef = useRef<HTMLDivElement | null>(null)
   const cameraDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPinningRef = useRef(false)
-  const lastFocusedMessageIdRef = useRef<string | null>(null)
+  const lastOpenedMessageIdRef = useRef<string | null>(null)
   const lastKnownCameraHeightRef = useRef<number>(250_000)
   const [viewport, setViewport] = useState<MapViewport | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
@@ -993,57 +993,66 @@ function RouteComponent() {
     })
   }, [messages, openMessageIds])
 
-  const focusedMessage = openMessages.at(-1) ?? null
-  const focusedMessageId = focusedMessage
-    ? `message-${focusedMessage.id}`
-    : null
+  const lastOpenedMessage = useMemo(() => {
+    const lastOpenedMessageId = lastOpenedMessageIdRef.current
+    if (!lastOpenedMessageId) return null
+
+    return (
+      openMessages.find(
+        (message) => `message-${message.id}` === lastOpenedMessageId,
+      ) ?? null
+    )
+  }, [openMessages])
 
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer || viewer.isDestroyed()) return
     if (isPinning) return
 
-    if (!focusedMessage || !focusedMessageId) {
-      lastFocusedMessageIdRef.current = null
-      return
-    }
-
-    if (lastFocusedMessageIdRef.current === focusedMessageId) return
+    const lastOpenedMessageId = lastOpenedMessageIdRef.current
+    if (!lastOpenedMessage || !lastOpenedMessageId) return
 
     const destination = Cartesian3.fromDegrees(
-      focusedMessage.longitude,
-      focusedMessage.latitude,
+      lastOpenedMessage.longitude,
+      lastOpenedMessage.latitude,
       lastKnownCameraHeightRef.current,
     )
 
-    // const windowPosition = SceneTransforms.worldToWindowCoordinates(
-    //   viewer.scene,
-    //   destination,
-    // )
-    // const cameraHeight = viewer.camera.positionCartographic.height
+    const windowPosition = SceneTransforms.worldToWindowCoordinates(
+      viewer.scene,
+      destination,
+    )
 
-    // if (windowPosition) {
-    //   const centerX = viewer.scene.canvas.clientWidth / 2
-    //   const centerY = viewer.scene.canvas.clientHeight / 2
-    //   const centerDistance = Math.hypot(
-    //     windowPosition.x - centerX,
-    //     windowPosition.y - centerY,
-    //   )
-    //   if (centerDistance < 72 && cameraHeight <= 280_000) {
-    //     lastFocusedMessageIdRef.current = focusedMessageId
-    //     return
-    //   }
-    // }
+    let flyToDuration = 1.5
 
-    lastFocusedMessageIdRef.current = focusedMessageId
+    if (windowPosition && isPointVisibleFromCamera(viewer.scene, destination)) {
+      const centerX = viewer.scene.canvas.clientWidth / 2
+      const centerY = viewer.scene.canvas.clientHeight / 2
+      const centerDistance = Math.hypot(
+        windowPosition.x - centerX,
+        windowPosition.y - centerY,
+      )
+      const nearCenterRadius =
+        Math.min(
+          viewer.scene.canvas.clientWidth,
+          viewer.scene.canvas.clientHeight,
+        ) * 0.2
+
+      if (centerDistance <= nearCenterRadius) return
+
+      if (centerDistance <= nearCenterRadius * 2) {
+        flyToDuration = 0.5
+      }
+    }
+
     viewer.camera.flyTo({
       destination,
-      duration: 1.5,
+      duration: flyToDuration,
       orientation: {
         heading: viewer.camera.heading,
       },
     })
-  }, [isPinning, focusedMessage, focusedMessageId])
+  }, [isPinning, lastOpenedMessage, openMessageIds])
 
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return
@@ -1107,6 +1116,7 @@ function RouteComponent() {
 
         if (!isPinningRef.current) {
           if (pickedMessageId) {
+            lastOpenedMessageIdRef.current = pickedMessageId
             setOpenMessageIds((currentIds) =>
               currentIds.includes(pickedMessageId)
                 ? currentIds
