@@ -975,6 +975,11 @@ function RouteComponent() {
     })
   }, [messages, updateMessageIds])
 
+  const openMessageIdSet = useMemo(
+    () => new Set(openMessageIds),
+    [openMessageIds],
+  )
+
   const openMessages = useMemo(() => {
     if (openMessageIds.length === 0) return []
 
@@ -1487,12 +1492,18 @@ function RouteComponent() {
 
     const selectedWaveEntityIds = new Set<string>()
 
+    openMessageIds.forEach((messageId) => {
+      wavePhaseOffsets.forEach((_, waveIndex) => {
+        selectedWaveEntityIds.add(`${messageId}-wave-${waveIndex}`)
+      })
+    })
+
     viewer.entities.values.forEach((entity) => {
       const entityId = entity.id.toString()
       if (!entityId.startsWith('message-')) return
       if (entityId.includes('-wave-')) return
 
-      const isSelected = openMessageIds.includes(entityId)
+      const isSelected = openMessageIdSet.has(entityId)
       const isHovered = entityId === hoveredMessageId
 
       if (entity.point) {
@@ -1522,29 +1533,8 @@ function RouteComponent() {
       }
 
       if (entity.cylinder && isSelected) {
-        const materialOne = new ColorMaterialProperty(
-          new CallbackProperty(function () {
-            const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
-            const alpha = (1 - eased) * 0.17
-            return Color.ORANGE.withAlpha(alpha)
-          }, false),
-        )
-
-        const outlineColorOne = new CallbackProperty(function () {
-          const eased = easeOutCubic(getWaveProgress(wavePhaseOffsets[0]))
-          const alpha = (1 - eased) * 0.78
-          return Color.ORANGE.withAlpha(alpha)
-        }, false)
-        applyPulseWaveToCylinder(
-          entity,
-          wavePhaseOffsets[0],
-          viewer,
-          materialOne,
-          outlineColorOne,
-        )
-
         for (
-          let waveIndex = 1;
+          let waveIndex = 0;
           waveIndex < wavePhaseOffsets.length;
           waveIndex++
         ) {
@@ -1564,32 +1554,40 @@ function RouteComponent() {
             waveEntity.position = entity.position
           }
 
-          const materialTwo = new ColorMaterialProperty(
+          const wavePhaseOffset = wavePhaseOffsets[waveIndex]
+          const material = new ColorMaterialProperty(
             new CallbackProperty(function () {
-              const eased = easeOutCubic(
-                getWaveProgress(wavePhaseOffsets[waveIndex]),
-              )
+              const eased = easeOutCubic(getWaveProgress(wavePhaseOffset))
               const alpha = (1 - eased) * 0.17
               return Color.ORANGE.withAlpha(alpha)
             }, false),
           )
 
-          const outlineColorTwo = new CallbackProperty(function () {
-            const eased = easeOutCubic(
-              getWaveProgress(wavePhaseOffsets[waveIndex]),
-            )
+          const outlineColor = new CallbackProperty(function () {
+            const eased = easeOutCubic(getWaveProgress(wavePhaseOffset))
             const alpha = (1 - eased) * 0.78
             return Color.ORANGE.withAlpha(alpha)
           }, false)
 
           applyPulseWaveToCylinder(
             waveEntity,
-            wavePhaseOffsets[waveIndex],
+            wavePhaseOffset,
             viewer,
-            materialTwo,
-            outlineColorTwo,
+            material,
+            outlineColor,
           )
         }
+
+        const hiddenRadius = new ConstantProperty(0.0001)
+        entity.cylinder.topRadius = hiddenRadius
+        entity.cylinder.bottomRadius = hiddenRadius
+        entity.cylinder.outline = new ConstantProperty(false)
+        entity.cylinder.material = new ColorMaterialProperty(
+          new ConstantProperty(Color.ORANGE.withAlpha(0)),
+        )
+        entity.cylinder.outlineColor = new ConstantProperty(
+          Color.ORANGE.withAlpha(0),
+        )
       } else if (entity.cylinder) {
         const hiddenRadius = new ConstantProperty(0.0001)
         entity.cylinder.topRadius = hiddenRadius
@@ -1606,13 +1604,13 @@ function RouteComponent() {
 
     const staleWaveEntities = viewer.entities.values.filter((entity) => {
       const id = entity.id.toString()
-      return id.includes('-wave-') && !selectedWaveEntityIds.has(id)
+      return /^message-.+-wave-\d+$/.test(id) && !selectedWaveEntityIds.has(id)
     })
 
     staleWaveEntities.forEach((entity) => {
       viewer.entities.remove(entity)
     })
-  }, [hoveredMessageId, openMessageIds, messages])
+  }, [hoveredMessageId, openMessageIds, openMessageIdSet, messages])
 
   useEffect(() => {
     const viewer = viewerRef.current
