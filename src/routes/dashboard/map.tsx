@@ -895,7 +895,9 @@ function RouteComponent() {
     if (dragUpdateStateRef.current.id === messageId) {
       dragUpdateStateRef.current = { id: null, offset: { x: 0, y: 0 } }
     }
-    e.currentTarget.releasePointerCapture(e.pointerId)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
   }
 
   const handleSelectedCardPointerDown = (
@@ -936,7 +938,9 @@ function RouteComponent() {
     if (dragStateRef.current.id === messageId) {
       dragStateRef.current = { id: null, offset: { x: 0, y: 0 } }
     }
-    e.currentTarget.releasePointerCapture(e.pointerId)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
   }
 
   const canSubmit =
