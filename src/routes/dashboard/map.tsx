@@ -638,7 +638,7 @@ function RouteComponent() {
         data: DeleteGeoMessage[]
       }
     }) => {
-      return await fetch('http://localhost:3006/api/v1/geo-notes', {
+      return await fetch(GEO_NOTES_API_URL, {
         method: 'DELETE',
         headers: {
           accept: '*/*',
