@@ -10,36 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
-import { Route as DashboardTodosRouteImport } from './routes/dashboard/todos'
-import { Route as DashboardRolesRouteImport } from './routes/dashboard/roles'
-import { Route as DashboardPermissionsRouteImport } from './routes/dashboard/permissions'
-import { Route as DashboardMapRouteImport } from './routes/dashboard/map'
 import { Route as DashboardBetterAuthRouteImport } from './routes/dashboard/better-auth'
+import { Route as DashboardMapRouteImport } from './routes/dashboard/map'
+import { Route as DashboardPermissionsRouteImport } from './routes/dashboard/permissions'
+import { Route as DashboardRolesRouteImport } from './routes/dashboard/roles'
+import { Route as DashboardTodosRouteImport } from './routes/dashboard/todos'
+import { Route as DashboardUsersRouteImport } from './routes/dashboard/users'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardUsersRoute = DashboardUsersRouteImport.update({
-  id: '/dashboard/users',
-  path: '/dashboard/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardTodosRoute = DashboardTodosRouteImport.update({
-  id: '/dashboard/todos',
-  path: '/dashboard/todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRolesRoute = DashboardRolesRouteImport.update({
-  id: '/dashboard/roles',
-  path: '/dashboard/roles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardPermissionsRoute = DashboardPermissionsRouteImport.update({
-  id: '/dashboard/permissions',
-  path: '/dashboard/permissions',
+const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
+  id: '/dashboard/better-auth',
+  path: '/dashboard/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardMapRoute = DashboardMapRouteImport.update({
@@ -47,9 +32,24 @@ const DashboardMapRoute = DashboardMapRouteImport.update({
   path: '/dashboard/map',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardBetterAuthRoute = DashboardBetterAuthRouteImport.update({
-  id: '/dashboard/better-auth',
-  path: '/dashboard/better-auth',
+const DashboardPermissionsRoute = DashboardPermissionsRouteImport.update({
+  id: '/dashboard/permissions',
+  path: '/dashboard/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRolesRoute = DashboardRolesRouteImport.update({
+  id: '/dashboard/roles',
+  path: '/dashboard/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardTodosRoute = DashboardTodosRouteImport.update({
+  id: '/dashboard/todos',
+  path: '/dashboard/todos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardUsersRoute = DashboardUsersRouteImport.update({
+  id: '/dashboard/users',
+  path: '/dashboard/users',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -130,32 +130,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/users': {
-      id: '/dashboard/users'
-      path: '/dashboard/users'
-      fullPath: '/dashboard/users'
-      preLoaderRoute: typeof DashboardUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/todos': {
-      id: '/dashboard/todos'
-      path: '/dashboard/todos'
-      fullPath: '/dashboard/todos'
-      preLoaderRoute: typeof DashboardTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/roles': {
-      id: '/dashboard/roles'
-      path: '/dashboard/roles'
-      fullPath: '/dashboard/roles'
-      preLoaderRoute: typeof DashboardRolesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/permissions': {
-      id: '/dashboard/permissions'
-      path: '/dashboard/permissions'
-      fullPath: '/dashboard/permissions'
-      preLoaderRoute: typeof DashboardPermissionsRouteImport
+    '/dashboard/better-auth': {
+      id: '/dashboard/better-auth'
+      path: '/dashboard/better-auth'
+      fullPath: '/dashboard/better-auth'
+      preLoaderRoute: typeof DashboardBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/map': {
@@ -165,11 +144,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMapRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/better-auth': {
-      id: '/dashboard/better-auth'
-      path: '/dashboard/better-auth'
-      fullPath: '/dashboard/better-auth'
-      preLoaderRoute: typeof DashboardBetterAuthRouteImport
+    '/dashboard/permissions': {
+      id: '/dashboard/permissions'
+      path: '/dashboard/permissions'
+      fullPath: '/dashboard/permissions'
+      preLoaderRoute: typeof DashboardPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/roles': {
+      id: '/dashboard/roles'
+      path: '/dashboard/roles'
+      fullPath: '/dashboard/roles'
+      preLoaderRoute: typeof DashboardRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/todos': {
+      id: '/dashboard/todos'
+      path: '/dashboard/todos'
+      fullPath: '/dashboard/todos'
+      preLoaderRoute: typeof DashboardTodosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/users': {
+      id: '/dashboard/users'
+      path: '/dashboard/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof DashboardUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
