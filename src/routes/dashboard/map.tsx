@@ -1919,45 +1919,30 @@ function RouteComponent() {
   async function handleUpdate(index: number) {
     if (!canUpdate) return
 
+    const messageToUpdate = toUpdateMessages[index]
+
     setIsSubmitUpdating(true)
     setErrorMessage(null)
 
     try {
-      updateGeoNotesMutation.mutateAsync(
-        {
-          body: {
-            data: [toUpdateMessages[index]],
-          },
+      const response = await updateGeoNotesMutation.mutateAsync({
+        body: {
+          data: [messageToUpdate],
         },
-        {
-          onSuccess: async (response) => {
-            if (!response.ok) {
-              const payload = (await response.json().catch(() => null)) as {
-                error?: string
-              } | null
-              throw new Error(payload?.error ?? 'Unable to update map message.')
-            }
-            setUpdateMessageIds((prevItems) =>
-              prevItems.filter(
-                (item) => item !== `message-${toUpdateMessages[index].id}`,
-              ),
-            )
-            setToUpdateMessages((prevItems) =>
-              prevItems.filter(
-                (item) => item.id !== toUpdateMessages[index].id,
-              ),
-            )
-            setUpdateCardPosition({})
-          },
-        },
-      )
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(payload?.error ?? 'Unable to update map message.')
+      }
+
       setUpdateMessageIds((prevItems) =>
-        prevItems.filter(
-          (item) => item !== `message-${toUpdateMessages[index].id}`,
-        ),
+        prevItems.filter((item) => item !== `message-${messageToUpdate.id}`),
       )
       setToUpdateMessages((prevItems) =>
-        prevItems.filter((item) => item.id !== toUpdateMessages[index].id),
+        prevItems.filter((item) => item.id !== messageToUpdate.id),
       )
       setUpdateCardPosition({})
     } catch (error) {
@@ -1978,36 +1963,22 @@ function RouteComponent() {
     setErrorMessage(null)
 
     try {
-      addGeoNotesMutation.mutateAsync(
-        {
-          data: {
-            title: draftTitle.trim(),
-            geoNote: draftMessage.trim(),
-            latitude: selectedPosition.lat,
-            longitude: selectedPosition.lng,
-            ...(draftVideoUrl.trim() ? { videoUrl: draftVideoUrl.trim() } : {}),
-          },
+      const response = await addGeoNotesMutation.mutateAsync({
+        data: {
+          title: draftTitle.trim(),
+          geoNote: draftMessage.trim(),
+          latitude: selectedPosition.lat,
+          longitude: selectedPosition.lng,
+          ...(draftVideoUrl.trim() ? { videoUrl: draftVideoUrl.trim() } : {}),
         },
-        {
-          onSuccess: async (response) => {
-            if (!response.ok) {
-              const payload = (await response.json().catch(() => null)) as {
-                error?: string
-              } | null
-              throw new Error(
-                payload?.error ?? 'Unable to publish map message.',
-              )
-            }
+      })
 
-            setDraftTitle('')
-            setDraftMessage('')
-            setDraftVideoUrl('')
-            setIsPinning(false)
-            setSelectedPosition(null)
-            setCursorPosition(null)
-          },
-        },
-      )
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(payload?.error ?? 'Unable to publish map message.')
+      }
 
       setDraftTitle('')
       setDraftMessage('')
