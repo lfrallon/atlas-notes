@@ -8,6 +8,12 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { client } from '../client/client.gen'
+
+client.setConfig({
+  baseUrl: 'http://localhost:3006',
+})
+
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {

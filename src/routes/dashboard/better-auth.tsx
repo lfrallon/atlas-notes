@@ -339,7 +339,7 @@ function BetterAuthDemo() {
         }
 
         await router.navigate({
-          to: '/dashboard/map',
+          to: '/',
           replace: true,
           reloadDocument: true,
         })
