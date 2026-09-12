@@ -474,7 +474,7 @@ function DemoDrizzle() {
       {/* Selection Button/Indicator */}
       {selectedCount > 0 && (
         <div className="sticky top-12 sm:top-12.5 z-40 sm:px-6 pt-3 sm:pt-6 animate-in fade-in slide-in-from-top-2 duration-600">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 sm:border sm:border-indigo-400/50 sm:p-4 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-linear-to-r from-indigo-600/30 to-purple-600/20 sm:border sm:border-indigo-400/50 sm:p-5 shadow-lg shadow-indigo-500/10 backdrop-blur-md">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-8 h-8 bg-indigo-600 text-white text-sm font-bold">
                 {selectedCount}
